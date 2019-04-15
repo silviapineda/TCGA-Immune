@@ -16,6 +16,7 @@ print(x)
 ############################################################################################
 library(pgirmess)
 library(stringr)
+library(SciViews)
 
 setwd("~/TCGA-Immune/")
 
@@ -117,7 +118,41 @@ for (i in 1:length(sample)){
 }
 
 diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
-save(data_merge,diversity,file="Data/PAAD/PAAD_RepertoireResults_clones.Rdata")
+
+####After runing recon
+recon<-read.table("Data/PAAD/RECON/test_D_number_table.txt",header=T)
+chain<-substr(recon$sample_name,61,64)
+sample<-substr(recon$sample_name,66,101)
+##0.0D is species richness (Number of clones)
+##Entropy is ln(1.0.D)
+diversity<-as.data.frame(diversity)
+chain_list<-unique(chain)
+for(i in chain_list){
+  recon_chain<-recon[which(chain==i),]
+  sample_chain<-substr(recon_chain$sample_name,66,101)
+  id<-match(rownames(diversity),sample_chain)
+  clone_chain<-ifelse(is.na(id)==F,recon_chain[id,"est_0.0D"],0)
+  assign(paste0("clones_recon_",i),clone_chain)
+  entroy_chain<-ifelse(is.na(id)==F,ln(recon_chain[id,"est_1.0D"]),0)
+  assign(paste0("entropy_recon_",i),entroy_chain)
+}
+diversity$clones_recon_IGH<-clones_recon_IGHV
+diversity$clones_recon_IGK<-clones_recon_IGKV
+diversity$clones_recon_IGL<-clones_recon_IGLV
+diversity$clones_recon_TRA<-clones_recon_TRAV
+diversity$clones_recon_TRB<-clones_recon_TRBV
+diversity$clones_recon_TRD<-clones_recon_TRDV
+diversity$clones_recon_TRG<-clones_recon_TRGV
+
+diversity$entropy_recon_IGH<-entropy_recon_IGHV
+diversity$entropy_recon_IGK<-entropy_recon_IGKV
+diversity$entropy_recon_IGL<-entropy_recon_IGLV
+diversity$entropy_recon_TRA<-entropy_recon_TRAV
+diversity$entropy_recon_TRB<-entropy_recon_TRBV
+diversity$entropy_recon_TRD<-entropy_recon_TRDV
+diversity$entropy_recon_TRG<-entropy_recon_TRGV
+#Simpson Index (1/2D) and BPI (1/∞D)
+save(data_merge,diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata")
 
 
 ####Read repertoire data from Akshay considering all reads
@@ -171,12 +206,12 @@ clinical.drug$drug_name<-as.character(clinical.drug$drug_name)
 clinical.drug$drug_name[212]<-"Immunization"
 clinical.drug<-clinical.drug[,-9]
 write.csv(clinical.drug,"Data/PAAD/Clinical/clinical_drug_PAAD.csv")
-
+clinical.drug<-read.csv("Data/PAAD/Clinical/clinical_drug_PAAD.csv")
 ##Clinical.radiation
 clinical.radiation<-clinical.radiation[!duplicated(clinical.radiation),]
 clinical.radiation<-clinical.radiation[,-c(7,12:13,15)]
 write.csv(clinical.radiation,"Data/PAAD/Clinical/clinical_radiation_PAAD.csv")
-
+clinical.radiation<-read.csv("Data/PAAD/Clinical/clinical_radiation_PAAD.csv")
 ##Clinical.patient
 clinical.patient<-clinical.patient[!duplicated(clinical.patient),]
 clinical.patient$tobacco_smoking_history_master<-ifelse(clinical.patient$tobacco_smoking_history==1,"Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)",
@@ -186,35 +221,37 @@ clinical.patient$tobacco_smoking_history_master<-ifelse(clinical.patient$tobacco
                                             ifelse(clinical.patient$tobacco_smoking_history==5,"Current reformed smoker, duration not specified",NA)))))
 clinical.patient<-clinical.patient[,-c(2,72,75:80)]
 write.csv(clinical.patient,"Data/PAAD/Clinical/clinical_patient_PAAD.csv")
-
+clinical.patient<-read.csv("Data/PAAD/Clinical/clinical_patient_PAAD.csv")
 ##CLinical.stage has the same information than the one in clinical.patient
 
 ##clinical.new_tumor_event
 clinical.new_tumor_event<-clinical.new_tumor_event[!duplicated(clinical.new_tumor_event),]
 write.csv(clinical.new_tumor_event,"Data/PAAD/Clinical/clinical_new_tumor_event_PAAD.csv")
-
+clinical.new_tumor_event<-read.csv("Data/PAAD/Clinical/clinical_new_tumor_event_PAAD.csv")
 
 ##CLinical.follow.up
 clinical.folow_up<-read.csv("Data/PAAD/Clinical/Clinical_follow_up_fromSuppTableS1_PAAD.csv")
 write.csv(clinical.folow_up,"Data/PAAD/Clinical/clinical_folow_up_PAAD.csv")
-
+clinical.folow_up<-read.csv("Data/PAAD/Clinical/clinical_folow_up_PAAD.csv")
 
 #biospecimen.sample
 biospecimen.slide<-biospecimen.slide[!duplicated(biospecimen.slide),]
 biospecimen.slide<-biospecimen.slide[,-c(2,4,10,13,15)]
 write.csv(biospecimen.slide,"Data/PAAD/Clinical/biospecimen_slide_PAAD.csv")
+biospecimen.slide<-read.csv("Data/PAAD/Clinical/biospecimen_slide_PAAD.csv")
 
 ###Read xCELL data
-xCell.data<-read.table("Data/xCELL/xCell_PAAD_fpkm_xCell_0725041119.txt",header = T,sep="\t")
+xCell.data<-read.table("Data/xCELL/xCell_PAAD_rsem_xCell_0643041519.txt",header = T,sep="\t")
 rownames(xCell.data)<-xCell.data$X
 xCell.data<-xCell.data[,-1]
 xx<-str_replace(colnames(xCell.data),"\\.","-")
 xx<-str_replace(xx,"\\.","-")
 xx<-str_replace(xx,"\\.","-")
 colnames(xCell.data)<-xx
-write.csv(xCell.data,"Data/xCell_TCGA.csv")
-id.xcell<-match(PAAD_repertoire_diversity$TCGA_sample,colnames(xCell.data))
-xCell.data.PAAD<-xCell.data[,na.omit(id.xcell)] ##180 
+id.xcell<-match(substr(PAAD_repertoire_diversity$TCGA_sample,1,15),colnames(xCell.data))
+xCell.data.PAAD<-xCell.data[,na.omit(id.xcell)] ##181 
 
-save(PAAD_repertoire,xCell.data.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
-     file="Data/PAAD/PAAD_repertoire_xCell_clinical.Rdata")
+save(data_merge,PAAD_repertoire_diversity,xCell.data.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
+     file="Data/PAAD/PAAD_FullData.Rdata")
+
+
