@@ -62,7 +62,7 @@ clones<-data.matrix(table(clones_count$sample,clones_count$chainType))
 colnames(clones)<-c("clones_IGH","clones_IGK","clones_IGL","clones_TRA","clones_TRB","clones_TRD","clones_TRG")
 
 ##Diversity measures
-sample<-rownames(reads_clones_annot)
+sample<-rownames(clones)
 entropy_IGH<-NULL
 entropy_IGK<-NULL
 entropy_IGL<-NULL
@@ -242,16 +242,22 @@ biospecimen.slide<-read.csv("Data/PAAD/Clinical/biospecimen_slide_PAAD.csv")
 
 ###Read xCELL data
 xCell.data<-read.table("Data/xCELL/xCell_PAAD_rsem_xCell_0643041519.txt",header = T,sep="\t")
+xcell.pvalue<-read.table("Data/xCELL/xCell_PAAD_rsem_xCell_0643041519.pvals.txt",header=T,sep="\t")
 rownames(xCell.data)<-xCell.data$X
+rownames(xcell.pvalue)<-xcell.pvalue$X
 xCell.data<-xCell.data[,-1]
+xcell.pvalue<-xcell.pvalue[,-1]
 xx<-str_replace(colnames(xCell.data),"\\.","-")
 xx<-str_replace(xx,"\\.","-")
 xx<-str_replace(xx,"\\.","-")
 colnames(xCell.data)<-xx
+colnames(xcell.pvalue)<-xx
 id.xcell<-match(substr(PAAD_repertoire_diversity$TCGA_sample,1,15),colnames(xCell.data))
 xCell.data.PAAD<-xCell.data[,na.omit(id.xcell)] ##181 
+xCell.pvalue.PAAD<-xcell.pvalue[,na.omit(id.xcell)] ##181
 
-save(data_merge,PAAD_repertoire_diversity,xCell.data.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
+PAAD.repertoire.diversity<-PAAD_repertoire_diversity
+save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
      file="Data/PAAD/PAAD_FullData.Rdata")
 
 
