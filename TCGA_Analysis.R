@@ -180,10 +180,15 @@ PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tu
 xcell.data.tumor.filter_treads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$T_Reads>100),] #139
 xcell.data.tumor.filter_treads_mat<-xcell.data.tumor.filter_treads[ , -which(colnames(xcell.data.tumor.filter_treads) %in% c("ImmuneScore","StromaScore","MicroenvironmentScore"))]
 
+library(dplyr)
+PAAD.repertoire.diversity_treads$T_expression_tertiles<-ntile(PAAD.repertoire.diversity_treads$T_expression,3)
+
 alphalist<-seq(0.01,0.99,by=0.01)
 set.seed(54)
 elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_treads_mat,PAAD.repertoire.diversity_treads$TRA_expression,family="gaussian"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
+
+
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
 for (j in 1:length(alphalist)) {
@@ -418,10 +423,10 @@ association.test.xcell<- function (clinical.patient.xcell,clinical.var,xcell.dat
       for(i in 1:length(which(p.markers<0.05))){
         print(i)
         dfplot$marker<-xcell.data.tumor.filter[which(clinical.patient.xcell[,clinical.var]!=""),which(p.markers<0.05)[i]]
-        tiff(paste0("Results/boxplot_",clinical.var,"_",which(p.markers<0.05)[i],".tiff"),res=300,h=2000,w=3000)
+        tiff(paste0("Results/boxplot_",clinical.var,"_",colnames(xcell.data.tumor.filter)[which(p.markers<0.05)][i],".tiff"),res=300,h=2000,w=3000)
         print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.xcell[which(clinical.patient.xcell[,clinical.var]!=""),clinical.var], 
                                 x=clinical.patient.xcell[which(clinical.patient.xcell[,clinical.var]!=""),clinical.var])) + geom_boxplot() 
-              + scale_y_continuous(name= which(p.markers<0.05)[i]) + stat_compare_means()  + scale_x_discrete(name=clinical.var)
+              + scale_y_continuous(name=colnames(xcell.data.tumor.filter)[which(p.markers<0.05)][i]) + stat_compare_means()  + scale_x_discrete(name=clinical.var)
               + scale_fill_discrete(name=clinical.var))
         dev.off()
       }
@@ -440,10 +445,10 @@ association.test.xcell<- function (clinical.patient.xcell,clinical.var,xcell.dat
       for(i in 1:length(which(p.markers<0.05))){
         print(i)
         dfplot$marker<-xcell.data.tumor.filter[which(clinical.patient.xcell[,clinical.var]!=""),which(p.markers<0.05)[i]]
-        tiff(paste0("Results/boxplot_",clinical.var,"_",which(p.markers<0.05)[i],".tiff"),res=300,h=2000,w=3000)
+        tiff(paste0("Results/boxplot_",clinical.var,"_",colnames(xcell.data.tumor.filter)[which(p.markers<0.05)][i],".tiff"),res=300,h=2000,w=3000)
         print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.xcell[which(clinical.patient.xcell[,clinical.var]!=""),clinical.var], 
                                 x=clinical.patient.xcell[which(clinical.patient.xcell[,clinical.var]!=""),clinical.var])) + geom_point() + geom_smooth(method='lm')
-              + scale_y_continuous(name= which(p.markers<0.05)[i]) + stat_cor(method = "pearson") + scale_x_continuous(name=clinical.var)
+              + scale_y_continuous(name= colnames(xcell.data.tumor.filter)[which(p.markers<0.05)][i]) + stat_cor(method = "pearson") + scale_x_continuous(name=clinical.var)
               + scale_fill_continuous(name=clinical.var))
         dev.off()
       }
@@ -456,74 +461,89 @@ association.test.xcell<- function (clinical.patient.xcell,clinical.var,xcell.dat
 clinical.patient.xcell$histological_type_2cat<-factor(ifelse(clinical.patient.xcell$histological_type=="Pancreas-Adenocarcinoma Ductal Type","PDAC","Other"))
 association.test.xcell(clinical.patient.xcell,"histological_type_2cat",xcell.data.tumor.filter)
 
-###No funciona bien mirar
+
 ##anatomic_neoplasm_subdivision
 clinical.patient.xcell$anatomic_neoplasm_subdivision<-factor(clinical.patient.xcell$anatomic_neoplasm_subdivision)
-association.test.immuneRep(clinical.patient.xcell,"anatomic_neoplasm_subdivision",xcell.data.tumor.filter)
+association.test.xcell(clinical.patient.xcell,"anatomic_neoplasm_subdivision",xcell.data.tumor.filter)
 
 ##gender
-clinical.patient.tumor$gender<-factor(clinical.patient.tumor$gender)
-association.test.immuneRep(clinical.patient.tumor,"gender",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$gender<-factor(clinical.patient.xcell$gender)
+association.test.xcell(clinical.patient.xcell,"gender",xcell.data.tumor.filter)
 
 ##race_list
-clinical.patient.tumor$race_list<-factor(clinical.patient.tumor$race_list)
-association.test.immuneRep(clinical.patient.tumor,"race_list",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$race_list<-factor(clinical.patient.xcell$race_list)
+association.test.xcell(clinical.patient.xcell,"race_list",xcell.data.tumor.filter)
 
 ##History of Prior Malignancy
-clinical.patient.tumor$other_dx<-factor(clinical.patient.tumor$other_dx)
-association.test.immuneRep(clinical.patient.tumor,"other_dx",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$other_dx<-factor(clinical.patient.xcell$other_dx)
+association.test.xcell(clinical.patient.xcell,"other_dx",xcell.data.tumor.filter)
 
 ##lymph_node_examined_count
-association.test.immuneRep(clinical.patient.tumor,"lymph_node_examined_count",PAAD.repertoire.tumor,markers)
+association.test.xcell(clinical.patient.xcell,"lymph_node_examined_count",xcell.data.tumor.filter)
 
 ##neoplasm_histologic_grade
-clinical.patient.tumor$neoplasm_histologic_grade_3cat<-factor(ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G1","G1",
-                                                                     ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G2","G2",
-                                                                            ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G3","G3",""))))
-association.test.immuneRep(clinical.patient.tumor,"neoplasm_histologic_grade_3cat",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$neoplasm_histologic_grade_3cat<-factor(ifelse(clinical.patient.xcell$neoplasm_histologic_grade=="G1","G1",
+                                                                     ifelse(clinical.patient.xcell$neoplasm_histologic_grade=="G2","G2",
+                                                                            ifelse(clinical.patient.xcell$neoplasm_histologic_grade=="G3","G3",""))))
+association.test.xcell(clinical.patient.xcell,"neoplasm_histologic_grade_3cat",xcell.data.tumor.filter)
 
 ##Age 
-association.test.immuneRep(clinical.patient.tumor,"age_at_initial_pathologic_diagnosis",PAAD.repertoire.tumor,markers)
+association.test.xcell(clinical.patient.xcell,"age_at_initial_pathologic_diagnosis",xcell.data.tumor.filter)
 
 ##vital_status
-clinical.patient.tumor$vital_status<-factor(clinical.patient.tumor$vital_status)
-association.test.immuneRep(clinical.patient.tumor,"vital_status",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$vital_status<-factor(clinical.patient.xcell$vital_status)
+association.test.xcell(clinical.patient.xcell,"vital_status",xcell.data.tumor.filter)
+
+## Heatmap ####
+annotation_col = data.frame(
+  vital_status = factor(clinical.patient.xcell$vital_status))
+rownames(annotation_col)<-rownames(xcell.data.tumor.filter)
+xcell.data.tumor.filter_vital_status<-xcell.data.tumor.filter[,c("aDC","Adipocytes","CD4+ naive T-cells","CD8+ T-cells","cDC",
+                                                                 "DC","Epithelial cells","Fibroblasts","HSC","ImmuneScore",
+                                                                 "Keratinocytes","Melanocytes","MicroenvironmentScore","Monocytes",
+                                                                 "NKT","StromaScore")]
+
+ann_colors = list (vital_status = c("Alive" = brewer.pal(3,"Set2")[1], "Dead"= brewer.pal(3,"Set2")[2]))
+pheatmap(t(xcell.data.tumor.filter_vital_status),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12),
+         annotation_col = annotation_col,annotation_colors = ann_colors)
+
+
 
 ##Smoking
-clinical.patient.tumor$smoking<-factor(ifelse(clinical.patient.tumor$tobacco_smoking_history_master=="Current smoker (includes daily smokers and non-daily smokers or occasional smokers)","Current",
-                                              ifelse(clinical.patient.tumor$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker","Former")))
-association.test.immuneRep(clinical.patient.tumor,"smoking",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$smoking<-factor(ifelse(clinical.patient.xcell$tobacco_smoking_history_master=="Current smoker (includes daily smokers and non-daily smokers or occasional smokers)","Current",
+                                              ifelse(clinical.patient.xcell$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker","Former")))
+association.test.xcell(clinical.patient.xcell,"smoking",xcell.data.tumor.filter)
 
 ##number_pack_years_smoked
-association.test.immuneRep(clinical.patient.tumor,"number_pack_years_smoked",PAAD.repertoire.tumor,markers)
+association.test.xcell(clinical.patient.xcell,"number_pack_years_smoked",xcell.data.tumor.filter)
 
 ##Alcohol
-clinical.patient.tumor$alcohol_history_documented<-factor(clinical.patient.tumor$alcohol_history_documented)
-association.test.immuneRep(clinical.patient.tumor,"alcohol_history_documented",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$alcohol_history_documented<-factor(clinical.patient.xcell$alcohol_history_documented)
+association.test.xcell(clinical.patient.xcell,"alcohol_history_documented",xcell.data.tumor.filter)
 
 ##Alcohol category
-clinical.patient.tumor$alcoholic_exposure_category2<-ifelse(clinical.patient.tumor$alcohol_history_documented=="NO","No-drinker",
-                                                            ifelse(clinical.patient.tumor$alcohol_history_documented=="YES" & clinical.patient.tumor$alcoholic_exposure_category=="",NA,
-                                                                   ifelse(clinical.patient.tumor$alcoholic_exposure_category=="None","None-Drinker",
-                                                                          ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Occasional Drinker","Occasional-Drinker",
-                                                                                 ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Daily Drinker","Daily-Drinker",
-                                                                                        ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Social Drinker","Social-Drinker",
-                                                                                               ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Weekly Drinker","Weekly-Drinker",NA)))))))
-clinical.patient.tumor$alcoholic_exposure_category2<-factor(clinical.patient.tumor$alcoholic_exposure_category2)
-association.test.immuneRep(clinical.patient.tumor,"alcoholic_exposure_category2",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$alcoholic_exposure_category2<-ifelse(clinical.patient.xcell$alcohol_history_documented=="NO","No-drinker",
+                                                            ifelse(clinical.patient.xcell$alcohol_history_documented=="YES" & clinical.patient.xcell$alcoholic_exposure_category=="",NA,
+                                                                   ifelse(clinical.patient.xcell$alcoholic_exposure_category=="None","None-Drinker",
+                                                                          ifelse(clinical.patient.xcell$alcoholic_exposure_category=="Occasional Drinker","Occasional-Drinker",
+                                                                                 ifelse(clinical.patient.xcell$alcoholic_exposure_category=="Daily Drinker","Daily-Drinker",
+                                                                                        ifelse(clinical.patient.xcell$alcoholic_exposure_category=="Social Drinker","Social-Drinker",
+                                                                                               ifelse(clinical.patient.xcell$alcoholic_exposure_category=="Weekly Drinker","Weekly-Drinker",NA)))))))
+clinical.patient.xcell$alcoholic_exposure_category2<-factor(clinical.patient.xcell$alcoholic_exposure_category2)
+association.test.xcell(clinical.patient.xcell,"alcoholic_exposure_category2",xcell.data.tumor.filter)
 
 ##family history
-clinical.patient.tumor$family_history_of_cancer<-factor(clinical.patient.tumor$family_history_of_cancer)
-association.test.immuneRep(clinical.patient.tumor,"family_history_of_cancer",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$family_history_of_cancer<-factor(clinical.patient.xcell$family_history_of_cancer)
+association.test.xcell(clinical.patient.xcell,"family_history_of_cancer",xcell.data.tumor.filter)
 
 ##radiation_therapy
-clinical.patient.tumor$radiation_therapy<-factor(clinical.patient.tumor$radiation_therapy)
-association.test.immuneRep(clinical.patient.tumor,"radiation_therapy",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$radiation_therapy<-factor(clinical.patient.xcell$radiation_therapy)
+association.test.xcell(clinical.patient.xcell,"radiation_therapy",xcell.data.tumor.filter)
 
 ##primary_therapy_outcome_success
-clinical.patient.tumor$primary_therapy_outcome_success<-factor(clinical.patient.tumor$primary_therapy_outcome_success)
-association.test.immuneRep(clinical.patient.tumor,"primary_therapy_outcome_success",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$primary_therapy_outcome_success<-factor(clinical.patient.xcell$primary_therapy_outcome_success)
+association.test.xcell(clinical.patient.xcell,"primary_therapy_outcome_success",xcell.data.tumor.filter)
 
 ##history_chronic_pancreatitis
-clinical.patient.tumor$history_of_chronic_pancreatitis<-factor(clinical.patient.tumor$history_of_chronic_pancreatitis)
-association.test.immuneRep(clinical.patient.tumor,"history_of_chronic_pancreatitis",PAAD.repertoire.tumor,markers)
+clinical.patient.xcell$history_of_chronic_pancreatitis<-factor(clinical.patient.xcell$history_of_chronic_pancreatitis)
+association.test.xcell(clinical.patient.xcell,"history_of_chronic_pancreatitis",xcell.data.tumor.filter)
