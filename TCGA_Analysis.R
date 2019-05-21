@@ -268,7 +268,6 @@ dev.off()
 ## Merge with Clinical data ###
 ###############################
 clinical.patient.tumor<-clinical.patient[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode),]
-biospecimen.slide.tumor<-biospecimen.slide[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),biospecimen.slide$bcr_patient_barcode),]
 
 markers<-c("IG_expression","IGH_expression","IGK_expression","IGL_expression","T_expression","TRA_expression","TRB_expression","TRD_expression",
   "TRG_expression","Alpha_Beta_ratio_expression", "KappaLambda_ratio_expression","clones_recon_IGH","clones_recon_IGK","clones_recon_IGL",
@@ -399,8 +398,9 @@ association.test.immuneRep(clinical.patient.tumor,"primary_therapy_outcome_succe
 clinical.patient.tumor$history_of_chronic_pancreatitis<-factor(clinical.patient.tumor$history_of_chronic_pancreatitis)
 association.test.immuneRep(clinical.patient.tumor,"history_of_chronic_pancreatitis",PAAD.repertoire.tumor,markers)
 
-
+##################################
 #######Clinical follow-up########
+#################################
 clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
 ##vital_status
 clinical.follow_up.tumor$vital_status<-factor(clinical.follow_up.tumor$vital_status)
@@ -423,10 +423,17 @@ clinical.follow_up.tumor$treatment_outcome_first_course<-replace(clinical.follow
 clinical.follow_up.tumor$treatment_outcome_first_course<-factor(clinical.follow_up.tumor$treatment_outcome_first_course)
 association.test.immuneRep(clinical.follow_up.tumor,"treatment_outcome_first_course",PAAD.repertoire.tumor,markers)
 
-treatment_outcome_first_course
-#############
-##clinical outcome with xcell
-############
+###########################
+##### Biospecimen ########
+##########################
+biospecimen.slide.tumor<-biospecimen.slide[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),biospecimen.slide$bcr_patient_barcode),]
+
+#percent_tumor_nuclei
+association.test.immuneRep(biospecimen.slide.tumor,"percent_neutrophil_infiltration",PAAD.repertoire.tumor,markers)
+
+################################
+##clinical outcome with xcell###
+################################
 clinical.patient.xcell<-clinical.patient[match(substr(rownames(xcell.data.tumor.filter),1,12),clinical.patient$bcr_patient_barcode),]
 clinical.follow.up.xcell<-clinical.folow_up[match(substr(rownames(xcell.data.tumor.filter),1,12),clinical.folow_up$bcr_patient_barcode),]
 
@@ -568,7 +575,9 @@ clinical.patient.xcell$history_of_chronic_pancreatitis<-factor(clinical.patient.
 association.test.xcell(clinical.patient.xcell,"history_of_chronic_pancreatitis",xcell.data.tumor.filter)
 
 
+#################################
 #######Clinical follow-up########
+#################################
 ##vital_status
 clinical.follow.up.xcell$vital_status<-factor(clinical.follow.up.xcell$vital_status)
 association.test.xcell(clinical.follow.up.xcell,"vital_status",xcell.data.tumor.filter)
@@ -589,6 +598,22 @@ clinical.follow.up.xcell$new_tumor_event_type<-replace(clinical.follow.up.xcell$
 clinical.follow.up.xcell$new_tumor_event_type<-factor(clinical.follow.up.xcell$new_tumor_event_type)
 association.test.xcell(clinical.follow.up.xcell,"new_tumor_event_type",xcell.data.tumor.filter)
 
+###########################
+##### Biospecimen ########
+##########################
+biospecimen.slide.xcell<-biospecimen.slide[match(substr(rownames(xcell.data.tumor.filter),1,12),biospecimen.slide$bcr_patient_barcode),]
+
+#percent_tumor_cells
+association.test.xcell(biospecimen.slide.xcell,"percent_tumor_cells",xcell.data.tumor.filter)
+
+#percent_tumor_nuclei
+association.test.xcell(biospecimen.slide.xcell,"percent_tumor_nuclei",xcell.data.tumor.filter)
+
+#percent_stromal_cells
+association.test.xcell(biospecimen.slide.xcell,"percent_stromal_cells",xcell.data.tumor.filter)
+
+#percent_lymphocyte_infiltration
+association.test.xcell(biospecimen.slide.xcell,"percent_lymphocyte_infiltration",xcell.data.tumor.filter)
 
 ##############################################
 ### Survival Analysis with kmeans cluster ####
