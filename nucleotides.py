@@ -65,18 +65,18 @@ def AddIndexToClones(clones_Array):
 
 def ProcessGroup(nucleotides_Dataframe, unique_VJCDR3_Series, i):
     print (i)
-    selected_VJCDR3_Dataframe = nucleotides_Dataframe[nucleotides_Dataframe['V_J_lenghCDR3'] == unique_VJCDR3_Series[i]]
-    nucleotides_Array = list(selected_VJCDR3_Dataframe['nSeqCDR3'])
+    selected_VJCDR3_Dataframe = nucleotides_Dataframe[nucleotides_Dataframe['V_J_lenghCDR3aa'] == unique_VJCDR3_Series[i]]
+    nucleotides_Array = list(selected_VJCDR3_Dataframe['aaSeqCDR3'])
     ##Obtain the number of clones inferred
     Clones_Infered_indexed = ProcessNucleotides(nucleotides_Array)
-    selected_VJCDR3_Dataframe_sorted = selected_VJCDR3_Dataframe.sort_values(['nSeqCDR3'])
+    selected_VJCDR3_Dataframe_sorted = selected_VJCDR3_Dataframe.sort_values(['aaSeqCDR3'])
     Clones_Infered_indexed_sorted = Clones_Infered_indexed.sort_values(['clone'])
     selected_VJCDR3_Dataframe_sorted['CloneId'] = list(Clones_Infered_indexed_sorted['number'])
     return selected_VJCDR3_Dataframe_sorted
 
 def ProcessSample(nucleotides_Dataframe):
     result = pd.DataFrame([])
-    unique_VJCDR3_Series = nucleotides_Dataframe['V_J_lenghCDR3'].unique()
+    unique_VJCDR3_Series = nucleotides_Dataframe['V_J_lenghCDR3aa'].unique()
     ##parallelization for each unique VJCDR3
     pool = Pool(30)
     partialFunction = partial(ProcessGroup, nucleotides_Dataframe, unique_VJCDR3_Series)
@@ -88,14 +88,14 @@ def main():
     ###### Main program ####
     ########################
     print("Start")
-    nucleotides_Dataframe = pd.read_csv("~/TCGA-Immune/Data/PAAD/data_for_cloneInfered_PAAD.txt",sep="\t")
+    nucleotides_Dataframe = pd.read_csv("~/TCGA-Immune/Data/PAAD/data_clonesInference_aa.txt",sep="\t")
     
     result_ClonesInfered = pd.DataFrame([])
     result = ProcessSample(nucleotides_Dataframe)
     result_ClonesInfered = result_ClonesInfered.append(result)
 
     ###Result
-    result_ClonesInfered.to_csv('~/TCGA-Immune/Data/PAAD/ClonesInfered_PAAD.csv')
+    result_ClonesInfered.to_csv('~/TCGA-Immune/Data/PAAD/ClonesInfered_PAAD_aa.csv')
     print("End")
 
 main()
