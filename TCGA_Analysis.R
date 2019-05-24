@@ -229,7 +229,7 @@ xcell.data.tumor.filter_Igreads_mat<-xcell.data.tumor.filter_Igreads[ , -which(c
 
 alphalist<-seq(0.01,0.99,by=0.01)
 set.seed(54)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_Igreads_mat,PAAD.repertoire.diversity_Igreads$IG_expression,family="gaussian"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_Igreads_mat,PAAD.repertoire.diversity_Igreads$KappaLambda_ratio_expression,family="gaussian"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
@@ -245,7 +245,7 @@ id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
 
-enet<-glmnet(xcell.data.tumor.filter_Igreads_mat,PAAD.repertoire.diversity_Igreads$IG_expression,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
+enet<-glmnet(xcell.data.tumor.filter_Igreads_mat,PAAD.repertoire.diversity_Igreads$KappaLambda_ratio_expression,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
 cells<-rownames(enet$beta)[which(enet$beta!=0)]
 coef<-enet$beta[which(enet$beta!=0)]
 
@@ -253,7 +253,7 @@ significant_cells<-xcell.data.tumor.filter_Igreads_mat[,match(cells,colnames(xce
 
 ## Heatmap ####
 annotation_col = data.frame(
-  IG_expression = PAAD.repertoire.diversity_Igreads$IG_expression)
+  IG_expression = PAAD.repertoire.diversity_Igreads$KappaLambda_ratio_expression)
 
 rownames(annotation_col)<-rownames(significant_cells)
 ann_colors = list (IG_expression = brewer.pal(6,"Greens"))
