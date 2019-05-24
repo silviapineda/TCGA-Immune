@@ -91,7 +91,7 @@ for(i in sample) {
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
     V(net)$size <- V(net)$Freq/100
-    V(net)$color <- c("#c9a47f")
+    V(net)$color <- c("#FDC086")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
