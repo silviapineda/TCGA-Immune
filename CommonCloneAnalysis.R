@@ -45,11 +45,11 @@ load("Data/PAAD/PAAD_FullData.Rdata")
 #                                  data_merge$chainType=="IGKV" |
 #                                data_merge$chainType=="IGLV"),]
 data_qc_chain_IGKV<-data_merge[which(data_merge$chainType=="IGKV"),]
-clone_type_IGKV<-t(as.data.frame(unclass(table(data_qc_chain$V_J_lenghCDR3_CloneId,factor(data_qc_chain$sample))))) 
+clone_type_IGKV<-t(as.data.frame(unclass(table(data_qc_chain_IGKV$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGKV$sample))))) 
 data_qc_chain_IGLV<-data_merge[which(data_merge$chainType=="IGLV"),]
-clone_type_IGLV<-t(as.data.frame(unclass(table(data_qc_chain$V_J_lenghCDR3_CloneId,factor(data_qc_chain$sample))))) 
+clone_type_IGLV<-t(as.data.frame(unclass(table(data_qc_chain_IGLV$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGLV$sample))))) 
 data_qc_chain_IGHV<-data_merge[which(data_merge$chainType=="IGHV"),]
-clone_type_IGHV<-t(as.data.frame(unclass(table(data_qc_chain$V_J_lenghCDR3_CloneId,factor(data_qc_chain$sample))))) 
+clone_type_IGHV<-t(as.data.frame(unclass(table(data_qc_chain_IGHV$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGHV$sample))))) 
 
 ##Build present vs no present
 clone_type_presence<-apply(clone_type_IGKV,1,function(x) ifelse(x==0,0,1))
