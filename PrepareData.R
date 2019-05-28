@@ -171,7 +171,7 @@ save(data_merge,diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata
 
 ####Read repertoire data from Akshay considering all reads
 ## It is important to remember that when retricting reads to the ones with cdr3 informartion, the ratios where pretty weird since there were very few reads in the most uncommon chains
-## Therefore for the chain expression, we are going to stay with all reads detected by the MISCR tool
+## Therefore for the chain expression, we are going to stay with all reads detected by the MIXCR tool
 PAAD_repertoire<-readRDS("Data/TCGA_Immune_Rep/PAAD_RepertoireResults.rds")
 id<-match(rownames(diversity),rownames(PAAD_repertoire))
 PAAD_repertoire_diversity<-cbind(PAAD_repertoire[id,],diversity)
