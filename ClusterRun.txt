@@ -1,0 +1,16 @@
+###Working with the cluster
+
+#1. Install Miniconda
+
+Download from: https://docs.conda.io/en/latest/miniconda.html
+Follow this instructions: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+#2. Instal MIXCR
+conda install mixcr
+
+#3. Instructions to run in the cluster
+https://hpc-carpentry.github.io/hpc-intro/13-scheduler/index.html

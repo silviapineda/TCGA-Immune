@@ -1,0 +1,73 @@
+##Download data from GTEX
+https://www.ncbi.nlm.nih.gov/books/NBK36439/#Download.download_using_prefetch_command
+
+#######
+# 1. Download and install Aspera Connect (see here:  https://www.ncbi.nlm.nih.gov/books/NBK36439/#Download.Aspera_Connect
+ for more information):
+ #please make sure to select and install Aspera Connect instead of any other Aspera client products. Aspera Connect is available for Linux, Mac, and Windows platforms. 
+  https://download.asperasoft.com/download/docs/connect/3.9.1/user_linux/pdf2/Connect_User_3.9.1_Linux.pdf
+
+########
+# 2. Select and save data files information in a “cart” file
+
+(For SRA data download, in addition to bulk download with cart-file, the prefetch can also run with individual SRA accession, which is often preferred method for program/script directed automatic download. See the section 5 for more about this.)
+
+    - Login to the dbGaP Authorized Access System using the eRA account login credentials. (Intramural NIH scientists and staff need their NIH email username and password).
+    - Click on “My Requests” tab. The list of Approved Requests is under “Approved” sub-tab.
+    - Find the table row of approved dataset, click on the link named “Request Files” in the “Actions” column.
+    - On the “Access Request” page, different types of data files available for download are shown separately under different sub-tabs. To download non-SRA data, go to the “Phenotype and Genotype files” sub-tab and click on the “dbGaP File Selector” link. To download SRA data, go to the “SRA data (reads and reference alignments)” sub-tab and click on the “SRA RUN Selector” link.
+    - Wait until the page loading is complete. Click on the “Help” icon on top of the page to see instruction/information about the selector).
+    - Add/remove files using the facets listed in the left panel facet manager. From the right panel file list, select/unselect files by checking/unchecking checkboxes in front of the file names.
+    - Once the files are selected (checked), click on the “Cart File” button (on the upper part of the page) and save the cart file (.kart).
+    
+########
+# 3. Configure SRA toolkit
+
+    - Download the latest version of the NCBI SRA Toolkit.(https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software)
+     Untar or unzip downloaded toolkit file.
+    - Follow the Protected Data Usage Guide to configure the toolkit(https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=std#s-4)
+	The toolkit needs to be configured before use, through which the dbGaP repository key will be imported.
+    - The dbGaP repository key file contains the information required by the SRA Toolkit to identify approved user and the project where the downloaded dbGaP data belong. The following is how to download the dbGaP repository key.
+       		 a. Login to PI’s dbGaP account.
+
+        b. Under the “My Projects” tab, find the project where download data belong. Click on the link named “get dbGaP repository key” in the “Actions” column. Save the key (.ngc) file.
+
+        c. For an old download package, the dbGaP repository key of the download package can also be retrieved from the page under the “Downloads” tab. In the table row of download package, click on the link “get dbGaP repository key” in the “Actions” column, and save the key (.ngc) file.
+
+    - The dbGaP repository key needs to be imported during the SRA toolkit configuration process. After the configuration, a dbGaP project directory, also called workspace directory, is automatically created. The default location of the dbGaP project directory is like the following.
+
+        /home/foo/ncbi/dbGaP-2000 (on a Linux terminal) or /Users/foo/ncbi/dbGaP-2000 (on a Mac terminal) or C:\Users\foo\ncbi\dbGaP-2000 (on a Windows DOS terminal)
+    
+    Note: The location and name of the dbGaP project directory may be different if the default settings are not chosen during the configuration.
+    
+    Check and confirm the dbGaP repository directory is created. If it is created correctly, the sub-directories, such as “sra”, “refseq”, should be seen under it.
+    
+    To Configure SRA toolkit: https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
+
+The sra toolkit is installed in /opt/
+The dbgap directory is in /home/spineda/ncbi/dbGaP-21956/
+
+
+#######
+## 4. Download the data from GTEX
+
+##First, we need to configure the sratoolkit 
+https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
+
+##prefetch
+/opt/bioinfo/sratoolkit//bin/prefetch --list cart_DAR81372_201905280938.krt This is to show what is in the cart file
+
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/prefetch SRR1095651
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/prefetch -a "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh" SRR1095651
+
+##fastq-dump
+https://edwards.sdsu.edu/research/fastq-dump/
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip –-split-files –-readids -F --skip-technical -W --read-filter pass SRR1095651.sra
+
+
+#### Material and Methods from GTEX data
+https://science.sciencemag.org/content/sci/suppl/2015/05/06/348.6235.648.DC1/GTEx.SM.pdf
+
+
+    
+    
