@@ -66,6 +66,8 @@ for(i in 1:length(Ig_markers)){
 }
 Ig_markers[which(p.Ig_markers<0.05)] ## 0
 
+
+
 ###################################
 ##### Only tumors #################
 ###################################
@@ -78,99 +80,7 @@ xCell.pvalue.tumor<-t(xCell.pvalue.PAAD[,match(PAAD.repertoire.tumor$TCGA_sample
 xCell.pvalue.tumor.filter<-t(apply(xCell.pvalue.tumor,1,function (x) replace(x,x>=0.2,1)))
 xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter==1) <= 148*0.8] ##(148*0.8)  45 cells
 
-####Filter by variabilty (mean +- 2*SD)
-filter.out<-NULL
-for(i in 1:ncol(xcell.data.tumor.filter)){
-  pos<-mean(xcell.data.tumor.filter[,i])+2*sd(xcell.data.tumor.filter[,i])
-  neg<-mean(xcell.data.tumor.filter[,i])-2*sd(xcell.data.tumor.filter[,i])
-
-  if(length(which(xcell.data.tumor.filter[,i]> pos)) == 0 & 
-     length(which(xcell.data.tumor.filter[,i]< neg)) == 0){
-    
-    filter.out[i]<-i
-  } else {
-    filter.out[i]<-NA
-  }
-}
-
-#Delete the scores
-mat<-t(xcell.data.tumor.filter[ , -which(colnames(xcell.data.tumor.filter) %in% c("ImmuneScore","StromaScore","MicroenvironmentScore"))]) ##Delete the scores
-tiff("Results/xCell_CompareSamples.tiff",res=300,w=3500,h=3000)
-pheatmap(mat,scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
-dev.off()
-
-####################
-#### Clustering ###
-###################
-# Prepare Data
-mydata <- scale(t(mat)) # standardize variables
-# Determine number of clusters
-wss <- (nrow(mydata)-1)*sum(apply(mydata,2,var))
-for (i in 2:15) wss[i] <- sum(kmeans(mydata, 
-                                     centers=i)$withinss)
-plot(1:15, wss, type="b", xlab="Number of Clusters",
-     ylab="Within groups sum of squares")
-
-###############
-# 1.  K-Means Cluster Analysis
-################
-fit.k <- kmeans(mydata, 2) # 2 cluster solution
-# get cluster means 
-aggregate(mydata,by=list(fit.k$cluster),FUN=mean)
-# append cluster assignment
-#mydata <- data.frame(mydata, fit.k$cluster)
-library(fpc)
-tiff("Results/xCell_cluster_kmeans.tiff",res=300,w=2000,h=2000)
-plotcluster(mydata, fit.k$cluster)
-dev.off()
-
-library(cluster) 
-tiff("Results/xCell_cluster_kmeans2.tiff",res=300,w=2000,h=2000)
-clusplot(mydata, fit.k$cluster, color=TRUE, shade=TRUE, lines=0)
-dev.off()
-
-#################
-# 2. Ward Hierarchical Clustering
-#################
-d <- dist(mydata, method = "euclidean") # distance matrix
-fit.h <- hclust(d, method="ward.D2") 
-plot(fit.h) # display dendogram
-groups <- cutree(fit.h, k=2) # cut tree into 2 clusters
-# draw dendogram with red borders around the 2 clusters 
-rect.hclust(fit.h, k=2, border="red")
-
-tiff("Results/xCell_cluster_hierarchical.tiff",res=300,w=2000,h=2000)
-plotcluster(mydata, groups)
-dev.off()
-
-tiff("Results/xCell_cluster_hierarchical2.tiff",res=300,w=2000,h=2000)
-clusplot(mydata, groups, color=TRUE, shade=TRUE, lines=0)
-dev.off()
-
-#############
-# 3. Model Based Clustering
-############
-library(mclust)
-fit <- Mclust(mydata)
-plot(fit) # plot results 
-summary(fit) # display the best model
-
-##Plotting kmeans with 2 clusters
-tiff("Results/xCell_cluster_mclust.tiff",res=300,w=2000,h=2000)
-plotcluster(mydata, fit$classification)
-dev.off()
-
-tiff("Results/xCell_cluster_mclust2.tiff",res=300,w=2000,h=2000)
-clusplot(mydata, fit$classification, color=TRUE, shade=TRUE, lines=0)
-dev.off()
-
-annotation_col = data.frame(cluster = groups)
-ann_colors = list (cluster = c("1" = brewer.pal(3,"Set2")[1], "2"= brewer.pal(3,"Set2")[2]))
-pheatmap(mat,scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12),
-         annotation_col = annotation_col,annotation_colors = ann_colors,clustering_method = "ward.D2")
-
-xcell.cluster<-fit.k$cluster
-  
+ 
 ###Applied ENET to find cells associated with T or B expression
 ##############
 ##T_reads
@@ -274,6 +184,7 @@ markers<-c("IG_expression","IGH_expression","IGK_expression","IGL_expression","T
   "clones_recon_TRA","clones_recon_TRB","clones_recon_TRD","clones_recon_TRG","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL",           
   "entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG")
 
+
 ##Function to run the association between clinical outcome and BCR/TCR
 association.test.immuneRep<- function (clinical.patient.tumor,clinical.var,PAAD.repertoire.tumor,markers){
   if (class(clinical.patient.tumor[,clinical.var])=="factor"){
@@ -346,8 +257,8 @@ association.test.immuneRep(clinical.patient.tumor,"race_list",PAAD.repertoire.tu
 clinical.patient.tumor$other_dx<-factor(clinical.patient.tumor$other_dx)
 association.test.immuneRep(clinical.patient.tumor,"other_dx",PAAD.repertoire.tumor,markers)
 
-##lymph_node_examined_count
-association.test.immuneRep(clinical.patient.tumor,"lymph_node_examined_count",PAAD.repertoire.tumor,markers)
+##number_of_lymphnodes_positive_by_he
+association.test.immuneRep(clinical.patient.tumor,"number_of_lymphnodes_positive_by_he",PAAD.repertoire.tumor,markers)
 
 ##neoplasm_histologic_grade
 clinical.patient.tumor$neoplasm_histologic_grade_3cat<-factor(ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G1","G1",
@@ -397,6 +308,34 @@ association.test.immuneRep(clinical.patient.tumor,"primary_therapy_outcome_succe
 ##history_chronic_pancreatitis
 clinical.patient.tumor$history_of_chronic_pancreatitis<-factor(clinical.patient.tumor$history_of_chronic_pancreatitis)
 association.test.immuneRep(clinical.patient.tumor,"history_of_chronic_pancreatitis",PAAD.repertoire.tumor,markers)
+
+#stage_event_tnm_categories
+clinical.patient.tumor$pathologic_stage<-factor(ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage IA" | 
+                                                clinical.patient.tumor$stage_event_pathologic_stage=="Stage IB", "Stage I",
+                                        ifelse(clinical.patient.tumor$stage_event_pathologic_stage == "Stage IIA" |
+                                               clinical.patient.tumor$stage_event_pathologic_stage=="Stage IIB","Stage II",
+                                         ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage III","Stage III",
+                                         ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage IV", "Stage IV",NA)))))
+association.test.immuneRep(clinical.patient.tumor,"pathologic_stage",PAAD.repertoire.tumor,markers)
+
+######################
+### Random Forest ###
+#####################
+library("randomForest")
+clinical_variablers<-c("histological_type_2cat","anatomic_neoplasm_subdivision","gender","race_list","other_dx",
+                       "lymph_node_examined_count","neoplasm_histologic_grade_3cat","age_at_initial_pathologic_diagnosis",
+                       "smoking","number_pack_years_smoked","alcohol_history_documented","alcoholic_exposure_category2",
+                       "family_history_of_cancer","radiation_therapy","primary_therapy_outcome_success",
+                       "history_of_chronic_pancreatitis")
+rf_output <- randomForest(PAAD.repertoire.tumor$IG_expression~.,data=clinical.patient.tumor[,clinical_variablers],
+                          mtry=3, importance=TRUE,na.action=na.omit)
+
+
+rf_output <- randomForest(clinical.patient.tumor$history_of_chronic_pancreatitis~.,data=PAAD.repertoire.tumor[,markers],
+                          importance=TRUE,proximity=TRUE,na.action=na.omit)
+
+MDSplot(rf_output, clinical.patient.tumor$family_history_of_cancer,main = "Discovery",cex=1.6)
+
 
 ##################################
 #######Clinical follow-up########
@@ -508,8 +447,8 @@ association.test.xcell(clinical.patient.xcell,"race_list",xcell.data.tumor.filte
 clinical.patient.xcell$other_dx<-factor(clinical.patient.xcell$other_dx)
 association.test.xcell(clinical.patient.xcell,"other_dx",xcell.data.tumor.filter)
 
-##lymph_node_examined_count
-association.test.xcell(clinical.patient.xcell,"lymph_node_examined_count",xcell.data.tumor.filter)
+##number_of_lymphnodes_positive_by_he
+association.test.xcell(clinical.patient.xcell,"number_of_lymphnodes_positive_by_he",xcell.data.tumor.filter)
 
 ##neoplasm_histologic_grade
 clinical.patient.xcell$neoplasm_histologic_grade_3cat<-factor(ifelse(clinical.patient.xcell$neoplasm_histologic_grade=="G1","G1",
@@ -574,6 +513,14 @@ association.test.xcell(clinical.patient.xcell,"primary_therapy_outcome_success",
 clinical.patient.xcell$history_of_chronic_pancreatitis<-factor(clinical.patient.xcell$history_of_chronic_pancreatitis)
 association.test.xcell(clinical.patient.xcell,"history_of_chronic_pancreatitis",xcell.data.tumor.filter)
 
+#Pathologic_stage
+clinical.patient.xcell$pathologic_stage<-factor(ifelse(clinical.patient.xcell$stage_event_pathologic_stage=="Stage IA" | 
+                                                         clinical.patient.xcell$stage_event_pathologic_stage=="Stage IB", "Stage I",
+                                                       ifelse(clinical.patient.xcell$stage_event_pathologic_stage == "Stage IIA" |
+                                                                clinical.patient.xcell$stage_event_pathologic_stage=="Stage IIB","Stage II",
+                                                              ifelse(clinical.patient.xcell$stage_event_pathologic_stage=="Stage III","Stage III",
+                                                                     ifelse(clinical.patient.xcell$stage_event_pathologic_stage=="Stage IV", "Stage IV",NA)))))
+association.test.xcell(clinical.patient.xcell,"pathologic_stage",xcell.data.tumor.filter)
 
 #################################
 #######Clinical follow-up########
@@ -616,15 +563,88 @@ association.test.xcell(biospecimen.slide.xcell,"percent_stromal_cells",xcell.dat
 association.test.xcell(biospecimen.slide.xcell,"percent_lymphocyte_infiltration",xcell.data.tumor.filter)
 
 ##############################################
-### Survival Analysis with kmeans cluster ####
+### Survival Analysis  ####
 ##############################################
 library(survival)
 library(survminer)
 library(survMisc)
+####ImmuneRep
 clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
-id<-match(clinical.follow_up.tumor$bcr_patient_barcode,substr(names(fit.k$cluster),1,12))
-clinical.follow_up.tumor$cluster<-factor(fit.k$cluster[id])
-  
+##OS
+surv_object <- Surv(time = clinical.follow_up.tumor$OS.time, event = clinical.follow_up.tumor$OS)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression)
+summary(res.cox)
+##Categorical
+KL_mean<-mean(PAAD.repertoire.tumor$KappaLambda_ratio_expression)
+PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$KappaLambda_ratio_expression<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor$KL_ratio_2cat)
+fit1
+ggsurvplot(fit1, data = PAAD.repertoire.tumor)
+comp(ten(fit1))$tests$lrTests
+
+#DSS
+clinical.follow_up.tumor.DSS<-clinical.follow_up.tumor[which(clinical.follow_up.tumor$DSS!="#N/A"),]
+clinical.follow_up.tumor.DSS$DSS<-as.integer(as.character(clinical.follow_up.tumor.DSS$DSS))
+surv_object <- Surv(time = clinical.follow_up.tumor.DSS$DSS.time, event = clinical.follow_up.tumor.DSS$DSS)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression[which(clinical.follow_up.tumor$DSS!="#N/A")])
+summary(res.cox)
+#Categorical
+KL_mean<-mean(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression)
+PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat<-ifelse(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat)
+fit1
+ggsurvplot(fit1, data = PAAD.repertoire.diversity.gini_IGHV2)
+comp(ten(fit1))$tests$lrTests
+
+##PFI
+surv_object <- Surv(time = clinical.follow_up.tumor$PFI.time, event = clinical.follow_up.tumor$PFI)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression)
+summary(res.cox)
+
+####Xcell
+clinical.follow.up.xcell<-clinical.folow_up[match(substr(rownames(xcell.data.tumor.filter),1,12),clinical.folow_up$bcr_patient_barcode),]
+##OS
+surv_object <- Surv(time = clinical.follow.up.xcell$OS.time, event = clinical.follow.up.xcell$OS)
+res.cox <- coxph(surv_object~xcell.data.tumor.filter[,"NKT"])
+summary(res.cox)
+##Categorical
+KL_mean<-mean(xcell.data.tumor.filter[,"NKT"])
+NKT_2cat<-ifelse(xcell.data.tumor.filter[,"NKT"]<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ NKT_2cat)
+fit1
+ggsurvplot(fit1, data = as.data.frame(xcell.data.tumor.filter))
+comp(ten(fit1))$tests$lrTests
+
+#DSS
+clinical.follow.up.xcell.DSS<-clinical.follow.up.xcell[which(clinical.follow.up.xcell$DSS!="#N/A"),]
+clinical.follow.up.xcell.DSS$DSS<-as.integer(as.character(clinical.follow.up.xcell.DSS$DSS))
+surv_object <- Surv(time = clinical.follow.up.xcell.DSS$DSS.time, event = clinical.follow.up.xcell.DSS$DSS)
+res.cox <- coxph(surv_object~xcell.data.tumor.filter[,"NKT"][which(clinical.follow.up.xcell.DSS$DSS!="#N/A")])
+summary(res.cox)
+#Categorical
+KL_mean<-mean(xcell.data.tumor.filter[,"NKT"])
+NKT_2cat<-ifelse(xcell.data.tumor.filter[,"NKT"]<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ NKT_2cat[which(clinical.follow.up.xcell.DSS$DSS!="#N/A")])
+fit1
+ggsurvplot(fit1, data = as.data.frame(xcell.data.tumor.filter[which(clinical.follow.up.xcell.DSS$DSS!="#N/A"),]))
+comp(ten(fit1))$tests$lrTests
+
+
+##PFI
+surv_object <- Surv(time = clinical.follow_up.tumor$PFI.time, event = clinical.follow_up.tumor$PFI)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression)
+summary(res.cox)
+
+
+
+
+
+
+###Cluster
+##Cluster
+#id<-match(clinical.follow_up.tumor$bcr_patient_barcode,substr(names(fit.k$cluster),1,12))
+#clinical.follow_up.tumor$cluster<-factor(fit.k$cluster[id])
+
 ##OS
 surv_object <- Surv(time = clinical.follow_up.tumor$OS.time, event = clinical.follow_up.tumor$OS)
 fit1 <- survfit(surv_object ~ clinical.follow_up.tumor$cluster, data = clinical.follow_up.tumor)
