@@ -57,12 +57,14 @@ https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
 ##prefetch
 /opt/bioinfo/sratoolkit//bin/prefetch --list cart_DAR81372_201905280938.krt This is to show what is in the cart file
 
-/opt/sratoolkit.2.9.6-1-ubuntu64/bin/prefetch SRR1095651
+##To download without a cart you need to be in the /dbGap-21956/sra/ folder
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/prefetch --max-size 30G SRR1095651 ## --max size is to increase the limit that can be downloaded at once, otherwise the files cannot be download
+
 /opt/sratoolkit.2.9.6-1-ubuntu64/bin/prefetch -a "/opt/aspera/bin/ascp|/opt/aspera/etc/asperaweb_id_dsa.openssh" SRR1095651
 
 ##fastq-dump
 https://edwards.sdsu.edu/research/fastq-dump/
-/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip –-split-files –-readids -F --skip-technical -W --read-filter pass SRR1095651.sra
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip --split-files --readids -F --skip-technical -W --read-filter pass SRR1095651.sra
 
 
 #### Material and Methods from GTEX data
