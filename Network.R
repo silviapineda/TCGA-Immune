@@ -206,3 +206,201 @@ samples_high<-c("5e9e81e2-0e8b-4aca-aced-6ce451fa3262", "08c4c14a-94a8-4063-bbc3
 samples_high_TCGA<-substr(as.character(PAAD.repertoire.diversity.gini_IG[match(samples_high,PAAD.repertoire.diversity.gini_IG$Row.names),"TCGA_sample"]),1,12)
 
 clinical.patient[match(samples_high_TCGA,clinical.patient$bcr_patient_barcode),]
+
+#################################################
+#### Analysis of the GINI vertex and cluster ####
+#################################################
+PAAD.repertoire.diversity.gini_IGHV<-read.csv("Results/Network/network_IGHV_tumor.csv")
+##Delete outliers
+PAAD.repertoire.diversity.gini_IGHV<-PAAD.repertoire.diversity.gini_IGHV[which(PAAD.repertoire.diversity.gini_IGHV$vertex_gini<0.8),]
+clinical.Gini<-clinical.patient[match(substr(PAAD.repertoire.diversity.gini_IGHV$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode),]
+
+##Function to run the association between clinical outcome and BCR/TCR
+association.test.immuneRep<- function (clinical.patient.tumor,clinical.var,PAAD.repertoire.tumor,markers){
+  if (class(clinical.patient.tumor[,clinical.var])=="factor"){
+    p.markers<-NULL
+    for(i in 1:length(markers)){
+      p.markers[i]<-kruskal.test(PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[i]]~
+                                   clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])$p.value
+    }
+    dfplot <- data.frame(PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)]],
+                         clinical.var = clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])
+    colnames(dfplot)[ncol(dfplot)]<- clinical.var
+    
+    if (dim(dfplot)[2]>1){
+      for(i in 1:length(markers[which(p.markers<0.05)])){
+        print(i)
+        dfplot$marker<-PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)][i]]
+        tiff(paste0("Results/boxplot_",clinical.var,"_",markers[which(p.markers<0.05)][i],".tiff"),res=300,h=2000,w=3000)
+        print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var], 
+                                x=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])) + geom_boxplot() 
+              + scale_y_continuous(name= markers[which(p.markers<0.05)][i]) + stat_compare_means()  + scale_x_discrete(name=clinical.var)
+              + scale_fill_discrete(name=clinical.var))
+        dev.off()
+      }
+    }
+  } else {
+    p.markers<-NULL
+    for(i in 1:length(markers)){
+      p.markers[i]<-coef(summary(glm(PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[i]]~
+                                       clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])))[2,4]
+    }
+    dfplot <- data.frame(marker =PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)]],
+                         clinical.var = clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])
+    colnames(dfplot)[ncol(dfplot)]<- clinical.var
+    
+    if (dim(dfplot)[2]>1){
+      for(i in 1:length(markers[which(p.markers<0.05)])){
+        print(i)
+        dfplot$marker<-PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)][i]]
+        tiff(paste0("Results/boxplot_",clinical.var,"_",markers[which(p.markers<0.05)][i],".tiff"),res=300,h=2000,w=3000)
+        print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var], 
+                                x=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])) + geom_point() + geom_smooth(method='lm')
+              + scale_y_continuous(name= markers[which(p.markers<0.05)][i]) + stat_cor(method = "pearson") + scale_x_continuous(name=clinical.var)
+              + scale_fill_continuous(name=clinical.var))
+        dev.off()
+      }
+    }
+  }
+  return("Done")
+}
+
+markers<-c("cluster_gini","vertex_gini")
+##Histological type
+clinical.Gini$histological_type_2cat<-factor(ifelse(clinical.Gini$histological_type=="Pancreas-Adenocarcinoma Ductal Type","PDAC","Other"))
+clinical.Gini$histological_type_2cat<-factor(clinical.Gini$histological_type_2cat)
+association.test.immuneRep(clinical.Gini,"histological_type_2cat",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##anatomic_neoplasm_subdivision
+clinical.Gini$anatomic_neoplasm_subdivision<-factor(clinical.Gini$anatomic_neoplasm_subdivision)
+association.test.immuneRep(clinical.Gini,"anatomic_neoplasm_subdivision",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##gender
+clinical.Gini$gender<-factor(clinical.Gini$gender)
+association.test.immuneRep(clinical.Gini,"gender",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##race_list
+clinical.Gini$race_list<-factor(clinical.Gini$race_list)
+association.test.immuneRep(clinical.Gini,"race_list",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##History of Prior Malignancy
+clinical.Gini$other_dx<-factor(clinical.Gini$other_dx)
+association.test.immuneRep(clinical.Gini,"other_dx",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##lymph_node_examined_count
+association.test.immuneRep(clinical.Gini,"lymph_node_examined_count",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##neoplasm_histologic_grade
+clinical.Gini$neoplasm_histologic_grade_3cat<-factor(ifelse(clinical.Gini$neoplasm_histologic_grade=="G1","G1",
+                                                                     ifelse(clinical.Gini$neoplasm_histologic_grade=="G2","G2",
+                                                                            ifelse(clinical.Gini$neoplasm_histologic_grade=="G3","G3",""))))
+association.test.immuneRep(clinical.Gini,"neoplasm_histologic_grade_3cat",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##Age 
+association.test.immuneRep(clinical.Gini,"age_at_initial_pathologic_diagnosis",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+
+##Smoking
+clinical.Gini$smoking<-factor(ifelse(clinical.Gini$tobacco_smoking_history_master=="Current smoker (includes daily smokers and non-daily smokers or occasional smokers)","Current",
+                                              ifelse(clinical.Gini$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker","Former")))
+association.test.immuneRep(clinical.Gini,"smoking",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##number_pack_years_smoked
+association.test.immuneRep(clinical.Gini,"number_pack_years_smoked",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##Alcohol
+clinical.Gini$alcohol_history_documented<-factor(clinical.Gini$alcohol_history_documented)
+association.test.immuneRep(clinical.Gini,"alcohol_history_documented",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##Alcohol category
+clinical.Gini$alcoholic_exposure_category2<-ifelse(clinical.Gini$alcohol_history_documented=="NO","No-drinker",
+                                                            ifelse(clinical.Gini$alcohol_history_documented=="YES" & clinical.Gini$alcoholic_exposure_category=="",NA,
+                                                                   ifelse(clinical.Gini$alcoholic_exposure_category=="None","None-Drinker",
+                                                                          ifelse(clinical.Gini$alcoholic_exposure_category=="Occasional Drinker","Occasional-Drinker",
+                                                                                 ifelse(clinical.Gini$alcoholic_exposure_category=="Daily Drinker","Daily-Drinker",
+                                                                                        ifelse(clinical.Gini$alcoholic_exposure_category=="Social Drinker","Social-Drinker",
+                                                                                               ifelse(clinical.Gini$alcoholic_exposure_category=="Weekly Drinker","Weekly-Drinker",NA)))))))
+clinical.Gini$alcoholic_exposure_category2<-factor(clinical.Gini$alcoholic_exposure_category2)
+association.test.immuneRep(clinical.Gini,"alcoholic_exposure_category2",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##family history
+clinical.Gini$family_history_of_cancer<-factor(clinical.Gini$family_history_of_cancer)
+association.test.immuneRep(clinical.Gini,"family_history_of_cancer",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##radiation_therapy
+clinical.Gini$radiation_therapy<-factor(clinical.Gini$radiation_therapy)
+association.test.immuneRep(clinical.Gini,"radiation_therapy",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##primary_therapy_outcome_success
+clinical.Gini$primary_therapy_outcome_success<-factor(clinical.Gini$primary_therapy_outcome_success)
+association.test.immuneRep(clinical.Gini,"primary_therapy_outcome_success",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##history_chronic_pancreatitis
+clinical.Gini$history_of_chronic_pancreatitis<-factor(clinical.Gini$history_of_chronic_pancreatitis)
+association.test.immuneRep(clinical.Gini,"history_of_chronic_pancreatitis",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+
+##################################
+#######Clinical follow-up########
+#################################
+clinical.Gini.follow_up<-clinical.folow_up[match(substr(PAAD.repertoire.diversity.gini_IGHV$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
+##vital_status
+clinical.Gini.follow_up$vital_status<-factor(clinical.Gini.follow_up$vital_status)
+association.test.immuneRep(clinical.Gini.follow_up,"vital_status",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+##new tumor event
+clinical.Gini.follow_up$new_tumor_event_type<-replace(clinical.Gini.follow_up$new_tumor_event_type,clinical.Gini.follow_up$new_tumor_event_type=="#N/A",NA)
+clinical.Gini.follow_up$new_tumor_event_type<-replace(clinical.Gini.follow_up$new_tumor_event_type,
+                                                       clinical.Gini.follow_up$new_tumor_event_type=="Locoregional Recurrence|Distant Metastasis" | 
+                                                         clinical.Gini.follow_up$new_tumor_event_type=="New Primary Tumor",NA)
+clinical.Gini.follow_up$new_tumor_event_type<-factor(clinical.Gini.follow_up$new_tumor_event_type)
+association.test.immuneRep(clinical.Gini.follow_up,"new_tumor_event_type",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+#treatment_outcome_first_course
+clinical.Gini.follow_up$treatment_outcome_first_course<-replace(clinical.Gini.follow_up$treatment_outcome_first_course,
+                                                                 clinical.Gini.follow_up$treatment_outcome_first_course=="[Discrepancy]" |
+                                                                   clinical.Gini.follow_up$treatment_outcome_first_course=="[Not Applicable]" | 
+                                                                   clinical.Gini.follow_up$treatment_outcome_first_course=="[Not Available]" |
+                                                                   clinical.Gini.follow_up$treatment_outcome_first_course=="[Unknown]",NA)
+clinical.Gini.follow_up$treatment_outcome_first_course<-factor(clinical.Gini.follow_up$treatment_outcome_first_course)
+association.test.immuneRep(clinical.Gini.follow_up,"treatment_outcome_first_course",PAAD.repertoire.diversity.gini_IGHV,markers)
+
+
+##################################
+### Survival Analysis ############
+##################################
+library(survival)
+library(survminer)
+library(survMisc)
+
+##OS
+surv_object <- Surv(time = clinical.Gini.follow_up$OS.time, event = clinical.Gini.follow_up$OS)
+res.cox <- coxph(surv_object~PAAD.repertoire.diversity.gini_IGHV$KappaLambda_ratio_expression)
+summary(res.cox)
+##Categorical
+KL_mean<-mean(PAAD.repertoire.diversity.gini_IGHV$KappaLambda_ratio_expression)
+PAAD.repertoire.diversity.gini_IGHV$KL_ratio_2cat<-ifelse(PAAD.repertoire.diversity.gini_IGHV$KappaLambda_ratio_expression<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.diversity.gini_IGHV$KL_ratio_2cat)
+fit1
+ggsurvplot(fit1, data = PAAD.repertoire.diversity.gini_IGHV)
+comp(ten(fit1))$tests$lrTests
+
+#DSS
+clinical.Gini.follow_up2<-clinical.Gini.follow_up[which(clinical.Gini.follow_up$DSS!="#N/A"),]
+clinical.Gini.follow_up2$DSS<-as.integer(as.character(clinical.Gini.follow_up2$DSS))
+PAAD.repertoire.diversity.gini_IGHV2<-PAAD.repertoire.diversity.gini_IGHV[which(clinical.Gini.follow_up$DSS!="#N/A"),]
+surv_object <- Surv(time = clinical.Gini.follow_up2$DSS.time, event = clinical.Gini.follow_up2$DSS)
+res.cox <- coxph(surv_object~PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression)
+summary(res.cox)
+#Categorical
+KL_mean<-mean(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression)
+PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat<-ifelse(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat)
+fit1
+ggsurvplot(fit1, data = PAAD.repertoire.diversity.gini_IGHV2)
+comp(ten(fit1))$tests$lrTests
+
+##PFI
+surv_object <- Surv(time = clinical.Gini.follow_up$PFI.time, event = clinical.Gini.follow_up$PFI)
+res.cox <- coxph(surv_object~PAAD.repertoire.diversity.gini_IGHV$KappaLambda_ratio_expression)
+summary(res.cox)
