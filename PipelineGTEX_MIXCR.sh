@@ -1,28 +1,7 @@
-
-##Download the data
-##First, we need to configure the sratoolkit 
-https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
+###Running MIXCR
 
 
-##prefetch
-/opt/bioinfo/sratoolkit/bin/prefetch --list cart_DAR81372_201905280938.krt #This is to show what is in the cart file with all the ID's
-
-FILES=$( cat srr_list.txt)
-
-for i in $FILES
-do
-##To download without a cart you need to be in the /dbGap-21956/sra/ folder
-/opt/bioinfo/sratoolkit/bin/prefetch --max-size 30G ${i} ## --max size is to increase the limit that can be downloaded at once, otherwise the files cannot be download
-
-##fastq-dump
-#https://edwards.sdsu.edu/research/fastq-dump/
-/opt/bioinfo/sratoolkit/bin/fastq-dump --gzip --split-files --readids -F --skip-technical -W --read-filter pass ${i}.sra
-done
-
-#### Material and Methods from GTEX data
-#https://science.sciencemag.org/content/sci/suppl/2015/05/06/348.6235.648.DC1/GTEx.SM.pdf
-
-FILES="list of SRR"
+FILES="list of files"
 
 ## 1. Align sequencing reads
 for i in $FILES
