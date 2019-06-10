@@ -101,50 +101,34 @@ fviz_cluster(object = fit.k, data = mydata, show.clust.cent = TRUE,labelsize = 8
   theme(legend.position = "none")
 dev.off()
 
-library(ComplexHeatmap)
-library(viridis)
-colors <- colorRampPalette(brewer.pal(6,name="PuOr"))(12)
-Heatmap(matrix = mat, name = "K-means", col = colors,
-        column_title = "samples",
-        row_names_gp = gpar(fontsize = 7),
-        clustering_distance_columns = "euclidean",
-        clustering_distance_rows = "euclidean",
-        clustering_method_columns = "average",
-        clustering_method_rows = "average",
-        km = 3)
+# library(ComplexHeatmap)
+# library(viridis)
+# library("circlize")
+# colors <- colorRampPalette(brewer.pal(6,name="PuOr"))(5)
+# cols = colorRamp2(c(-6,-3,0,3,6),c("#B35806" ,"#F4B25D", "#EBDDD0", "#A8A1CD" ,"#542788"))
+# Heatmap(matrix = mat, name = "K-means", col = cols,
+#         column_title = "samples",
+#         row_names_gp = gpar(fontsize = 7),
+#         clustering_distance_columns = "euclidean",
+#         clustering_distance_rows = "euclidean",
+#         clustering_method_columns = "average",
+#         clustering_method_rows = "average",
+#         km = 3)
+# 
 
-
-annotation_col = data.frame(cluster = factor(fit.k$cluster))
-ann_colors = list (cluster = c("1" = brewer.pal(3,"Set2")[1], "2"= brewer.pal(3,"Set2")[2], "3" = brewer.pal(3,"Set2")[3],"4" = brewer.pal(4,"Set2")[4]))
-pheatmap(mat,scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12),
-         annotation_col = annotation_col,annotation_colors = ann_colors,clustering_method = "ward.D2")
-
-scale_rows = function(x){
-  m = apply(x, 1, mean, na.rm = T)
-  s = apply(x, 1, sd, na.rm = T)
-  return((x - m) / s)
-}
-
-generate_breaks = function(x, n, center = F){
-  if(center){
-    m = max(abs(c(min(x, na.rm = T), max(x, na.rm = T))))
-    res = seq(-m, m, length.out = n + 1)
-  }
-  else{
-    res = seq(min(x, na.rm = T), max(x, na.rm = T), length.out = n + 1)
-  }
-  
-  return(res)
-}
-
-scaled_data <- scale_rows(mat)
-
-color =  colorRampPalette(brewer.pal(6,name="PuOr"))(12)
-breaks = generate_breaks(scaled_data, length(color), center = T)
-pheatmap(scaled_data, breaks = breaks, color = color)
-
+cluster.order<-fit.k$cluster[order(fit.k$cluster)]
+annotation_col = data.frame(cluster = factor(cluster.order))
+colnames(mat)<-substr(colnames(mat),1,12)
+mat.k<-mat[,match(rownames(annotation_col),colnames(mat))]
+ann_colors = list (cluster = c("1" = brewer.pal(3,"Set1")[1], "2"= brewer.pal(3,"Set1")[3], "3" = brewer.pal(3,"Set1")[2]))
+tiff("Results/xCell_heatmap_kmeans3.tiff",res=300,w=3500,h=3000)
+pheatmap(mat.k,scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12),
+         annotation_col = annotation_col,annotation_colors = ann_colors,cluster_cols=F)
+dev.off()
 xcell.cluster<-fit.k$cluster
-
+id<-match(substr(rownames(xcell.data.tumor.filter),1,12),names(xcell.cluster))
+xcell.data.tumor.filter<-data.frame(xcell.data.tumor.filter)
+xcell.data.tumor.filter$cluster<-xcell.cluster[id]
 
 #################
 # 2. Ward Hierarchical Clustering
@@ -185,3 +169,60 @@ dev.off()
 tiff("Results/xCell_cluster_mclust2.tiff",res=300,w=2000,h=2000)
 clusplot(mydata, fit$classification, color=TRUE, shade=TRUE, lines=0)
 dev.off()
+
+
+
+##############################################
+### Survival Analysis  ####
+##############################################
+library(survival)
+library(survminer)
+library(survMisc)
+
+####Xcell
+clinical.follow.up.xcell<-clinical.folow_up[match(substr(rownames(xcell.data.tumor.filter),1,12),clinical.folow_up$bcr_patient_barcode),]
+clinical.patient.follow.up.xcell<-merge(clinical.follow.up.xcell,clinical.patient,by="bcr_patient_barcode")
+#Pathologic_stage
+clinical.patient.follow.up.xcell$pathologic_stage<-factor(ifelse(clinical.patient.follow.up.xcell$stage_event_pathologic_stage=="Stage IA" | 
+                                                                   clinical.patient.follow.up.xcell$stage_event_pathologic_stage=="Stage IB", "Stage I",
+                                                       ifelse(clinical.patient.follow.up.xcell$stage_event_pathologic_stage == "Stage IIA" |
+                                                                clinical.patient.follow.up.xcell$stage_event_pathologic_stage=="Stage IIB","Stage II",
+                                                              ifelse(clinical.patient.follow.up.xcell$stage_event_pathologic_stage=="Stage III","Stage III",
+                                                                     ifelse(clinical.patient.follow.up.xcell$stage_event_pathologic_stage=="Stage IV", "Stage IV",NA)))))
+
+##OS
+surv_object <- Surv(time = clinical.patient.follow.up.xcell$OS.time, event = clinical.patient.follow.up.xcell$OS)
+xcell.data.tumor.filter$cluster_2cat<-ifelse(xcell.data.tumor.filter$cluster=="1" | xcell.data.tumor.filter$cluster=="2", "Cluster1+2","Cluster3")
+res.cox <- coxph(surv_object~xcell.data.tumor.filter[,"cluster_2cat"]+clinical.patient.follow.up.xcell$pathologic_stage)
+summary(res.cox)
+##Categorical
+fit1 <- survfit(surv_object ~  factor(xcell.data.tumor.filter[,"cluster_2cat"]))
+fit1
+tiff("Results/xCell_cluster_OS.tiff",res=300,w=2000,h=2000)
+ggsurvplot(fit1, data = as.data.frame(xcell.data.tumor.filter),pval = "p = 0.03 \n(Gehan-Breslow)" ,conf.int = T,risk.table = TRUE,
+           legend.labs=c("Cluster 1+2","Cluster 3"))
+dev.off()
+comp(ten(fit1))$tests$lrTests
+
+#DSS
+clinical.follow.up.xcell.DSS<-clinical.follow.up.xcell[which(clinical.follow.up.xcell$DSS!="#N/A"),]
+clinical.follow.up.xcell.DSS$DSS<-as.integer(as.character(clinical.follow.up.xcell.DSS$DSS))
+surv_object <- Surv(time = clinical.follow.up.xcell.DSS$DSS.time, event = clinical.follow.up.xcell.DSS$DSS)
+res.cox <- coxph(surv_object~xcell.data.tumor.filter[,"cluster_2cat"][which(clinical.follow.up.xcell.DSS$DSS!="#N/A")])
+summary(res.cox)
+#Categorical
+fit1 <- survfit(surv_object ~ xcell.data.tumor.filter[,"cluster_2cat"][which(clinical.follow.up.xcell.DSS$DSS!="#N/A")])
+fit1
+ggsurvplot(fit1, data = xcell.data.tumor.filter[which(clinical.follow.up.xcell.DSS$DSS!="#N/A"),])
+comp(ten(fit1))$tests$lrTests
+
+
+##PFI
+surv_object <- Surv(time = clinical.follow.up.xcell$PFI.time, event = clinical.follow.up.xcell$PFI)
+res.cox <- coxph(surv_object~xcell.data.tumor.filter[,"cluster_2cat"])
+summary(res.cox)
+fit1 <- survfit(surv_object ~  factor(xcell.data.tumor.filter[,"cluster_2cat"]))
+fit1
+comp(ten(fit1))$tests$lrTests
+
+
