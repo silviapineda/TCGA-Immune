@@ -12,7 +12,7 @@ https://www.ncbi.nlm.nih.gov/books/NBK36439/#Download.download_using_prefetch_co
 
 (For SRA data download, in addition to bulk download with cart-file, the prefetch can also run with individual SRA accession, which is often preferred method for program/script directed automatic download. See the section 5 for more about this.)
 
-    - Login to the dbGaP Authorized Access System using the eRA account login credentials. (Intramural NIH scientists and staff need their NIH email username and password).
+    - Login to the dbGaP Authorized Access System (https://dbgap.ncbi.nlm.nih.gov/aa/wga.cgi?page=login) using the eRA account login credentials. (Intramural NIH scientists and staff need their NIH email username and password). 
     - Click on “My Requests” tab. The list of Approved Requests is under “Approved” sub-tab.
     - Find the table row of approved dataset, click on the link named “Request Files” in the “Actions” column.
     - On the “Access Request” page, different types of data files available for download are shown separately under different sub-tabs. To download non-SRA data, go to the “Phenotype and Genotype files” sub-tab and click on the “dbGaP File Selector” link. To download SRA data, go to the “SRA data (reads and reference alignments)” sub-tab and click on the “SRA RUN Selector” link.
@@ -65,7 +65,9 @@ https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
 ##fastq-dump
 https://edwards.sdsu.edu/research/fastq-dump/
 /opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip --split-files --readids -F --skip-technical -W --read-filter pass SRR1095651.sra
-
+ 
+##New fastqr-dump to download fast files faster
+https://github.com/ncbi/sra-tools/wiki/HowTo:-fasterq-dump
 
 #### Material and Methods from GTEX data
 https://science.sciencemag.org/content/sci/suppl/2015/05/06/348.6235.648.DC1/GTEx.SM.pdf
