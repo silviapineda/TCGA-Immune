@@ -28,6 +28,8 @@ PAAD.repertoire.diversity$Tumor_type_2categ<-ifelse(PAAD.repertoire.diversity$Tu
                                              ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","Adjacent_normal_pancreas",
                                              ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","Adjacent_normal_pancreas",NA)))
 PAAD.repertoire.diversity$Tumor_type_2categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_2categ)
+
+
 ##################
 ####Descriptive analysis to see if there are differences by tumor and adjacent_normal
 ##################
