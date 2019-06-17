@@ -64,13 +64,23 @@ https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
 
 ##fastq-dump
 https://edwards.sdsu.edu/research/fastq-dump/
-/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip --split-files --readids -F --skip-technical -W --read-filter pass SRR1095651.sra
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip --split-files --readids -F --skip-technical -W SRR1095651.sra
+ /opt/bioinfo/sratoolkit/bin/fastq-dump -gzip -I --split-files 
  
 ##New fastqr-dump to download fast files faster
 https://github.com/ncbi/sra-tools/wiki/HowTo:-fasterq-dump
 
 #### Material and Methods from GTEX data
 https://science.sciencemag.org/content/sci/suppl/2015/05/06/348.6235.648.DC1/GTEx.SM.pdf
+
+#######
+##Download phenotype data
+1. Download the cart file from the https://dbgap.ncbi.nlm.nih.gov/aa/wga.cgi?page=login
+
+2. /opt/sratoolkit//bin/prefetch cart_file.krt
+
+##Go to files where the files are download 
+3. /opt/sratoolkit.2.9.6-1-ubuntu64/bin/vdb-decrypt phs000424.v7.pht002743.v7.p2.c1.GTEx_Sample_Attributes.GRU.txt.gz.ncbi_enc
 
 
     
