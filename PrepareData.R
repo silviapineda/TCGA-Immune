@@ -68,11 +68,37 @@ nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
 ###Add a column with the reads per chain for Ig and TRA
+##Reads per chain
+read_count <- table(data_merge$sample)
+read_count_chain <- table(data_merge$sample, data_merge$chainType)
+reads <- data.frame(cbind(read_count,read_count_chain))
+
+####### The data needs to be normalized by the unmapped reads 
+totalReads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+id<-match(totalReads$V1,rownames(reads))
+reads$totalReads<-totalReads[id,2]
+
+####Normalize the nuber of reads
+###Analysis in Overall Ab expression
+reads$IG_expression<-(reads$IGHV+reads$IGKV+reads$IGLV)/reads$totalReads
+reads$IGH_expression<-reads$IGHV/reads$totalReads
+reads$IGK_expression<-reads$IGKV/reads$totalReads
+reads$IGL_expression<-reads$IGLV/reads$totalReads
+
+reads$T_expression<-(reads$TRAV+reads$TRBV+reads$TRDV+reads$TRGV)/reads$totalReads
+reads$TRA_expression<-reads$TRAV/reads$totalReads
+reads$TRB_expression<-reads$TRBV/reads$totalReads
+reads$TRD_expression<-reads$TRDV/reads$totalReads
+reads$TRG_expression<-reads$TRGV/reads$totalReads
+###Ratio
+reads$Alpha_Beta_ratio_expression<-(reads$TRA_expression+reads$TRB_expression)/reads$T_expression
+reads$KappaLambda_ratio_expression <- (reads$IGK_expression / reads$IGL_expression)
+
 ##Clones per chain
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
 
 clones_count<- unique(data_merge[,c("sample","V_J_lenghCDR3_CloneId","chainType")])
-clones<-data.matrix(table(clones_count$sample,clones_count$chainType))
+clones<-data.frame(cbind(table(clones_count$sample,clones_count$chainType)))
 colnames(clones)<-c("clones_IGH","clones_IGK","clones_IGL","clones_TRA","clones_TRB","clones_TRD","clones_TRG")
 
 ##Diversity measures
@@ -131,7 +157,7 @@ for (i in 1:length(sample)){
   
 }
 
-diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
+diversity<-cbind(reads,clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
 
 ####After runing recon
 recon<-read.table("Data/PAAD/RECON/test_D_number_table.txt",header=T)
@@ -168,14 +194,9 @@ diversity$entropy_recon_TRG<-entropy_recon_TRG
 #Simpson Index (1/2D) and BPI (1/∞D)
 save(data_merge,diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata")
 
+PAAD_repertoire_diversity<-diversity
 
-####Read repertoire data from Akshay considering all reads
-## It is important to remember that when retricting reads to the ones with cdr3 informartion, the ratios where pretty weird since there were very few reads in the most uncommon chains
-## Therefore for the chain expression, we are going to stay with all reads detected by the MIXCR tool
-PAAD_repertoire<-readRDS("Data/TCGA_Immune_Rep/PAAD_RepertoireResults.rds")
-id<-match(rownames(diversity),rownames(PAAD_repertoire))
-PAAD_repertoire_diversity<-cbind(PAAD_repertoire[id,],diversity)
-
+###Annotation with the IDs
 file_ids = rownames(PAAD_repertoire_diversity)
 annotation = TCGAtranslateID(file_ids)
 annotation$patient_barcode = substr(annotation$submitter_id,1,12)
