@@ -25,48 +25,11 @@ setwd("~/TCGA-Immune/")
 
 load("Data/PAAD/PAAD_FullData.Rdata")
 PAAD.repertoire.diversity$Tumor_type_2categ<-ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas","Tumor_pancres",
-                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","Adjacent_normal_pancreas",
-                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","Adjacent_normal_pancreas",NA)))
+                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","normal_pseudonormal_pancreas",
+                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","normal_pseudonormal_pancreas",
+                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Pseudonormal (<1% neoplastic cellularity)","normal_pseudonormal_pancreas",NA))))
 PAAD.repertoire.diversity$Tumor_type_2categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_2categ)
-
-
-##################
-####Descriptive analysis to see if there are differences by tumor and adjacent_normal
-##################
-###T markers
-PAAD.repertoire.diversity_treads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_Reads>100),]
-T_markers<-c("TRA_expression","TRB_expression","TRD_expression","TRG_expression","Alpha_Beta_ratio_expression",
-             "clones_recon_TRA","clones_recon_TRB","clones_recon_TRD","clones_recon_TRG","entropy_recon_TRA",
-             "entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG")
-p.T_markers=NULL
-for(i in 1:length(T_markers)){
-  p.T_markers[i]<-coef(summary(glm(PAAD.repertoire.diversity_treads[,T_markers[i]]~PAAD.repertoire.diversity_treads$Tumor_type_2categ)))[2,4]
-  PAAD.repertoire.diversity_treads$Marker<-PAAD.repertoire.diversity_treads[,T_markers[i]]
-  tiff(paste0("Results/boxplot_",T_markers[i],".tiff"),res=300,h=2000,w=2000)
-  print(ggplot(PAAD.repertoire.diversity_treads[which(is.na(PAAD.repertoire.diversity_treads$Tumor_type_2categ)==F),], 
-         aes(y=Marker, fill=Tumor_type_2categ, x=Tumor_type_2categ)) + geom_boxplot() + scale_y_continuous(name=T_markers[i])
-        + stat_compare_means())
-  dev.off()
-  
-}
-T_markers[which(p.T_markers<0.05)] ## "TRD_expression" "TRG_expression"
-
-##Ig markers
-PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$IG_Reads>100),]
-Ig_markers<-c("IGH_expression","IGK_expression","IGL_expression","KappaLambda_ratio_expression",
-             "clones_recon_IGH","clones_recon_IGK","clones_recon_IGL","entropy_recon_IGH",
-             "entropy_recon_IGK","entropy_recon_IGL")
-p.Ig_markers=NULL
-for(i in 1:length(Ig_markers)){
-  p.Ig_markers[i]<-coef(summary(glm(PAAD.repertoire.diversity_treads[,Ig_markers[i]]~PAAD.repertoire.diversity_treads$Tumor_type_2categ)))[2,4]
-  PAAD.repertoire.diversity_treads$Marker<-PAAD.repertoire.diversity_treads[,Ig_markers[i]]
-  tiff(paste0("Results/boxplot_",Ig_markers[i],".tiff"),res=300,h=2000,w=2000)
-  print(ggplot(PAAD.repertoire.diversity_treads[which(is.na(PAAD.repertoire.diversity_treads$Tumor_type_2categ)==F),], 
-               aes(y=Marker, fill=Tumor_type_2categ, x=Tumor_type_2categ)) + geom_boxplot() + scale_y_continuous(name=Ig_markers[i])
-        + stat_compare_means())
-  dev.off()
-}
-Ig_markers[which(p.Ig_markers<0.05)] ## 0
+PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$Tumor_type_2categ)==F),]
 
 
 
@@ -82,7 +45,27 @@ xCell.pvalue.tumor<-t(xCell.pvalue.PAAD[,match(PAAD.repertoire.tumor$TCGA_sample
 xCell.pvalue.tumor.filter<-t(apply(xCell.pvalue.tumor,1,function (x) replace(x,x>=0.2,1)))
 xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter==1) <= 148*0.8] ##(148*0.8)  45 cells
 
- 
+##################################
+## Heatmap for the BCR and TCR ###
+#################################
+PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$IG_Reads>100),]
+Ig_markers<-c("IGH_expression","IGK_expression","IGL_expression","KappaLambda_ratio_expression",
+              "clones_recon_IGH","clones_recon_IGK","clones_recon_IGL","entropy_recon_IGH",
+              "entropy_recon_IGK","entropy_recon_IGL")
+
+mat<-PAAD.repertoire.diversity_Igreads[,Ig_markers]
+rownames(mat)<-substr(PAAD.repertoire.diversity_Igreads$TCGA_sample,1,12)
+pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+
+PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$T_Reads>100),]
+T_markers<-c("TRA_expression","TRB_expression","TRD_expression","TRG_expression","Alpha_Beta_ratio_expression",
+             "clones_recon_TRA","clones_recon_TRB","clones_recon_TRD","clones_recon_TRG","entropy_recon_TRA",
+             "entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG")
+mat<-PAAD.repertoire.diversity_treads[,T_markers]
+rownames(mat)<-substr(PAAD.repertoire.diversity_treads$TCGA_sample,1,12)
+pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+
+
 ###Applied ENET to find cells associated with T or B expression
 ##############
 ##T_reads
