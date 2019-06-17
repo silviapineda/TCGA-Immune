@@ -1,12 +1,13 @@
 ###Running MIXCR
 
 
-FILES="list of files"
+FILES=
 
 ## 1. Align sequencing reads
-for i in $FILES
+for i in $(ls /local/GTEX_pancreas/*fastq.gz | rev | cut -c 12- | rev | uniq)
 do
-mixcr align -p rna-seq -s hsa -f -r ${i}_aligments_report.txt -t 20 -OallowPartialAlignments=true ${i}_pass_1.fastq.gz ${i}_pass_2.fastq.gz ${i}_alignments.vdjca
+echo $i
+/home/spineda/miniconda3/bin/mixcr align -p rna-seq -s hsa -f -r ${i}_aligments_report.txt -t 20 -OallowPartialAlignments=true ${i}_1.fastq.gz ${i}_2.fastq.gz ${i}_alignments.vdjca
 done
 
 #2. Partial alignments
