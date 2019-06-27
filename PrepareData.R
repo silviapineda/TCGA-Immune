@@ -45,14 +45,14 @@ data_full_cdr3$SEQUENCE_ID<-paste(data_full_cdr3$sample,data_full_cdr3$seqID,sep
 data_full_cdr3$V_J_lenghCDR3 = paste(data_full_cdr3$bestVGene,data_full_cdr3$bestJGene,data_full_cdr3$CDR3_length,sep="_")
 
 ###Chain
-data_full_cdr3$chainType<-substr(data_full_cdr3$bestVGene,1,4)
-data_full_cdr3_Ig<-data_full_cdr3[which(data_full_cdr3$chainType=="IGHV" |
-                                        data_full_cdr3$chainType=="IGKV" |
-                                        data_full_cdr3$chainType=="IGLV"),]
-data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRAV" | 
-                                         data_full_cdr3$chainType=="TRBV" |
-                                         data_full_cdr3$chainType=="TRDV" | 
-                                         data_full_cdr3$chainType=="TRGV"),]
+data_full_cdr3$chainType<-substr(data_full_cdr3$bestVGene,1,3)
+data_full_cdr3_Ig<-data_full_cdr3[which(data_full_cdr3$chainType=="IGH" |
+                                        data_full_cdr3$chainType=="IGK" |
+                                        data_full_cdr3$chainType=="IGL"),]
+data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRA" | 
+                                         data_full_cdr3$chainType=="TRB" |
+                                         data_full_cdr3$chainType=="TRD" | 
+                                         data_full_cdr3$chainType=="TRG"),]
 
 ###save the data to call the clones by all samples using the nucleotides.py
 data_clonesInference_Ig<-data_full_cdr3_Ig[,c("SEQUENCE_ID","sample","nSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
@@ -66,33 +66,6 @@ nucleotides_Ig<-read.csv("Data/PAAD/ClonesInfered_PAAD_Ig.csv")
 nucleotides_TCR<-read.csv("Data/PAAD/ClonesInfered_PAAD_TCR.csv")
 nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
-
-###Add a column with the reads per chain for Ig and TRA
-##Reads per chain
-read_count <- table(data_merge$sample)
-read_count_chain <- table(data_merge$sample, data_merge$chainType)
-reads <- data.frame(cbind(read_count,read_count_chain))
-
-####### The data needs to be normalized by the unmapped reads 
-totalReads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
-id<-match(totalReads$V1,rownames(reads))
-reads$totalReads<-totalReads[id,2]
-
-####Normalize the nuber of reads
-###Analysis in Overall Ab expression
-reads$IG_expression<-(reads$IGHV+reads$IGKV+reads$IGLV)/reads$totalReads
-reads$IGH_expression<-reads$IGHV/reads$totalReads
-reads$IGK_expression<-reads$IGKV/reads$totalReads
-reads$IGL_expression<-reads$IGLV/reads$totalReads
-
-reads$T_expression<-(reads$TRAV+reads$TRBV+reads$TRDV+reads$TRGV)/reads$totalReads
-reads$TRA_expression<-reads$TRAV/reads$totalReads
-reads$TRB_expression<-reads$TRBV/reads$totalReads
-reads$TRD_expression<-reads$TRDV/reads$totalReads
-reads$TRG_expression<-reads$TRGV/reads$totalReads
-###Ratio
-reads$Alpha_Beta_ratio_expression<-(reads$TRA_expression+reads$TRB_expression)/reads$T_expression
-reads$KappaLambda_ratio_expression <- (reads$IGK_expression / reads$IGL_expression)
 
 ##Clones per chain
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
@@ -114,13 +87,13 @@ for (i in 1:length(sample)){
   print(i)
   data_sample_unique<-data_merge[which(data_merge$sample==sample[i]),]
   clones_sample<-data_sample_unique[,"V_J_lenghCDR3_CloneId"]
-  clones_sample_IGH<-data_sample_unique[which(data_sample_unique$chainType=="IGHV"),"V_J_lenghCDR3_CloneId"]
-  clones_sample_IGK<-data_sample_unique[which(data_sample_unique$chainType=="IGKV"),"V_J_lenghCDR3_CloneId"]
-  clones_sample_IGL<-data_sample_unique[which(data_sample_unique$chainType=="IGLV"),"V_J_lenghCDR3_CloneId"]
-  clones_sample_TRA<-data_sample_unique[which(data_sample_unique$chainType=="TRAV"),"V_J_lenghCDR3_CloneId"]
-  clones_sample_TRB<-data_sample_unique[which(data_sample_unique$chainType=="TRBV"),"V_J_lenghCDR3_CloneId"]
-  clones_sample_TRD<-data_sample_unique[which(data_sample_unique$chainType=="TRDV"),"V_J_lenghCDR3_CloneId"]
-  clones_sample_TRG<-data_sample_unique[which(data_sample_unique$chainType=="TRGV"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_IGH<-data_sample_unique[which(data_sample_unique$chainType=="IGH"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_IGK<-data_sample_unique[which(data_sample_unique$chainType=="IGK"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_IGL<-data_sample_unique[which(data_sample_unique$chainType=="IGL"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_TRA<-data_sample_unique[which(data_sample_unique$chainType=="TRA"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_TRB<-data_sample_unique[which(data_sample_unique$chainType=="TRB"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_TRD<-data_sample_unique[which(data_sample_unique$chainType=="TRD"),"V_J_lenghCDR3_CloneId"]
+  clones_sample_TRG<-data_sample_unique[which(data_sample_unique$chainType=="TRG"),"V_J_lenghCDR3_CloneId"]
   
   #To write file to run with Recon
   #write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
@@ -157,7 +130,7 @@ for (i in 1:length(sample)){
   
 }
 
-diversity<-cbind(reads,clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
+diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
 
 ####After runing recon
 recon<-read.table("Data/PAAD/RECON/test_D_number_table.txt",header=T)
@@ -192,9 +165,45 @@ diversity$entropy_recon_TRB<-entropy_recon_TRB
 diversity$entropy_recon_TRD<-entropy_recon_TRD
 diversity$entropy_recon_TRG<-entropy_recon_TRG
 #Simpson Index (1/2D) and BPI (1/∞D)
+
+##length of CDR3
+cdr3_length<-aggregate(data_merge$CDR3_length,by=list(data_merge$sample,data_merge$chainType), FUN=mean)
+
+cdr3_length_IGH<-cdr3_length[which(cdr3_length$Group.2=="IGH"),]
+cdr3_length_IGK<-cdr3_length[which(cdr3_length$Group.2=="IGK"),]
+cdr3_length_IGL<-cdr3_length[which(cdr3_length$Group.2=="IGL"),]
+cdr3_length_TRA<-cdr3_length[which(cdr3_length$Group.2=="TRA"),]
+cdr3_length_TRB<-cdr3_length[which(cdr3_length$Group.2=="TRB"),]
+cdr3_length_TRD<-cdr3_length[which(cdr3_length$Group.2=="TRD"),]
+cdr3_length_TRG<-cdr3_length[which(cdr3_length$Group.2=="TRG"),]
+
+id.IGH<-match(rownames(diversity),cdr3_length_IGH$Group.1)
+cdr3_length_IGH_2<-ifelse(is.na(id.IGH)==T,0,cdr3_length_IGH$x)
+id.IGK<-match(rownames(diversity),cdr3_length_IGK$Group.1)
+cdr3_length_IGK_2<-ifelse(is.na(id.IGK)==T,0,cdr3_length_IGK$x)
+id.IGL<-match(rownames(diversity),cdr3_length_IGL$Group.1)
+cdr3_length_IGL_2<-ifelse(is.na(id.IGL)==T,0,cdr3_length_IGL$x)
+id.TRA<-match(rownames(diversity),cdr3_length_TRA$Group.1)
+cdr3_length_TRA_2<-ifelse(is.na(id.TRA)==T,0,cdr3_length_TRA$x)
+id.TRB<-match(rownames(diversity),cdr3_length_TRB$Group.1)
+cdr3_length_TRB_2<-ifelse(is.na(id.TRB)==T,0,cdr3_length_TRB$x)
+id.TRD<-match(rownames(diversity),cdr3_length_TRD$Group.1)
+cdr3_length_TRD_2<-ifelse(is.na(id.TRD)==T,0,cdr3_length_TRD$x)
+id.TRG<-match(rownames(diversity),cdr3_length_TRG$Group.1)
+cdr3_length_TRG_2<-ifelse(is.na(id.TRG)==T,0,cdr3_length_TRG$x)
+
+diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2,cdr3_length_TRA_2,cdr3_length_TRB_2,cdr3_length_TRD_2,cdr3_length_TRG_2)
+colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
+                              "cdr3_length_TRD","cdr3_length_TRG")
+
 save(data_merge,diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata")
 
-PAAD_repertoire_diversity<-diversity
+####Read repertoire data from Akshay considering all reads
+## It is important to remember that when retricting reads to the ones with cdr3 informartion, the ratios where pretty weird since there were very few reads in the most uncommon chains
+## Therefore for the chain expression, we are going to stay with all reads detected by the MIXCR tool
+PAAD_repertoire<-readRDS("Data/TCGA_Immune_Rep/PAAD_RepertoireResults.rds")
+id<-match(rownames(diversity),rownames(PAAD_repertoire))
+PAAD_repertoire_diversity<-cbind(PAAD_repertoire[id,],diversity)
 
 ###Annotation with the IDs
 file_ids = rownames(PAAD_repertoire_diversity)
@@ -292,6 +301,14 @@ xCell.data.PAAD<-xCell.data[,na.omit(id.xcell)] ##181
 xCell.pvalue.PAAD<-xcell.pvalue[,na.omit(id.xcell)] ##181
 
 PAAD.repertoire.diversity<-PAAD_repertoire_diversity
+##Adding the tumor_type_2categ variable 
+PAAD.repertoire.diversity$Tumor_type_2categ<-ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas","Tumor_pancreas",
+                                                    ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","normal_pseudonormal_pancreas",
+                                                           ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","normal_pseudonormal_pancreas",
+                                                                  ifelse(PAAD.repertoire.diversity$Tumor_type=="Pseudonormal (<1% neoplastic cellularity)","normal_pseudonormal_pancreas",NA))))
+PAAD.repertoire.diversity$Tumor_type_2categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_2categ)
+PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$Tumor_type_2categ)==F),]
+
 save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
      file="Data/PAAD/PAAD_FullData.Rdata")
 
