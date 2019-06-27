@@ -188,18 +188,21 @@ receptor = "IG"
 assign(paste0("cluster_gini_",receptor),data.frame(Obtain_gini_index(data_merge,receptor,PAAD.repertoire.diversity)))
 assign(paste0("PAAD.repertoire.diversity.gini_",receptor),merge(PAAD.repertoire.diversity,cluster_gini_IG,by="row.names"))
 write.csv(get(paste0("PAAD.repertoire.diversity.gini_",receptor)),file=paste0("Results/Network/network",receptor,".csv"))
-PAAD.repertoire.diversity.gini_IG_tumor<-PAAD.repertoire.diversity.gini_IG[which(PAAD.repertoire.diversity.gini_IG$Tumor_type=="Tumor_pancreas"),]
-write.csv(get(paste0("PAAD.repertoire.diversity.gini_",receptor,"_tumor")),file=paste0("Results/Network/network_",receptor,"_tumor.csv"))
+# PAAD.repertoire.diversity.gini_IG_tumor<-PAAD.repertoire.diversity.gini_IG[which(PAAD.repertoire.diversity.gini_IG$Tumor_type=="Tumor_pancreas"),]
+# write.csv(get(paste0("PAAD.repertoire.diversity.gini_",receptor,"_tumor")),file=paste0("Results/Network/network_",receptor,"_tumor.csv"))
+brewer.pal(n = 3, name = "Accent")
+COLOR=c("#BEAED4","#7FC97F")
 
 tiff(paste0("Results/Network/network_vertex_cluster_gini_",receptor,".tiff"),h=2000,w=2000,res=300)
-plot(get(paste0("PAAD.repertoire.diversity.gini_",receptor,"_tumor"))[,"cluster_gini"], 
-     get(paste0("PAAD.repertoire.diversity.gini_",receptor,"_tumor"))[,"vertex_gini"],pch=20,ylab = "Gini (Vextex)",xlab = "Gini (Cluster)")
+plot(get(paste0("PAAD.repertoire.diversity.gini_",receptor))[,"cluster_gini"], 
+     get(paste0("PAAD.repertoire.diversity.gini_",receptor))[,"vertex_gini"],
+     col = COLOR[get(paste0("PAAD.repertoire.diversity.gini_",chainType))[,"Tumor_type_2categ"]],pch=20,ylab = "Gini (Vextex)",xlab = "Gini (Cluster)")
+legend("topleft",legend=c("Normal_pseudonormal_pancreas","Tumor_pancreas"), col=COLOR,pch=19,cex=0.8)
 dev.off()
 
 
 chainType= "IGHV"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,PAAD.repertoire.diversity)))
-
 assign(paste0("PAAD.repertoire.diversity.gini_",chainType),merge(PAAD.repertoire.diversity,get(paste0("cluster_gini_",chainType)),by="row.names"))
 #write.csv(get(paste0("PAAD.repertoire.diversity.gini_",chainType)),file=paste0("Results/Network/network",chainType,".csv"))
 ###only for tumor
@@ -212,7 +215,7 @@ COLOR=c("#BEAED4","#7FC97F")
 plot(get(paste0("PAAD.repertoire.diversity.gini_",chainType))[,"cluster_gini"], 
      get(paste0("PAAD.repertoire.diversity.gini_",chainType))[,"vertex_gini"],
      col = COLOR[get(paste0("PAAD.repertoire.diversity.gini_",chainType))[,"Tumor_type_2categ"]],pch=19,ylab = c("Gini (Vextex)"),xlab = c("Gini (Cluster)"))
-    legend("topleft",legend=c("Tumor_pancreas","Normal_pseudonormal_pancreas"), col=COLOR,pch=19,cex=0.8)
+    legend("topleft",legend=c("Normal_pseudonormal_pancreas","Tumor_pancreas"), col=COLOR,pch=19,cex=0.8)
 dev.off()
 
 
