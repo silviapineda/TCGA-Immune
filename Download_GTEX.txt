@@ -74,13 +74,24 @@ https://github.com/ncbi/sra-tools/wiki/HowTo:-fasterq-dump
 https://science.sciencemag.org/content/sci/suppl/2015/05/06/348.6235.648.DC1/GTEx.SM.pdf
 
 #######
-##Download phenotype data
+##5. Download phenotype data
 1. Download the cart file from the https://dbgap.ncbi.nlm.nih.gov/aa/wga.cgi?page=login
 
 2. /opt/sratoolkit//bin/prefetch cart_file.krt
 
 ##Go to files where the files are download 
 3. /opt/sratoolkit.2.9.6-1-ubuntu64/bin/vdb-decrypt phs000424.v7.pht002743.v7.p2.c1.GTEx_Sample_Attributes.GRU.txt.gz.ncbi_enc
+
+##############
+###6. Sometimes the paired end files have nit the same number of reads due to QC process from SRA
+##    fastq_pair tool can repair this issue.
+https://github.com/linsalrob/fastq-pair
+git https://github.com/linsalrob/fastq-pair.git
+cd fastq-pair
+mkdir build && cd build
+cmake ../
+make && sudo make install
+fastq_pair file1.fastq file2.fastq
 
 
     
