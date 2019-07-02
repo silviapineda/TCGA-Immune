@@ -41,10 +41,10 @@ data_merge_cdr3_TCR<-data_merge[which(data_merge$chainType=="TRA" |
                                        data_merge$chainType=="TRD" | 
                                        data_merge$chainType=="TRG"),]
 
-data_clonesInference_Ig_aa<-data_merge_cdr3_Ig[,c("seqID","sample","aaSeqCDR3","bestVGene","bestJGene","V_J_lenghCDR3aa")]
-write.table(data_clonesInference_Ig_aa,file="Data/PAAD/data_clonesInference_Ig_aa.txt",row.names = F,sep="\t")
-data_clonesInference_TCR_aa<-data_merge_cdr3_TCR[,c("seqID","sample","aaSeqCDR3","bestVGene","bestJGene","V_J_lenghCDR3aa")]
-write.table(data_clonesInference_TCR_aa,file="Data/PAAD/data_clonesInference_TCR_aa.txt",row.names = F,sep="\t")
+#data_clonesInference_Ig_aa<-data_merge_cdr3_Ig[,c("seqID","sample","aaSeqCDR3","bestVGene","bestJGene","V_J_lenghCDR3aa")]
+#write.table(data_clonesInference_Ig_aa,file="Data/PAAD/data_clonesInference_Ig_aa.txt",row.names = F,sep="\t")
+#data_clonesInference_TCR_aa<-data_merge_cdr3_TCR[,c("seqID","sample","aaSeqCDR3","bestVGene","bestJGene","V_J_lenghCDR3aa")]
+#write.table(data_clonesInference_TCR_aa,file="Data/PAAD/data_clonesInference_TCR_aa.txt",row.names = F,sep="\t")
 
 data_merge_Ig_aa<-read.csv("Data/PAAD/ClonesInfered_Ig_aa.csv")
 data_merge_TCR_aa<-read.csv("Data/PAAD/ClonesInfered_TCR_aa.csv")
@@ -83,7 +83,7 @@ clone_type_presence_IGH<-apply(clone_type_IGH,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_IG<-apply(clone_type_IG,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_TCR<-apply(clone_type_TCR,1,function(x) ifelse(x==0,0,1))
 
-###Filter by clones that at least are share in morethan 2 samples
+###Filter by clones that at least are share in more than 2 samples
 clone_type_filter_IGK<-clone_type_presence_IGK[which(rowSums(clone_type_presence_IGK)>2),] #
 clone_type_filter_IGK<-clone_type_filter_IGK[,which(colSums(clone_type_filter_IGK)>0)] #
 clone_type_filter_IGL<-clone_type_presence_IGL[which(rowSums(clone_type_presence_IGL)>2),] #
@@ -202,26 +202,29 @@ for(i in 1:dim(clone_type_relative)[2]){
 
 clone_type_relative_sign<-clone_type_relative[,which(p_value<0.05)]
 
+##Plot results
 annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ)
 colnames(annotation_row)<-"Tumor_type_2categ"
 rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)
 ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
                                          "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
+
+tiff("Results/heatmap_relativeAbundance_Ig_sign.tiff",width = 5000, height = 3000, res = 300)
 pheatmap(clone_type_relative_sign,scale = "column",border_color=F,show_rownames = F, annotation_row = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+dev.off()
 
-
-
-df_long <- melt(clone_type_relative, id.vars = "Sample", variable.name = "Clones")
+clone_type_relative_sign_order<-clone_type_relative_sign[order(PAAD.repertoire.diversity$Tumor_type_2categ),]
+df_long <- melt(clone_type_relative_sign_order, id.vars = "Sample", variable.name = "Clones")
 colnames(df_long)<-c("Sample","Clones","value")
+library(randomcoloR)
+n <- 29
+palette <- distinctColorPalette(n)
+tiff("Results/barplot_relativeAbundance_Ig_sign.tiff",width = 5000, height = 3000, res = 300)
 ggplot(df_long, aes(x = Sample, y = value, fill = Clones)) + 
-  geom_bar(stat = "identity")
-
-
-##Only pancreas tumors
-clone_type_relative_tumors<-clone_type_relative[which(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas"),] #148
-
-write.csv(clone_type[,id], file = "Results/common_clones_TCR.csv")
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values=palette)
+dev.off()
 
 
 
