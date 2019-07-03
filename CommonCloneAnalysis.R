@@ -83,7 +83,7 @@ clone_type_presence_IGH<-apply(clone_type_IGH,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_IG<-apply(clone_type_IG,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_TCR<-apply(clone_type_TCR,1,function(x) ifelse(x==0,0,1))
 
-###Filter by clones that at least are share in more than 2 samples
+###Filter by clones share at least in 2 samples
 clone_type_filter_IGK<-clone_type_presence_IGK[which(rowSums(clone_type_presence_IGK)>2),] #
 clone_type_filter_IGK<-clone_type_filter_IGK[,which(colSums(clone_type_filter_IGK)>0)] #
 clone_type_filter_IGL<-clone_type_presence_IGL[which(rowSums(clone_type_presence_IGL)>2),] #
@@ -190,17 +190,62 @@ dev.off()
 ############
 ### 2. Normalization by transforming to relative abundance
 ############
-id<-match(rownames(clone_type_filter_IG),colnames(clone_type_IG))
-clone_type_abundance_IG<-clone_type_IG[,id]
-clone_type_relative<-t(apply(clone_type_abundance_IG,1,function (x) x/sum(x))) #180/2898
+###TCR
+clone_type_TCR_relative<-100*t(apply(clone_type_TCR,1,function (x) x/sum(x))) ##Each cell divided by the total number of counts per sample
+id<-match(rownames(clone_type_filter_TCR),colnames(clone_type_TCR_relative)) ##Filter by clones being in at least two samples
+clone_type_TCR_relative_filter<-clone_type_TCR_relative[,id] ##57
+id.sample<-match(rownames(clone_type_TCR_relative_filter),rownames(PAAD.repertoire.diversity))
+#### Logistoc regression
 p_value=NULL
-for(i in 1:dim(clone_type_relative)[2]){
+for(i in 1:dim(clone_type_TCR_relative_filter)[2]){
   print(i)
-  mod<-glm(PAAD.repertoire.diversity$Tumor_type_2categ~clone_type_relative[,i],family = "binomial")
+  mod<-glm(PAAD.repertoire.diversity$Tumor_type_2categ[id.sample]~clone_type_TCR_relative_filter[,i],family = "binomial")
   p_value[i]=coefficients(summary(mod))[2,4]
 }
 
-clone_type_relative_sign<-clone_type_relative[,which(p_value<0.05)]
+clone_type_relative_sign<-clone_type_TCR_relative_filter[,which(p_value<0.05)]
+
+
+##Plot results
+annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ)
+colnames(annotation_row)<-"Tumor_type_2categ"
+rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)
+ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
+                                         "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
+
+tiff("Results/heatmap_relativeAbundance_TCR_sign.tiff",width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_relative_sign),border_color=F,show_colnames = F, annotation_col = annotation_row,
+         annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(4,name="Reds"))(100))
+dev.off()
+
+clone_type_relative_sign_order<-clone_type_relative_sign[order(PAAD.repertoire.diversity$Tumor_type_2categ[id.sample]),]
+df_long <- melt(clone_type_relative_sign_order, id.vars = "Sample", variable.name = "Clones")
+colnames(df_long)<-c("Sample","Clones","value")
+library(randomcoloR)
+n <- 29
+palette <- distinctColorPalette(n)
+tiff("Results/barplot_relativeAbundance_TCR_sign.tiff",width = 5000, height = 3000, res = 300)
+ggplot(df_long, aes(x = Sample, y = value, fill = Clones)) + 
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values=palette)
+dev.off()
+
+
+###Ig
+clone_type_IG_relative<-100*t(apply(clone_type_IG,1,function (x) x/sum(x))) ##Each cell divided by the total number of counts per sample
+id<-match(rownames(clone_type_filter_IG),colnames(clone_type_IG_relative)) ##Filter by clones being in at least two samples
+clone_type_IG_relative_filter<-clone_type_IG_relative[,id] ##1442
+
+#### Logistoc regression
+p_value=NULL
+for(i in 1:dim(clone_type_IG_relative_filter)[2]){
+  print(i)
+  mod<-glm(PAAD.repertoire.diversity$Tumor_type_2categ~clone_type_IG_relative_filter[,i],family = "binomial")
+  p_value[i]=coefficients(summary(mod))[2,4]
+}
+
+clone_type_relative_sign<-clone_type_IG_relative_filter[,which(p_value<0.05)]
+
 
 ##Plot results
 annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ)
@@ -210,8 +255,8 @@ ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer
                                          "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
 
 tiff("Results/heatmap_relativeAbundance_Ig_sign.tiff",width = 5000, height = 3000, res = 300)
-pheatmap(clone_type_relative_sign,scale = "column",border_color=F,show_rownames = F, annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+pheatmap(t(clone_type_relative_sign),border_color=F,show_colnames = F, annotation_col = annotation_row,
+         annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(4,name="Reds"))(1000))
 dev.off()
 
 clone_type_relative_sign_order<-clone_type_relative_sign[order(PAAD.repertoire.diversity$Tumor_type_2categ),]
@@ -225,8 +270,6 @@ ggplot(df_long, aes(x = Sample, y = value, fill = Clones)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values=palette)
 dev.off()
-
-
 
 ############
 ## Nonmetric MDS
