@@ -24,14 +24,6 @@ library(viridis)
 setwd("~/TCGA-Immune/")
 
 load("Data/PAAD/PAAD_FullData.Rdata")
-PAAD.repertoire.diversity$Tumor_type_2categ<-ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas","Tumor_pancres",
-                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","normal_pseudonormal_pancreas",
-                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","normal_pseudonormal_pancreas",
-                                             ifelse(PAAD.repertoire.diversity$Tumor_type=="Pseudonormal (<1% neoplastic cellularity)","normal_pseudonormal_pancreas",NA))))
-PAAD.repertoire.diversity$Tumor_type_2categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_2categ)
-PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$Tumor_type_2categ)==F),]
-
-
 
 ###################################
 ##### Only tumors #################
@@ -162,6 +154,7 @@ dev.off()
 ###############################
 ## Merge with Clinical data ###
 ###############################
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_2categ=="Tumor_pancreas"),]
 clinical.patient.tumor<-clinical.patient[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode),]
 
 markers<-c("IG_expression","IGH_expression","IGK_expression","IGL_expression","T_expression","TRA_expression","TRB_expression","TRD_expression",
@@ -186,7 +179,7 @@ association.test.immuneRep<- function (clinical.patient.tumor,clinical.var,PAAD.
       for(i in 1:length(markers[which(p.markers<0.05)])){
         print(i)
         dfplot$marker<-PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)][i]]
-        tiff(paste0("Results/boxplot_",clinical.var,"_",markers[which(p.markers<0.05)][i],".tiff"),res=300,h=2000,w=3000)
+        tiff(paste0("Results/boxplot_",clinical.var,"_",markers[which(p.markers<0.05)][i],".tiff"),res=300,h=2500,w=3000)
         print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var], 
                                 x=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])) + geom_boxplot() 
               + scale_y_continuous(name= markers[which(p.markers<0.05)][i]) + stat_compare_means()  + scale_x_discrete(name=clinical.var)
@@ -222,7 +215,7 @@ association.test.immuneRep<- function (clinical.patient.tumor,clinical.var,PAAD.
 
 
 ##Histological type
-clinical.patient.tumor$histological_type_2cat<-factor(ifelse(clinical.patient.tumor$histological_type=="Pancreas-Adenocarcinoma Ductal Type","PDAC","Other"))
+clinical.patient.tumor$histological_type_2cat<-factor(ifelse(clinical.patient.tumor$histological_type=="Pancreas-Adenocarcinoma Ductal Type","PDAC","PC-Other"))
 clinical.patient.tumor$histological_type_2cat<-factor(clinical.patient.tumor$histological_type_2cat)
 association.test.immuneRep(clinical.patient.tumor,"histological_type_2cat",PAAD.repertoire.tumor,markers)
 
@@ -303,6 +296,12 @@ clinical.patient.tumor$pathologic_stage<-factor(ifelse(clinical.patient.tumor$st
                                          ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage IV", "Stage IV",NA)))))
 association.test.immuneRep(clinical.patient.tumor,"pathologic_stage",PAAD.repertoire.tumor,markers)
 
+##history_chronic_pancreatitis
+clinical.patient.tumor$history_of_diabetes<-factor(clinical.patient.tumor$history_of_diabetes)
+association.test.immuneRep(clinical.patient.tumor,"history_of_diabetes",PAAD.repertoire.tumor,markers)
+
+
+
 ######################
 ### Random Forest ###
 #####################
@@ -311,15 +310,14 @@ clinical_variablers<-c("histological_type_2cat","anatomic_neoplasm_subdivision",
                        "lymph_node_examined_count","neoplasm_histologic_grade_3cat","age_at_initial_pathologic_diagnosis",
                        "smoking","number_pack_years_smoked","alcohol_history_documented","alcoholic_exposure_category2",
                        "family_history_of_cancer","radiation_therapy","primary_therapy_outcome_success",
-                       "history_of_chronic_pancreatitis")
-rf_output <- randomForest(PAAD.repertoire.tumor$IG_expression~.,data=clinical.patient.tumor[,clinical_variablers],
-                          mtry=3, importance=TRUE,na.action=na.omit)
+                       "history_of_chronic_pancreatitis","history_of_diabetes")
 
+rf_output <- randomForest(PAAD.repertoire.tumor$clones_recon_TRA~.,data=clinical.patient.tumor[,clinical_variablers],
+                          importance=T,proximity=TRUE, keep.forest=T,na.action=na.omit)
 
-rf_output <- randomForest(clinical.patient.tumor$history_of_chronic_pancreatitis~.,data=PAAD.repertoire.tumor[,markers],
-                          importance=TRUE,proximity=TRUE,na.action=na.omit)
-
-MDSplot(rf_output, clinical.patient.tumor$family_history_of_cancer,main = "Discovery",cex=1.6)
+## Look at variable importance:
+round(importance(rf_output), 2)
+varImpPlot(rf_output)
 
 
 ##################################
@@ -557,11 +555,11 @@ library(survMisc)
 clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
 ##OS
 surv_object <- Surv(time = clinical.follow_up.tumor$OS.time, event = clinical.follow_up.tumor$OS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRG)
 summary(res.cox)
 ##Categorical
-KL_mean<-mean(PAAD.repertoire.tumor$KappaLambda_ratio_expression)
-PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$KappaLambda_ratio_expression<=KL_mean,1,2)
+KL_mean<-mean(PAAD.repertoire.tumor$entropy_recon_IGH)
+PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$entropy_recon_IGH<=KL_mean,1,2)
 fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor$KL_ratio_2cat)
 fit1
 ggsurvplot(fit1, data = PAAD.repertoire.tumor)
@@ -571,8 +569,9 @@ comp(ten(fit1))$tests$lrTests
 clinical.follow_up.tumor.DSS<-clinical.follow_up.tumor[which(clinical.follow_up.tumor$DSS!="#N/A"),]
 clinical.follow_up.tumor.DSS$DSS<-as.integer(as.character(clinical.follow_up.tumor.DSS$DSS))
 surv_object <- Surv(time = clinical.follow_up.tumor.DSS$DSS.time, event = clinical.follow_up.tumor.DSS$DSS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression[which(clinical.follow_up.tumor$DSS!="#N/A")])
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB[which(clinical.follow_up.tumor$DSS!="#N/A")])
 summary(res.cox)
+
 #Categorical
 KL_mean<-mean(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression)
 PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat<-ifelse(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression<=KL_mean,1,2)
@@ -583,8 +582,10 @@ comp(ten(fit1))$tests$lrTests
 
 ##PFI
 surv_object <- Surv(time = clinical.follow_up.tumor$PFI.time, event = clinical.follow_up.tumor$PFI)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor$KappaLambda_ratio_expression)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB)
 summary(res.cox)
+
+
 
 ####Xcell
 clinical.follow.up.xcell<-clinical.folow_up[match(substr(rownames(xcell.data.tumor.filter),1,12),clinical.folow_up$bcr_patient_barcode),]
