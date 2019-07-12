@@ -271,60 +271,8 @@ ggplot(df_long, aes(x = Sample, y = value, fill = Clones)) +
   scale_fill_manual(values=palette)
 dev.off()
 
-###################
-### Zcomposition ###
-###################
-library(zCompositions)
-##Filter by clones being in at least two samples
-id<-match(rownames(clone_type_filter_IG),colnames(clone_type_IG)) 
-clone_type_IG_filter<-clone_type_IG[,id]
 
-###Applied Geometric Bayesian Multiplicative to substitute the zeros
-clone_type_IG.GBM <- cmultRepl(t(clone_type_IG_filter), output="p-counts")
-clone_type_IG.GBM.pro<-as.matrix(t(clone_type_IG.GBM))/colSums(clone_type_IG.GBM)
 
-###Apllied the LRA (logratios Analysis)
-library(easyCODA)
-library(ellipse)
-clone_type_IG.GBM.lra<-LRA(clone_type_IG.GBM.pro,weight = F)
-#Total inertia
-sum(clone_type_IG.GBM.lra$sv^2) ##Total Variance = 2.091851
-#Percentages of inertia
-100*clone_type_IG.GBM.lra$sv^2/sum(clone_type_IG.GBM.lra$sv^2) ##amount of variance explain by components #10.5 (first) 1.9 (second)
-
-#Plot results from LRA
-COLORS =c(brewer.pal(3,"Accent")[1],brewer.pal(3,"Accent")[2])
-COLORS2=c(brewer.pal(3,"Dark2")[1],brewer.pal(3,"Dark2")[3])
-tiff("Results/LRA_plot.tiff",width = 2000, height = 2000, res = 300)
-plot(clone_type_IG.GBM.lra$rowpcoord,col=COLORS[PAAD.repertoire.diversity$Tumor_type_2categ],
-     xlab="Dimension 1 (10.5%)", ylab="Dimension 2 (1.9%)",pch=20,cex.axis=1.2,cex.lab=1.2)
-CIplot_biv(clone_type_IG.GBM.lra$rowpcoor[,1], clone_type_IG.GBM.lra$rowpcoor[,2], group=PAAD.repertoire.diversity$Tumor_type_2categ, 
-           groupcols=COLORS2,add=T,shade=T)
-dev.off()
-
-###Correspondance analysis
-# sample profiles (relative abundances), also transposing matrix
-# no zero substitution
-clone_type_IG.pro <- clone_type_IG_filter / colSums(clone_type_IG_filter)
-
-# correspondence analysis using ca() function in ca package
-# also CA() function in easyCODA can be used 
-# (at the moment, both are available in easyCODA)
-clone_type_IG.ca <- CA(clone_type_IG.pro)
-#Total inertia
-sum(clone_type_IG.ca$sv^2) ##Total Variance = 2.091851
-#Percentages of inertia
-100*clone_type_IG.ca$sv^2/sum(clone_type_IG.ca$sv^2) ##amount of variance explain by components #6.5 (first) 5.1 (second)
-
-#Plot results from LRA
-COLORS =c(brewer.pal(3,"Accent")[1],brewer.pal(3,"Accent")[2])
-COLORS2=c(brewer.pal(3,"Dark2")[1],brewer.pal(3,"Dark2")[3])
-tiff("Results/CA_plot.tiff",width = 2000, height = 2000, res = 300)
-plot(clone_type_IG.ca$rowpcoord,col=COLORS[PAAD.repertoire.diversity$Tumor_type_2categ],
-     xlab="Dimension 1 (6.5%)", ylab="Dimension 2 (5.1%)",pch=20,cex.axis=1.2,cex.lab=1.2)
-CIplot_biv(clone_type_IG.ca$rowpcoor[,1], clone_type_IG.GBM.lra$rowpcoor[,2], group=PAAD.repertoire.diversity$Tumor_type_2categ, 
-           groupcols=COLORS2,add=T,shade=T)
-dev.off()
 
 #chi-squares distances between parts in subcomposition can be obtained from the full set of row principal coordinates in ca
 clone_type_IG.d<-dist(clone_type_IG.ca$colpcoord)
@@ -348,20 +296,3 @@ plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2",
 dev.off()
 text(x, y, labels = row.names(clone_type_relative_tumors), cex=.7)
 
-############
-## Compositioanl
-############
-library(Compositional)
-additive_log_ratio<-alr(clone_type_abundance_filter+1) ##Adding 1 for the zeros
-
-
-library("DirichletMultinomial")
-fit1<-dmn(clone_type_abundance_filter,k=1)
-fit2<-dmn(clone_type_abundance_filter,k=2)
-fit3<-dmn(clone_type_abundance_filter,k=3)
-fit4<-dmn(clone_type_abundance_filter,k=4)
-fit5<-dmn(clone_type_abundance_filter,k=5)
-fit<-list(fit1,fit2,fit3,fit4,fit5)
-lplc <- sapply(fit, laplace)
-best <- fit[[which.min(lplc)]]
-heatmapdmn(clone_type_abundance_filter, fit[[1]], best, 30)
