@@ -31,6 +31,19 @@ load("Data/PAAD/PAAD_FullData.Rdata")
 cols=brewer.pal(3,name = "Accent")
 
 ###T markers
+#Barplot
+tiff("Results/barplot_Treads.tiff",res=300,h=2500,w=4000)
+barplot(PAAD.repertoire.diversity$T_Reads,col=cols[PAAD.repertoire.diversity$Tumor_type_2categ],main="Number of T-Reads",xlab = "Samples", ylab = "Reads",las=2)
+abline(h=100)
+legend("topright", legend=levels(PAAD.repertoire.diversity$Tumor_type_2categ),col=cols,pch=15, cex=0.8)
+dev.off()
+
+tiff("Results/Corr_plot_reads.tiff",res=300,h=2500,w=4000)
+plot(PAAD.repertoire.diversity$Total_Reads,PAAD.repertoire.diversity$totalSeqReads,col=cols[PAAD.repertoire.diversity$Tumor_type_2categ],pch=19,
+     xlab = "Total B- and T- Reads aligned", ylab = "Sequencing Depth")
+dev.off()
+
+##Differences by tumor categ 
 PAAD.repertoire.diversity_treads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_Reads>100),]
 T_markers<-c("TRA_expression","TRB_expression","TRD_expression","TRG_expression","Alpha_Beta_ratio_expression",
              "clones_recon_TRA","clones_recon_TRB","clones_recon_TRD","clones_recon_TRG","entropy_recon_TRA",
@@ -59,6 +72,12 @@ for(i in 1:length(T_markers)){
 T_markers[which(p.T_markers<0.05)] ## ""TRD_expression"    "TRG_expression"    "clones_recon_TRG"  "entropy_recon_TRG"
 
 ##Ig markers
+tiff("Results/barplot_Igreads.tiff",res=300,h=2500,w=4000)
+barplot(PAAD.repertoire.diversity$IG_Reads,col=cols[PAAD.repertoire.diversity$Tumor_type_2categ],main="Number of Ig-Reads",xlab = "Samples", ylab = "Reads",las=2)
+abline(h=100)
+legend("topright", legend=levels(PAAD.repertoire.diversity$Tumor_type_2categ),col=cols,pch=15, cex=0.8)
+dev.off()
+
 PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$IG_Reads>100),]
 Ig_markers<-c("IGH_expression","IGK_expression","IGL_expression","KappaLambda_ratio_expression",
               "clones_recon_IGH","clones_recon_IGK","clones_recon_IGL","entropy_recon_IGH",
@@ -177,6 +196,102 @@ tiff("Results/boxplot_TCR_cdr3_length.tiff",res=300,h=2500,w=3000)
 ggplot(TCR_cdr3length) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
   geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols[1], cols[2]), labels = c("normal_pseudonormal_pancreas", "Tumor_pancres")) +
+  theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
+  stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
+dev.off()
+
+##########################
+### Compare with GTEX ###
+#########################
+load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
+
+####Summary plots
+#IgExpression
+Ig_expr_PAAD<-melt(PAAD.repertoire.diversity[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression","Tumor_type_2categ")])
+Pancreas.repertoire.diversity$TCGA_sample<-rownames(Pancreas.repertoire.diversity)
+Pancreas.repertoire.diversity$Tumor_type_2categ<-rep("Normal_pancreas")
+Ig_expr_Pancreas<-melt(Pancreas.repertoire.diversity[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression","Tumor_type_2categ")])
+
+Ig_expr<-rbind(Ig_expr_PAAD,Ig_expr_Pancreas)
+Ig_expr<-Ig_expr[which(Ig_expr$value!=0),]
+Ig_expr$value<-log10(Ig_expr$value)
+tiff("Results/boxplot_Ig_expression.tiff",res=300,h=2500,w=3500)
+ggplot(Ig_expr) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
+  geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("adjacent_normal_pseudonormal_tumor_pancreas", "Tumor_pancreas","Normal_pancreas")) +
+  theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
+  stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
+dev.off()
+
+#Entropy
+Ig_entropy_PAAD<-melt(PAAD.repertoire.diversity[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","Tumor_type_2categ")])
+Ig_entropy_Pancreas<-melt(Pancreas.repertoire.diversity[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","Tumor_type_2categ")])
+
+Ig_expr<-rbind(Ig_entropy_PAAD,Ig_entropy_Pancreas)
+Ig_expr<-Ig_expr[which(Ig_expr$value!=0),]
+tiff("Results/boxplot_Ig_entropy.tiff",res=300,h=2500,w=3500)
+ggplot(Ig_expr) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
+  geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("adjacent_normal_pseudonormal_tumor_pancreas", "Tumor_pancreas","Normal_pancreas")) +
+  theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
+  stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
+dev.off()
+
+#Texpression
+T_expr_PAAD<-melt(PAAD.repertoire.diversity[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","Tumor_type_2categ")])
+T_expr_Pancreas<-melt(Pancreas.repertoire.diversity[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","Tumor_type_2categ")])
+
+T_expr<-rbind(T_expr_PAAD,T_expr_Pancreas)
+T_expr<-T_expr[which(T_expr$value!=0),]
+T_expr$value<-log10(T_expr$value)
+tiff("Results/boxplot_T_expression.tiff",res=300,h=2500,w=3500)
+ggplot(T_expr) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
+  geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("adjacent_normal_pseudonormal_tumor_pancreas", "Tumor_pancreas","Normal_pancreas")) +
+  theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
+  stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
+dev.off()
+
+
+#Entropy (T)
+T_entropy_PAAD<-melt(PAAD.repertoire.diversity[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","Tumor_type_2categ")])
+T_entropy_Pancreas<-melt(Pancreas.repertoire.diversity[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","Tumor_type_2categ")])
+
+T_expr<-rbind(T_entropy_PAAD,T_entropy_Pancreas)
+T_expr<-T_expr[which(T_expr$value!=0),]
+tiff("Results/boxplot_T_entropy.tiff",res=300,h=2500,w=3500)
+ggplot(T_expr) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
+  geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("adjacent_normal_pseudonormal_tumor_pancreas", "Tumor_pancreas","Normal_pancreas")) +
+  theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
+  stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
+dev.off()
+
+#KappaLambda
+kappa_lambda_PAAD<-melt(PAAD.repertoire.diversity[,c("TCGA_sample","KappaLambda_ratio_expression","Tumor_type_2categ")])
+kappa_lambda_Pancreas<-melt(Pancreas.repertoire.diversity[,c("TCGA_sample","KappaLambda_ratio_expression","Tumor_type_2categ")])
+
+kappa_lambda<-rbind(kappa_lambda_PAAD,kappa_lambda_Pancreas)
+kappa_lambda<-kappa_lambda[which(kappa_lambda$value!=0),]
+tiff("Results/boxplot_kappa_lambda.tiff",res=300,h=2500,w=3500)
+ggplot(kappa_lambda) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
+  geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("adjacent_normal_pseudonormal_tumor_pancreas", "Tumor_pancreas","Normal_pancreas")) +
+  theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
+  stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
+dev.off()
+
+
+#alphabeta
+alpha_beta_ratio_PAAD<-melt(PAAD.repertoire.diversity[,c("TCGA_sample","Alpha_Beta_ratio_expression","Tumor_type_2categ")])
+alpha_beta_ratio_Pancreas<-melt(Pancreas.repertoire.diversity[,c("TCGA_sample","Alpha_Beta_ratio_expression","Tumor_type_2categ")])
+
+alpha_beta_ratio<-rbind(alpha_beta_ratio_PAAD,alpha_beta_ratio_Pancreas)
+alpha_beta_ratio<-alpha_beta_ratio[which(alpha_beta_ratio$value!=1),]
+tiff("Results/boxplot_alpha_beta.tiff",res=300,h=2500,w=3500)
+ggplot(alpha_beta_ratio) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_2categ), alpha = 0, position = position_dodge(width = .8)) + 
+  geom_point(aes(x=variable, y=value, color=Tumor_type_2categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("adjacent_normal_pseudonormal_tumor_pancreas", "Tumor_pancreas","Normal_pancreas")) +
   theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
   stat_compare_means(aes(x=variable, y=value, color=Tumor_type_2categ)) 
 dev.off()
