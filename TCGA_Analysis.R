@@ -658,10 +658,11 @@ dev.off()
 comp(ten(fit1))$tests$lrTests
 
 
-####### #########################
-### Compare data with GTEX #####
+################################
+### Compare data with GTEX ####
 ##############################
-load("Data/GTEX/MIXCR/GTEX_FullData.Rdata")
+load("Data/GTEx/Blood/MIXCR/GTEX_FullData.Rdata")
+
 repertoire.diversity<-rbind(PAAD.repertoire.diversity[,c("Total_Reads","IGH_Reads","IGK_Reads", "IGL_Reads","TRA_Reads","TRB_Reads","TRD_Reads","TRG_Reads","IG_Reads",
                                                          "T_Reads","IG_expression", "IGH_expression", "IGK_expression","IGL_expression","T_expression","TRA_expression",
                                                          "TRB_expression","TRD_expression","TRG_expression","Alpha_Beta_ratio_expression","KappaLambda_ratio_expression",
@@ -672,7 +673,9 @@ repertoire.diversity<-rbind(PAAD.repertoire.diversity[,c("Total_Reads","IGH_Read
                                                          "TRB_expression","TRD_expression","TRG_expression","Alpha_Beta_ratio_expression","KappaLambda_ratio_expression",
                                                          "clones_IGH","clones_IGK","clones_IGL", "clones_TRA", "clones_TRB","clones_TRD","clones_TRG","entropy_IGH",
                                                          "entropy_IGL","entropy_TRA","entropy_TRB","entropy_TRD","entropy_TRG")])
-repertoire.diversity$sample_type<-factor(c(rep("PAAD",181),rep("GTEX",441)))
+repertoire.diversity$sample_type<-factor(c(rep("PAAD",160),rep("GTEX",441)))
+repertoire.diversity$TotalSeqReads<-repertoire.diversity$IG_Reads/repertoire.diversity$IG_expression
 
-ggplot(repertoire.diversity,aes(y=Alpha_Beta_ratio_expression, fill=sample_type, x=sample_type)) + geom_boxplot()  + stat_compare_means()
+ggplot(repertoire.diversity,aes(y=entropy_TRA, fill=sample_type, x=sample_type)) + geom_boxplot()  + stat_compare_means()
+
 
