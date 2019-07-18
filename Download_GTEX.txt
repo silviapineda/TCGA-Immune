@@ -64,7 +64,7 @@ https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=toolkit_doc&f=dbgap_use
 
 ##fastq-dump
 https://edwards.sdsu.edu/research/fastq-dump/
-/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip --split-files --readids -F --skip-technical -W SRR1095651.sra
+/opt/sratoolkit.2.9.6-1-ubuntu64/bin/fastq-dump --gzip  --split-3 --readids -F --skip-technical -W SRR1095651.sra
  /opt/bioinfo/sratoolkit/bin/fastq-dump -gzip -I --split-files 
  
 ##New fastqr-dump to download fast files faster
