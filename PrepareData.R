@@ -313,3 +313,8 @@ save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clin
      file="Data/PAAD/PAAD_FullData.Rdata")
 
 
+###Add total reads that have been sequenced
+totalreads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";")
+
+id<-match(rownames(PAAD.repertoire.diversity),totalreads$V1)
+PAAD.repertoire.diversity$totalSeqReads<-totalreads$V2[id]
