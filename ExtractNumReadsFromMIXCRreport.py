@@ -1,9 +1,9 @@
 import glob
 
 ###Read the file in gtf 
-filenames = glob.glob("/Users/Pinedasans/TCGA-Immune/Data/PAAD/MIXCR_PAAD/reports/*alignments_report.txt")
+filenames = glob.glob("/Users/Pinedasans/TCGA-Immune/Data/Pancreas_Validation/report/*alignments_report.txt")
 print("start")
-fout = open("/Users/Pinedasans/TCGA-Immune/Data/PAAD/MIXCR_PAAD/total_reads.txt",'w')
+fout = open("/Users/Pinedasans/TCGA-Immune/Data/Pancreas_Validation/total_reads.txt",'w')
 for f in filenames:
     print(f)
     sample = f[59:95]
