@@ -31,6 +31,9 @@ load("Data/PAAD/PAAD_FullData.Rdata")
 brewer.pal(3,name = "Accent")
 cols=c( "#7FC97F", "#FDC086", "#BEAED4" )
 
+#################
+### 1. TCGA #####
+#################
 
 ###T markers
 #Barplot
@@ -118,6 +121,7 @@ ggplot(Ig_expr) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_3categ)
 dev.off()
 
 TR_expr<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","Tumor_type_3categ")])
+TR_expr<-TR_expr[which(TR_expr$value!=0),]
 TR_expr$value<-log10(TR_expr$value)
 tiff("Results/boxplot_TR_expression_PAAD.tiff",res=300,h=2500,w=3500)
 ggplot(TR_expr) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_3categ), alpha = 0, position = position_dodge(width = .8)) + 
@@ -137,6 +141,7 @@ ggplot(Ig_entropy) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_3cat
 dev.off()
 
 TR_entropy<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","Tumor_type_3categ")])
+TR_entropy<-TR_entropy[which(TR_entropy$value!=0),]
 tiff("Results/boxplot_TR_entropy_PAAD.tiff",res=300,h=2500,w=3500)
 ggplot(TR_entropy) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_3categ), alpha = 0, position = position_dodge(width = .8)) + 
   geom_point(aes(x=variable, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
@@ -183,7 +188,7 @@ ggplot(TCR_cdr3length) + geom_boxplot(aes(x=variable, y=value, color=Tumor_type_
 dev.off()
 
 ##########################
-### Compare with GTEX ###
+### 2. Compare with GTEX ###
 #########################
 load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
 
@@ -282,7 +287,7 @@ dev.off()
 ### Validation Pancreas ####
 ############################
 load("Data/Pancreas_Validation/Pancreas_Validation_RepertoireResults_diversity.Rdata")
-cols=brewer.pal(3,name = "Accent")
+cols=brewer.pal(5,name = "Set1")
 
 ###T markers
 #Barplot
@@ -318,48 +323,66 @@ Pancreas.Validation.repertoire.diversity_Igreads<-Pancreas.Validation.repertoire
 
 ####Summary plots
 #IgExpression
-Ig_expr<-melt(Pancreas.Validation.repertoire.diversity_Igreads[,c("sample","IGH_expression","IGK_expression","IGL_expression","tissue")])
+Ig_expr1<-melt(Pancreas.Validation.repertoire.diversity_Igreads[,c("sample","IGH_expression","IGK_expression","IGL_expression","tissue")])
+Ig_expr2<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression","Tumor_type_3categ")])
+colnames(Ig_expr2)[1:2]<-c("sample","tissue")
 
+Ig_expr<-rbind(Ig_expr1,Ig_expr2)
 Ig_expr$value<-log10(Ig_expr$value)
-tiff("Results/boxplot_Ig_expression_PancreasValidation.tiff",res=300,h=2500,w=3500)
+tiff("Results/boxplot_Ig_expression_All.tiff",res=300,h=2500,w=3500)
 ggplot(Ig_expr) + geom_boxplot(aes(x=variable, y=value, color=tissue), alpha = 0, position = position_dodge(width = .8)) + 
   geom_point(aes(x=variable, y=value, color=tissue), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2]), labels = c("normal pancreas", "pancreas tumor")) +
+  scale_color_manual(values = c(cols[1], cols[1],cols[2],cols[2],cols[2]), labels = c("normal pancreas (val)", "pancreas tumor (val)","normal pancreas (TCGA)",
+                                               "pseudonormal (TCGA)","pancreas tumor (TCGA)")) +
   theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
   stat_compare_means(aes(x=variable, y=value, color=tissue)) 
 dev.off()
 
 #Entropy
-Ig_entropy<-melt(Pancreas.Validation.repertoire.diversity_Igreads[,c("sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","tissue")])
+Ig_entropy1<-melt(Pancreas.Validation.repertoire.diversity_Igreads[,c("sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","tissue")])
+Ig_entropy2<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","Tumor_type_3categ")])
+colnames(Ig_entropy2)[1:2]<-c("sample","tissue")
 
-tiff("Results/boxplot_Ig_entropy_PancreasValidation.tiff",res=300,h=2500,w=3500)
+Ig_entropy<-rbind(Ig_entropy1,Ig_entropy2)
+tiff("Results/boxplot_Ig_entropy_All.tiff",res=300,h=2500,w=3500)
 ggplot(Ig_entropy) + geom_boxplot(aes(x=variable, y=value, color=tissue), alpha = 0, position = position_dodge(width = .8)) + 
   geom_point(aes(x=variable, y=value, color=tissue), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2]), labels = c("normal pancreas", "pancreas tumor")) +
+  scale_color_manual(values = c(cols[1], cols[1],cols[2],cols[2],cols[2]), labels = c("normal pancreas (val)", "pancreas tumor (val)","normal pancreas (TCGA)",
+                                                                                      "pseudonormal (TCGA)","pancreas tumor (TCGA)")) +
   theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
   stat_compare_means(aes(x=variable, y=value, color=tissue)) 
 dev.off()
 
 #Texpression
-T_expr<-melt(Pancreas.Validation.repertoire.diversity_treads[,c("sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","tissue")])
+T_expr1<-melt(Pancreas.Validation.repertoire.diversity_treads[,c("sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","tissue")])
+T_expr2<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","Tumor_type_3categ")])
+colnames(T_expr2)[1:2]<-c("sample","tissue")
 
+T_expr<-rbind(T_expr1,T_expr2)
+T_expr<-T_expr[which(T_expr$value!=0),]
 T_expr$value<-log10(T_expr$value)
-tiff("Results/boxplot_T_expression_PancreasValidation.tiff",res=300,h=2500,w=3500)
+tiff("Results/boxplot_T_expression_All.tiff",res=300,h=2500,w=3500)
 ggplot(T_expr) + geom_boxplot(aes(x=variable, y=value, color=tissue), alpha = 0, position = position_dodge(width = .8)) + 
   geom_point(aes(x=variable, y=value, color=tissue), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2]), labels = c("normal pancreas", "pancreas tumor")) +
+  scale_color_manual(values = c(cols[1], cols[1],cols[2],cols[2],cols[2]), labels = c("normal pancreas (val)", "pancreas tumor (val)","normal pancreas (TCGA)",
+                                                                                      "pseudonormal (TCGA)","pancreas tumor (TCGA)")) +
   theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
   stat_compare_means(aes(x=variable, y=value, color=tissue)) 
 dev.off()
 
 
 #Entropy (T)
-T_entropy<-melt(Pancreas.Validation.repertoire.diversity_treads[,c("sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","tissue")])
+T_entropy1<-melt(Pancreas.Validation.repertoire.diversity_treads[,c("sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","tissue")])
+T_entropy2<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","Tumor_type_3categ")])
+colnames(T_entropy2)[1:2]<-c("sample","tissue")
 
-tiff("Results/boxplot_T_entropy_PancreasValidation.tiff",res=300,h=2500,w=3500)
+T_entropy<-rbind(T_entropy1,T_entropy2)
+T_entropy<-T_entropy[which(T_entropy$value!=0),]
+tiff("Results/boxplot_T_entropy_All.tiff",res=300,h=2500,w=3500)
 ggplot(T_entropy) + geom_boxplot(aes(x=variable, y=value, color=tissue), alpha = 0, position = position_dodge(width = .8)) + 
   geom_point(aes(x=variable, y=value, color=tissue), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas", "pancreas tumor")) +
+  scale_color_manual(values = c(cols[1], cols[1],cols[2],cols[2],cols[2]), labels = c("normal pancreas (val)", "pancreas tumor (val)","normal pancreas (TCGA)",
+                                                                                      "pseudonormal (TCGA)","pancreas tumor (TCGA)")) +
   theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
   stat_compare_means(aes(x=variable, y=value, color=tissue)) 
 dev.off()
@@ -386,3 +409,28 @@ ggplot(alpha_beta_ratio) + geom_boxplot(aes(x=variable, y=value, color=tissue), 
   theme(axis.title.x = element_text(size = 16),axis.text.x = element_text(size = 14),axis.title.y = element_text(size = 16),axis.text.y = element_text(size = 14))+
   stat_compare_means(aes(x=variable, y=value, color=tissue)) 
 dev.off()
+
+
+
+
+
+
+############################
+### GTEX Blood           ###
+############################
+load("Data/GTEx/Blood/MIXCR/GTEX_FullData.Rdata")
+totalReads<-read.table("Data/GTEx/Blood/MIXCR/total_reads_GTEX.txt",sep=";")
+id<-match(rownames(GTEX.repertoire.diversity),totalReads$V1)
+GTEX.repertoire.diversity$TotalSeq<-totalReads[id,"V2"]
+
+
+##Me he quedado aqui
+sra<-read.csv("Data/GTEx/Blood/SraRunTableBloodRNAseq.csv")
+rownames(GTEX.repertoire.diversity)<-unlist(strsplit(as.character(rownames(GTEX.repertoire.diversity)), "\\}"))
+id<-match(sra$Run,rownames(GTEX.repertoire.diversity))
+GTEX.repertoire.diversity<-GTEX.repertoire.diversity[na.omit(id),] ##439
+id<-match(rownames(GTEX.repertoire.diversity),sra$Run)
+sra[na.omit(id),""]
+sra$Run[id]
+cols=brewer.pal(5,name = "Set1")
+
