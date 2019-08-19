@@ -32,8 +32,43 @@ for(i in files) {
 
 save(data,file="Data/Pancreas_Validation/Validation_Pancreas.Rdata")
 
-#####Filter by CDR3
+#####
 load("Data/Pancreas_Validation/Validation_Pancreas.Rdata")
+###Chain
+data$chainType<-ifelse(data$bestVGene!="", substr(data$bestVGene,1,3),
+                       ifelse(data$bestVGene=="",substr(data$bestJGene,1,3),NA))
+
+###Add a column with the reads per chain for Ig and TRA
+##Reads per chain
+read_count <- table(data$sample)
+read_count_chain <- table(data$sample, data$chainType)
+reads <- data.frame(cbind(read_count,read_count_chain))
+
+####### The data needs to be normalized by the unmapped reads 
+totalReads<-read.table("Data/Pancreas_Validation/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+id<-match(rownames(reads),substr(totalReads$V1,4,13))
+reads$totalReads<-totalReads[id,2]
+
+##Total reads
+reads$Ig_Reads<-reads$IGH+reads$IGK+reads$IGL
+reads$T_Reads<- reads$TRA+reads$TRB+reads$TRD+reads$TRG
+
+####Normalize the nuber of reads
+reads$IG_expression<-(reads$IGH+reads$IGK+reads$IGL)/reads$totalReads
+reads$IGH_expression<-reads$IGH/reads$totalReads
+reads$IGK_expression<-reads$IGK/reads$totalReads
+reads$IGL_expression<-reads$IGL/reads$totalReads
+
+reads$T_expression<-(reads$TRA+reads$TRB+reads$TRD+reads$TRG)/reads$totalReads
+reads$TRA_expression<-reads$TRA/reads$totalReads
+reads$TRB_expression<-reads$TRB/reads$totalReads
+reads$TRD_expression<-reads$TRD/reads$totalReads
+reads$TRG_expression<-reads$TRG/reads$totalReads
+###Ratio
+reads$Alpha_Beta_ratio_expression<-(reads$TRA_expression+reads$TRB_expression)/reads$T_expression
+reads$KappaLambda_ratio_expression <- (reads$IGK_expression / reads$IGL_expression)
+
+####Restriction to CDR3 to extract the clones
 data_full_cdr3<-data[which(data$nSeqCDR3!=""),] #1082293
 data_full_cdr3$CDR3_length<-nchar(as.character(data_full_cdr3$nSeqCDR3)) 
 data_full_cdr3<-data_full_cdr3[which(data_full_cdr3$CDR3_length!=3),] 
@@ -46,7 +81,6 @@ data_full_cdr3$SEQUENCE_ID<-paste(data_full_cdr3$sample,data_full_cdr3$seqID,sep
 data_full_cdr3$V_J_lenghCDR3 = paste(data_full_cdr3$bestVGene,data_full_cdr3$bestJGene,data_full_cdr3$CDR3_length,sep="_")
 
 ###Chain
-data_full_cdr3$chainType<-substr(data_full_cdr3$bestVGene,1,3)
 data_full_cdr3_Ig<-data_full_cdr3[which(data_full_cdr3$chainType=="IGH" |
                                           data_full_cdr3$chainType=="IGK" |
                                           data_full_cdr3$chainType=="IGL"),]
@@ -67,32 +101,6 @@ nucleotides_Ig<-read.csv("Data/Pancreas_Validation/ClonesInfered_Ig_PancreasVali
 nucleotides_TCR<-read.csv("Data/Pancreas_Validation/ClonesInfered_TCR_PancreasValidation.csv")
 nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
-
-###Add a column with the reads per chain for Ig and TRA
-##Reads per chain
-read_count <- table(data_merge$sample)
-read_count_chain <- table(data_merge$sample, data_merge$chainType)
-reads <- data.frame(cbind(read_count,read_count_chain))
-
-####### The data needs to be normalized by the unmapped reads 
-totalReads<-read.table("Data/Pancreas_Validation/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
-id<-match(rownames(reads),substr(totalReads$V1,4,13))
-reads$totalReads<-totalReads[id,2]
-
-####Normalize the nuber of reads
-reads$IG_expression<-(reads$IGH+reads$IGK+reads$IGL)/reads$totalReads
-reads$IGH_expression<-reads$IGH/reads$totalReads
-reads$IGK_expression<-reads$IGK/reads$totalReads
-reads$IGL_expression<-reads$IGL/reads$totalReads
-
-reads$T_expression<-(reads$TRA+reads$TRB+reads$TRD+reads$TRG)/reads$totalReads
-reads$TRA_expression<-reads$TRA/reads$totalReads
-reads$TRB_expression<-reads$TRB/reads$totalReads
-reads$TRD_expression<-reads$TRD/reads$totalReads
-reads$TRG_expression<-reads$TRG/reads$totalReads
-###Ratio
-reads$Alpha_Beta_ratio_expression<-(reads$TRA_expression+reads$TRB_expression)/reads$T_expression
-reads$KappaLambda_ratio_expression <- (reads$IGK_expression / reads$IGL_expression)
 
 ##Clones per chain
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
@@ -230,7 +238,7 @@ annotation<-read.table("Data/Pancreas_Validation/Annotation.txt",sep="\t",header
 id<-match(rownames(Pancreas.Validation.repertoire.diversity),annotation$Run)
 Pancreas.Validation.repertoire.diversity$tissue<-annotation[id,"tissue"]
 Pancreas.Validation.repertoire.diversity$sample<-rownames(Pancreas.Validation.repertoire.diversity)
-save(data_merge,Pancreas.Validation.repertoire.diversity,annotation,file="Data/Pancreas_Validation/Pancreas_Validation_RepertoireResults_diversity.Rdata")
+save(data_merge,Pancreas.Validation.repertoire.diversity,annotation,file="Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
 
 
 
