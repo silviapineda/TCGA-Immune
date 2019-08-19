@@ -317,13 +317,12 @@ PAAD.repertoire.diversity$Tumor_type_3categ<-ifelse(PAAD.repertoire.diversity$Tu
 PAAD.repertoire.diversity$Tumor_type_3categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_3categ)
 PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$Tumor_type_3categ)==F),]
 
-
-save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
-     file="Data/PAAD/PAAD_FullData.Rdata")
-
-
 ###Add total reads that have been sequenced
 totalreads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";")
 
 id<-match(rownames(PAAD.repertoire.diversity),totalreads$V1)
 PAAD.repertoire.diversity$totalSeqReads<-totalreads$V2[id]
+
+save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
+     file="Data/PAAD/PAAD_FullData.Rdata")
+
