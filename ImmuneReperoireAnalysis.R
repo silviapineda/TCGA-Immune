@@ -49,13 +49,13 @@ plot(PAAD.repertoire.diversity$Total_Reads,PAAD.repertoire.diversity$totalSeqRea
 legend("bottomright", legend=levels(PAAD.repertoire.diversity$Tumor_type_3categ),col=cols,pch=15, cex=0.8)
 dev.off()
 
-summary(PAAD.repertoire.diversity$IG_Reads)
-summary(PAAD.repertoire.diversity$T_Reads)
+summary(PAAD.repertoire.diversity$IG_Reads[which(PAAD.repertoire.diversity$Tumor_type_3categ=="Tumor_pancreas")])
+summary(PAAD.repertoire.diversity$T_Reads[which(PAAD.repertoire.diversity$Tumor_type_3categ=="normal_pancreas")])
 summary(PAAD.repertoire.diversity$totalSeqReads)
 
 ##Filter by number of reads and clones <100
 PAAD.repertoire.diversity_treads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_Reads>100),]
-PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$IG_Reads>100),]
+PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Ig_Reads>100),]
 PAAD.repertoire.diversity$T_clones<-PAAD.repertoire.diversity$clones_recon_TRA+PAAD.repertoire.diversity$clones_recon_TRB+
                                     PAAD.repertoire.diversity$clones_recon_TRD+PAAD.repertoire.diversity$clones_recon_TRG
 PAAD.repertoire.diversity$Ig_clones<-PAAD.repertoire.diversity$clones_recon_IGH+PAAD.repertoire.diversity$clones_recon_IGK+
@@ -77,7 +77,6 @@ ggboxplot(Ig_expr, x = "Tumor_type_3categ", y = "value",facet.by = "variable",co
 dev.off()
 
 TR_expr<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","Tumor_type_3categ")])
-TR_expr<-TR_expr[which(TR_expr$value!=0),]
 TR_expr$value<-log10(TR_expr$value)
 tiff("Results/boxplot_TR_expression_PAAD.tiff",res=300,h=2500,w=3500)
 ggboxplot(TR_expr, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
@@ -302,11 +301,12 @@ dev.off()
 ###############################
 load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
 
+
 brewer.pal(3,name = "Accent")
 brewer.pal(3,name = "Pastel1")
 cols=c( "#7FC97F", "#FDC086", "#BEAED4" ,"#B3CDE3")
 
-summary(Pancreas.Validation.repertoire.diversity$Ig_Reads)
+summary(Pancreas.Validation.repertoire.diversity$Ig_Reads[which(Pancreas.Validation.repertoire.diversity$tissue=="pancreas tumor")])
 summary(Pancreas.Validation.repertoire.diversity$T_Reads)
 summary(Pancreas.Validation.repertoire.diversity$totalReads)
 
@@ -322,8 +322,6 @@ Pancreas.Validation.repertoire.diversity_Igclones<-Pancreas.Validation.repertoir
 
 ###T markers
 #Barplot
-Pancreas.Validation.repertoire.diversity$T_Reads<-Pancreas.Validation.repertoire.diversity$TRA+Pancreas.Validation.repertoire.diversity$TRB+
-  Pancreas.Validation.repertoire.diversity$TRD+Pancreas.Validation.repertoire.diversity$TRG
 tiff("Results/barplot_Treads_PancreasValidation.tiff",res=300,h=2500,w=4000)
 barplot(Pancreas.Validation.repertoire.diversity$T_Reads,col=cols[Pancreas.Validation.repertoire.diversity$tissue],main="Number of T-Reads",xlab = "Samples", ylab = "Reads",las=2)
 abline(h=100)
@@ -372,7 +370,6 @@ dev.off()
 
 #Texpression
 T_expr<-melt(Pancreas.Validation.repertoire.diversity_treads[,c("sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","tissue")])
-T_expr<-T_expr[which(T_expr$value!=0),]
 T_expr$value<-log10(T_expr$value)
 tiff("Results/boxplot_T_expression_PancreasValidation.tiff",res=300,h=2500,w=3500)
 ggboxplot(T_expr, x = "tissue", y = "value",facet.by = "variable",color = "tissue",ggtheme = theme_bw()) +
@@ -419,6 +416,138 @@ ggboxplot(alpha_beta_ratio, x = "tissue", y = "value",facet.by = "variable",colo
     comparisons =list(c("normal pancreas","pancreas tumor")))
 dev.off()
 
+#########################################################
+### 4. TCGA vs. Validation with clones call together ####
+#########################################################
+load("Data/PAAD_Val/PAAD_VAL_FullData.Rdata")
+
+##Filter by number of reads and clones <100
+PAAD.VAL.repertoire.diversity_treads<-PAAD.VAL.repertoire.diversity[which(PAAD.VAL.repertoire.diversity$T_Reads>100),]
+PAAD.VAL.repertoire.diversity_Igreads<-PAAD.VAL.repertoire.diversity[which(PAAD.VAL.repertoire.diversity$Ig_Reads>100),]
+PAAD.VAL.repertoire.diversity$T_clones<-PAAD.VAL.repertoire.diversity$clones_TRA+PAAD.VAL.repertoire.diversity$clones_TRB+
+  PAAD.VAL.repertoire.diversity$clones_TRD+PAAD.VAL.repertoire.diversity$clones_TRG
+PAAD.VAL.repertoire.diversity$Ig_clones<-PAAD.VAL.repertoire.diversity$clones_IGH+PAAD.VAL.repertoire.diversity$clones_IGK+
+  PAAD.VAL.repertoire.diversity$clones_IGL
+PAAD.VAL.repertoire.diversity_tclones<-PAAD.VAL.repertoire.diversity[which(PAAD.VAL.repertoire.diversity$T_clones>100),]
+PAAD.VAL.repertoire.diversity_Igclones<-PAAD.VAL.repertoire.diversity[which(PAAD.VAL.repertoire.diversity$Ig_clones>100),]
+
+
+brewer.pal(3,name = "Accent")
+cols=c( "#7FC97F", "#FDC086", "#BEAED4")
+
+#Ig expression
+Ig_expr<-melt(PAAD.VAL.repertoire.diversity_Igreads[,c("sample","IGH_expression","IGK_expression","IGL_expression","outcome")])
+Ig_expr$value<-log10(Ig_expr$value)
+tiff("Results/boxplot_Ig_expression_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(Ig_expr, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#Entropy
+Ig_entropy<-melt(PAAD.VAL.repertoire.diversity_Igclones[,c("sample","entropy_IGH","entropy_IGK","entropy_IGL","outcome")])
+tiff("Results/boxplot_Ig_entropy_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(Ig_entropy, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+      "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                       c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                       c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#Clones
+Ig_clones<-melt(PAAD.VAL.repertoire.diversity_Igclones[,c("sample","clones_IGH","clones_IGK","clones_IGL","outcome")])
+tiff("Results/boxplot_Ig_clones_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(Ig_clones, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreaheas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#T expression
+T_expr<-melt(PAAD.VAL.repertoire.diversity_treads[,c("sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","outcome")])
+T_expr$value<-log10(T_expr$value)
+tiff("Results/boxplot_T_expression_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(T_expr, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#Entropy
+T_entropy<-melt(PAAD.VAL.repertoire.diversity_tclones[,c("sample","entropy_TRA","entropy_TRB","entropy_TRD","entropy_TRG","outcome")])
+tiff("Results/boxplot_T_entropy_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(T_entropy, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#Clones
+T_clones<-melt(PAAD.VAL.repertoire.diversity_tclones[,c("sample","clones_TRA","clones_TRB","clones_TRD","clones_TRG","outcome")])
+tiff("Results/boxplot_T_clones_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(T_clones, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#Alpha_Beta_ratio_expression
+Alpha_Beta_ratio_expression<-melt(PAAD.VAL.repertoire.diversity_treads[,c("sample","Alpha_Beta_ratio_expression","outcome")])
+tiff("Results/boxplot_Alpha_Beta_ratio_expression_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(Alpha_Beta_ratio_expression, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
+
+#KappaLambda_ratio_expression
+KappaLambda_ratio_expression<-melt(PAAD.VAL.repertoire.diversity_Igreads[,c("sample","KappaLambda_ratio_expression","outcome")])
+tiff("Results/boxplot_KappaLambda_ratio_expression_TCGA_VAL.tiff",res=300,h=2500,w=3500)
+ggboxplot(KappaLambda_ratio_expression, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y=value,color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols[1],cols[1],cols[2],cols[3],cols[3]), labels = c("normal-pancreas (TCGA)",
+                                                                                     "normal-pancreas (Val)", "pseudonormal-pancreas (TCGA)", "tumor-pancreas (TCGA)", "tumor-pancreas (Val)")) +
+  stat_compare_means(
+    comparisons =list(c("normal-pancreas (TCGA)","normal-pancreas (Val)"),c("tumor-pancreas (TCGA)","tumor-pancreas (Val)"),
+                      c("normal-pancreas (TCGA)","tumor-pancreas (TCGA)"),c("normal-pancreas (Val)","tumor-pancreas (Val)"),
+                      c("pseudonormal-pancreas (TCGA)","tumor-pancreas (TCGA)")))
+dev.off()
 
 ###############################################################
 ## 5. Compare tumor/normal TCGA with tumor/normal validation ##
@@ -437,6 +566,7 @@ ggboxplot(Ig_expr, x = "tissue", y = "value",facet.by = "variable",color = "tiss
   scale_color_manual(values = c(cols[1],cols[3],cols[1],cols[3]), labels = c("normal pancreas (TCGA)", "tumor pancreas (TCGA)","normal pancreas (val)", "tumor pancreas (val)")) +
   stat_compare_means(
     comparisons =list(c("normal_pancreas","normal pancreas"),c("Tumor_pancreas","pancreas tumor")))
+
 dev.off()
 
 #IgEntropy
@@ -446,7 +576,6 @@ Ig_entropy2<-melt(Pancreas.Validation.repertoire.diversity_Igreads[,c("sample","
 colnames(Ig_entropy1)[1:2]<-c("sample","tissue")
 
 Ig_entropy<-rbind(Ig_entropy1,Ig_entropy2)
-Ig_entropy$value<-log10(Ig_entropy$value)
 tiff("Results/boxplot_Ig_entropy_TCGA_Val.tiff",res=300,h=2500,w=3500)
 ggboxplot(Ig_entropy, x = "tissue", y = "value",facet.by = "variable",color = "tissue",ggtheme = theme_bw()) +
   geom_point(aes(x=tissue, y=value,color=tissue), position = position_jitterdodge(dodge.width = 0.8)) +
@@ -479,7 +608,6 @@ T_entropy2<-melt(Pancreas.Validation.repertoire.diversity_treads[,c("sample","en
 colnames(T_entropy1)[1:2]<-c("sample","tissue")
 
 T_entropy<-rbind(T_entropy1,T_entropy2)
-T_entropy$value<-log10(T_entropy$value)
 tiff("Results/boxplot_T_entropy_TCGA_Val.tiff",res=300,h=2500,w=3500)
 ggboxplot(T_entropy, x = "tissue", y = "value",facet.by = "variable",color = "tissue",ggtheme = theme_bw()) +
   geom_point(aes(x=tissue, y=value,color=tissue), position = position_jitterdodge(dodge.width = 0.8)) +
