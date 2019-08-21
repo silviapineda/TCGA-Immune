@@ -31,8 +31,43 @@ for(i in files) {
 }
 save(data,file="Data/PAAD/PAAD_MIXCR_results.Rdata")
 
-#####Filter by CDR3
+#####
 load("Data/PAAD/PAAD_MIXCR_results.Rdata")
+###Chain
+data$chainType<-ifelse(data$bestVGene!="", substr(data$bestVGene,1,3),
+                       ifelse(data$bestVGene=="",substr(data$bestJGene,1,3),NA))
+
+###Add a column with the reads per chain for Ig and TRA
+##Reads per chain
+read_count <- table(data$sample)
+read_count_chain <- table(data$sample, data$chainType)
+reads <- data.frame(cbind(read_count,read_count_chain))
+
+####### The data needs to be normalized by the unmapped reads 
+totalReads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+id<-match(rownames(reads),totalReads$V1)
+reads$totalReads<-totalReads[id,2]
+
+##Total reads
+reads$Ig_Reads<-reads$IGH+reads$IGK+reads$IGL
+reads$T_Reads<- reads$TRA+reads$TRB+reads$TRD+reads$TRG
+
+####Normalize the nuber of reads
+reads$IG_expression<-(reads$IGH+reads$IGK+reads$IGL)/reads$totalReads
+reads$IGH_expression<-reads$IGH/reads$totalReads
+reads$IGK_expression<-reads$IGK/reads$totalReads
+reads$IGL_expression<-reads$IGL/reads$totalReads
+
+reads$T_expression<-(reads$TRA+reads$TRB+reads$TRD+reads$TRG)/reads$totalReads
+reads$TRA_expression<-reads$TRA/reads$totalReads
+reads$TRB_expression<-reads$TRB/reads$totalReads
+reads$TRD_expression<-reads$TRD/reads$totalReads
+reads$TRG_expression<-reads$TRG/reads$totalReads
+###Ratio
+reads$Alpha_Beta_ratio_expression<-(reads$TRA_expression+reads$TRB_expression)/reads$T_expression
+reads$KappaLambda_ratio_expression <- (reads$IGK_expression / reads$IGL_expression)
+
+####Restriction to CDR3 to extract the clones
 data_full_cdr3<-data[which(data$nSeqCDR3!=""),] #2,087,012
 data_full_cdr3$CDR3_length<-nchar(as.character(data_full_cdr3$nSeqCDR3)) 
 data_full_cdr3<-data_full_cdr3[which(data_full_cdr3$CDR3_length!=3),] #2,087,010
@@ -45,14 +80,13 @@ data_full_cdr3$SEQUENCE_ID<-paste(data_full_cdr3$sample,data_full_cdr3$seqID,sep
 data_full_cdr3$V_J_lenghCDR3 = paste(data_full_cdr3$bestVGene,data_full_cdr3$bestJGene,data_full_cdr3$CDR3_length,sep="_")
 
 ###Chain
-data_full_cdr3$chainType<-substr(data_full_cdr3$bestVGene,1,3)
 data_full_cdr3_Ig<-data_full_cdr3[which(data_full_cdr3$chainType=="IGH" |
-                                        data_full_cdr3$chainType=="IGK" |
-                                        data_full_cdr3$chainType=="IGL"),]
+                                          data_full_cdr3$chainType=="IGK" |
+                                          data_full_cdr3$chainType=="IGL"),]
 data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRA" | 
-                                         data_full_cdr3$chainType=="TRB" |
-                                         data_full_cdr3$chainType=="TRD" | 
-                                         data_full_cdr3$chainType=="TRG"),]
+                                           data_full_cdr3$chainType=="TRB" |
+                                           data_full_cdr3$chainType=="TRD" | 
+                                           data_full_cdr3$chainType=="TRG"),]
 
 ###save the data to call the clones by all samples using the nucleotides.py
 data_clonesInference_Ig<-data_full_cdr3_Ig[,c("SEQUENCE_ID","sample","nSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
@@ -196,14 +230,9 @@ diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2
 colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
                               "cdr3_length_TRD","cdr3_length_TRG")
 
-save(data_merge,diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata")
+PAAD_repertoire_diversity<-cbind(reads,diversity)
 
-####Read repertoire data from Akshay considering all reads
-## It is important to remember that when retricting reads to the ones with cdr3 informartion, the ratios where pretty weird since there were very few reads in the most uncommon chains
-## Therefore for the chain expression, we are going to stay with all reads detected by the MIXCR tool
-PAAD_repertoire<-readRDS("Data/TCGA_Immune_Rep/PAAD_RepertoireResults.rds")
-id<-match(rownames(diversity),rownames(PAAD_repertoire))
-PAAD_repertoire_diversity<-cbind(PAAD_repertoire[id,],diversity)
+save(data_merge,PAAD_repertoire_diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata")
 
 ###Annotation with the IDs
 file_ids = rownames(PAAD_repertoire_diversity)
@@ -316,12 +345,6 @@ PAAD.repertoire.diversity$Tumor_type_3categ<-ifelse(PAAD.repertoire.diversity$Tu
                                                                   ifelse(PAAD.repertoire.diversity$Tumor_type=="Pseudonormal (<1% neoplastic cellularity)","pseudonormal_pancreas",NA))))
 PAAD.repertoire.diversity$Tumor_type_3categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_3categ)
 PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$Tumor_type_3categ)==F),]
-
-###Add total reads that have been sequenced
-totalreads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";")
-
-id<-match(rownames(PAAD.repertoire.diversity),totalreads$V1)
-PAAD.repertoire.diversity$totalSeqReads<-totalreads$V2[id]
 
 save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
      file="Data/PAAD/PAAD_FullData.Rdata")
