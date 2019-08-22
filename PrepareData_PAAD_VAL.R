@@ -101,6 +101,7 @@ nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
 ##Clones per chain
+
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
 
 clones_count<- unique(data_merge[,c("sample","V_J_lenghCDR3_CloneId","chainType")])
@@ -168,14 +169,18 @@ diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_
 ####After runing recon
 recon<-read.table("Data/PAAD_VAL/RECON/test_D_number_table.txt",header=T)
 chain<-substr(recon$sample_name,65,67)
-sample<-substr(recon$sample_name,69,90)
+sample<-substr(recon$sample_name,69,104)
+sample<-unlist(strsplit(sample, "\\."))
+sample<-sample[which(nchar(sample)>7)]
 ##0.0D is species richness (Number of clones)
 ##Entropy is ln(1.0.D)
 diversity<-as.data.frame(diversity)
 chain_list<-unique(chain)
 for(i in chain_list){
   recon_chain<-recon[which(chain==i),]
-  sample_chain<-substr(recon_chain$sample_name,80,89)
+  sample_chain<-substr(recon_chain$sample_name,69,104)
+  sample_chain<-unlist(strsplit(sample_chain, "\\."))
+  sample_chain<-sample_chain[which(nchar(sample_chain)>7)]
   id<-match(rownames(diversity),sample_chain)
   clone_chain<-ifelse(is.na(id)==F,recon_chain[id,"est_0.0D"],0)
   assign(paste0("clones_recon_",i),clone_chain)
@@ -225,7 +230,7 @@ id.TRG<-match(rownames(diversity),cdr3_length_TRG$Group.1)
 cdr3_length_TRG_2<-ifelse(is.na(id.TRG)==T,0,cdr3_length_TRG$x)
 
 diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2,cdr3_length_TRA_2,cdr3_length_TRB_2,cdr3_length_TRD_2,cdr3_length_TRG_2)
-colnames(diversity)[15:21]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
+colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
                               "cdr3_length_TRD","cdr3_length_TRG")
 
 
