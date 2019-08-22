@@ -237,6 +237,13 @@ Pancreas.Validation.repertoire.diversity<-cbind(reads,diversity)
 annotation<-read.table("Data/Pancreas_Validation/Annotation.txt",sep="\t",header=T)
 id<-match(rownames(Pancreas.Validation.repertoire.diversity),annotation$Run)
 Pancreas.Validation.repertoire.diversity$tissue<-annotation[id,"tissue"]
+Pancreas.Validation.repertoire.diversity$sex<-annotation[id,"Sex"]
+Pancreas.Validation.repertoire.diversity$age<-annotation[id,"Age"]
+Pancreas.Validation.repertoire.diversity$tumor_size_cm<-annotation[id,"Tumor_size_cm"]
+Pancreas.Validation.repertoire.diversity$tumor_stage<-annotation[id,"Tumor_stage"]
+Pancreas.Validation.repertoire.diversity$tumor_grade<-annotation[id,"Tumor_grade"]
+Pancreas.Validation.repertoire.diversity$lymph_node_metastasis<-annotation[id,"Lymph_node_metastasis"]
+
 Pancreas.Validation.repertoire.diversity$sample<-rownames(Pancreas.Validation.repertoire.diversity)
 
 save(data_merge,Pancreas.Validation.repertoire.diversity,annotation,file="Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
