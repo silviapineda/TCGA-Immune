@@ -40,29 +40,30 @@ xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter=
 ##################################
 ## Heatmap for the BCR and TCR ###
 #################################
-PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$IG_Reads>100),]
-Ig_markers<-c("IGH_expression","IGK_expression","IGL_expression","KappaLambda_ratio_expression",
-              "clones_recon_IGH","clones_recon_IGK","clones_recon_IGL","entropy_recon_IGH",
-              "entropy_recon_IGK","entropy_recon_IGL")
-
+#IG
+PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$Ig_Reads>100),]
+Ig_markers<-c("IGH_expression","IGK_expression","IGL_expression")
 mat<-PAAD.repertoire.diversity_Igreads[,Ig_markers]
 rownames(mat)<-substr(PAAD.repertoire.diversity_Igreads$TCGA_sample,1,12)
 pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
 
+#TR
 PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$T_Reads>100),]
-T_markers<-c("TRA_expression","TRB_expression","TRD_expression","TRG_expression","Alpha_Beta_ratio_expression",
-             "clones_recon_TRA","clones_recon_TRB","clones_recon_TRD","clones_recon_TRG","entropy_recon_TRA",
-             "entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG")
+T_markers<-c("TRA_expression","TRB_expression","TRD_expression","TRG_expression")
 mat<-PAAD.repertoire.diversity_treads[,T_markers]
 rownames(mat)<-substr(PAAD.repertoire.diversity_treads$TCGA_sample,1,12)
 pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
 
+#All
+ALL_markers<-c("IGH_expression","IGK_expression","IGL_expression","TRA_expression","TRB_expression","TRD_expression","TRG_expression")
+mat<-PAAD.repertoire.tumor[,ALL_markers]
+rownames(mat)<-substr(PAAD.repertoire.tumor$TCGA_sample,1,12)
+pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
 
 ###Applied ENET to find cells associated with T or B expression
 ##############
 ##T_reads
 ##############
-load("~/Downloads/PAAD_repertoire_xCell_clinical.Rdata")
 PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$T_Reads>100),] #139
 xcell.data.tumor.filter_treads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$T_Reads>100),] #139
 xcell.data.tumor.filter_treads_mat<-xcell.data.tumor.filter_treads[ , -which(colnames(xcell.data.tumor.filter_treads) %in% c("ImmuneScore","StromaScore","MicroenvironmentScore"))]
@@ -70,9 +71,9 @@ xcell.data.tumor.filter_treads_mat<-xcell.data.tumor.filter_treads[ , -which(col
 library(dplyr)
 PAAD.repertoire.diversity_treads$T_expression_tertiles<-ntile(PAAD.repertoire.diversity_treads$T_expression,3)
 
-alphalist<-seq(0.01,0.99,by=0.01)
+alphalist<-seq(0.1,0.9,by=0.1)
 set.seed(54)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_treads_mat,PAAD.repertoire.diversity_treads$TRA_expression,family="gaussian"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_treads_mat,PAAD.repertoire.diversity_treads$T_expression,family="gaussian"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 
 
@@ -90,7 +91,7 @@ id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
 
-enet<-glmnet(xcell.data.tumor.filter_treads_mat,PAAD.repertoire.diversity_treads$TRA_expression,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
+enet<-glmnet(xcell.data.tumor.filter_treads_mat,PAAD.repertoire.diversity_treads$T_expression,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
 cells<-rownames(enet$beta)[which(enet$beta!=0)]
 coef<-enet$beta[which(enet$beta!=0)]
 
@@ -110,13 +111,13 @@ dev.off()
 ##############
 ##IG_reads
 #############
-PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$IGH_Reads>100),] #147
-xcell.data.tumor.filter_Igreads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$IGH_Reads>100),] #147
+PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$Ig_Reads>100),] #147
+xcell.data.tumor.filter_Igreads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$Ig_Reads>100),] #147
 xcell.data.tumor.filter_Igreads_mat<-xcell.data.tumor.filter_Igreads[ , -which(colnames(xcell.data.tumor.filter_Igreads) %in% c("ImmuneScore","StromaScore","MicroenvironmentScore"))]
 
-alphalist<-seq(0.01,0.99,by=0.01)
+alphalist<-seq(0.1,0.9,by=0.01)
 set.seed(54)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_Igreads_mat,PAAD.repertoire.diversity_Igreads$KappaLambda_ratio_expression,family="gaussian"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter_Igreads_mat,log10(PAAD.repertoire.diversity_Igreads$IG_expression),family="gaussian"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
@@ -132,7 +133,7 @@ id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
 
-enet<-glmnet(xcell.data.tumor.filter_Igreads_mat,PAAD.repertoire.diversity_Igreads$KappaLambda_ratio_expression,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
+enet<-glmnet(xcell.data.tumor.filter_Igreads_mat,log10(PAAD.repertoire.diversity_Igreads$IG_expression),family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
 cells<-rownames(enet$beta)[which(enet$beta!=0)]
 coef<-enet$beta[which(enet$beta!=0)]
 
@@ -140,7 +141,7 @@ significant_cells<-xcell.data.tumor.filter_Igreads_mat[,match(cells,colnames(xce
 
 ## Heatmap ####
 annotation_col = data.frame(
-  IG_expression = PAAD.repertoire.diversity_Igreads$KappaLambda_ratio_expression)
+  IG_expression = PAAD.repertoire.diversity_Igreads$IG_expression)
 
 rownames(annotation_col)<-rownames(significant_cells)
 ann_colors = list (IG_expression = brewer.pal(6,"Greens"))
@@ -150,155 +151,195 @@ pheatmap(t(significant_cells),scale="row",annotation_col = annotation_col,annota
 dev.off()
 
 
-
 ###############################
 ## Merge with Clinical data ###
 ###############################
 PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_2categ=="Tumor_pancreas"),]
 clinical.patient.tumor<-clinical.patient[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode),]
-
-markers<-c("IG_expression","IGH_expression","IGK_expression","IGL_expression","T_expression","TRA_expression","TRB_expression","TRD_expression",
-  "TRG_expression","Alpha_Beta_ratio_expression", "KappaLambda_ratio_expression","clones_recon_IGH","clones_recon_IGK","clones_recon_IGL",
-  "clones_recon_TRA","clones_recon_TRB","clones_recon_TRD","clones_recon_TRG","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL",           
-  "entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG")
-
+PAAD.repertoire.tumor.clinical.patient<-cbind(PAAD.repertoire.tumor,clinical.patient.tumor)
 
 ##Function to run the association between clinical outcome and BCR/TCR
-association.test.immuneRep<- function (clinical.patient.tumor,clinical.var,PAAD.repertoire.tumor,markers){
-  if (class(clinical.patient.tumor[,clinical.var])=="factor"){
-    p.markers<-NULL
-    for(i in 1:length(markers)){
-      p.markers[i]<-kruskal.test(PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[i]]~
-                                   clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])$p.value
-    }
-    dfplot <- data.frame(PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)]],
-                         clinical.var = clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])
-    colnames(dfplot)[ncol(dfplot)]<- clinical.var
-    
-    if (dim(dfplot)[2]>1){
-      for(i in 1:length(markers[which(p.markers<0.05)])){
-        print(i)
-        dfplot$marker<-PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)][i]]
-        tiff(paste0("Results/boxplot_",clinical.var,"_",markers[which(p.markers<0.05)][i],".tiff"),res=300,h=2500,w=3000)
-        print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var], 
-                                x=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])) + geom_boxplot() 
-              + scale_y_continuous(name= markers[which(p.markers<0.05)][i]) + stat_compare_means()  + scale_x_discrete(name=clinical.var)
-              + scale_fill_discrete(name=clinical.var))
-        dev.off()
-      }
-    }
-  } else {
-    p.markers<-NULL
-    for(i in 1:length(markers)){
-      p.markers[i]<-coef(summary(glm(PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[i]]~
-                                       clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])))[2,4]
-    }
-    dfplot <- data.frame(marker =PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)]],
-                         clinical.var = clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])
-    colnames(dfplot)[ncol(dfplot)]<- clinical.var
-    
-    if (dim(dfplot)[2]>1){
-      for(i in 1:length(markers[which(p.markers<0.05)])){
-        print(i)
-        dfplot$marker<-PAAD.repertoire.tumor[which(clinical.patient.tumor[,clinical.var]!=""),markers[which(p.markers<0.05)][i]]
-        tiff(paste0("Results/boxplot_",clinical.var,"_",markers[which(p.markers<0.05)][i],".tiff"),res=300,h=2000,w=3000)
-        print(ggplot(dfplot,aes(y=marker, fill=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var], 
-                                x=clinical.patient.tumor[which(clinical.patient.tumor[,clinical.var]!=""),clinical.var])) + geom_point() + geom_smooth(method='lm')
-              + scale_y_continuous(name= markers[which(p.markers<0.05)][i]) + stat_cor(method = "pearson") + scale_x_continuous(name=clinical.var)
-              + scale_fill_continuous(name=clinical.var))
-        dev.off()
-      }
-    }
+association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,clinical.var){
+  Ig_expr<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression",clinical.var)])
+  Ig_expr$value<-log10(Ig_expr$value)
+  Ig_expr<-na.omit(Ig_expr)
+  tiff(paste0("Results/boxplot_Ig_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Ig_expr[,clinical.var]))<10){  
+  print(ggboxplot(Ig_expr, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+    rotate_x_text() +
+    geom_point(aes(x=Ig_expr[,clinical.var], y=value,color=Ig_expr[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+    stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Ig_expr,aes(x = as.numeric(Ig_expr[,clinical.var]), y = value)) + geom_point() + 
+      facet_grid(.~Ig_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
   }
-  return("Done")
+  dev.off()
+
+  Ig_entropy<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL",clinical.var)])
+  Ig_entropy<-Ig_entropy[which(Ig_entropy$value!=0),]
+  Ig_entropy<-na.omit(Ig_entropy)
+  tiff(paste0("Results/boxplot_Ig_entropy_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Ig_entropy[,clinical.var]))<10){  
+    print(ggboxplot(Ig_entropy, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+    rotate_x_text() +
+    geom_point(aes(x=Ig_entropy[,clinical.var], y=value,color=Ig_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+    stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Ig_entropy,aes(x = as.numeric(Ig_entropy[,clinical.var]), y = value)) + geom_point() + 
+          facet_grid(.~Ig_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+
+  T_expr<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression",clinical.var)])
+  T_expr$value<-log10(T_expr$value)
+  T_expr<-na.omit(T_expr)
+  tiff(paste0("Results/boxplot_T_expr_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(T_expr[,clinical.var]))<10){  
+    print(ggboxplot(T_expr, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+    rotate_x_text() +
+    geom_point(aes(x=T_expr[,clinical.var], y=value,color=T_expr[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+    stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(T_expr,aes(x = as.numeric(T_expr[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~T_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+
+  T_entropy<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG",clinical.var)])
+  T_entropy<-T_entropy[which(T_entropy$value!=0),]
+  T_entropy<-na.omit(T_entropy)
+  tiff(paste0("Results/boxplot_T_entropy_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(T_entropy[,clinical.var]))<10){  
+    print(ggboxplot(T_entropy, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+    rotate_x_text() +
+    geom_point(aes(x=T_entropy[,clinical.var], y=value,color=T_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+    stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(T_entropy,aes(x = as.numeric(T_entropy[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~T_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+
+  Alpha_Beta_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","Alpha_Beta_ratio_expression",clinical.var)])
+  Alpha_Beta_ratio_expression<-na.omit(Alpha_Beta_ratio_expression)
+  tiff(paste0("Results/boxplot_Alpha_Beta_ratio_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Alpha_Beta_ratio_expression[,clinical.var]))<10){  
+    print(ggboxplot(Alpha_Beta_ratio_expression, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+    rotate_x_text() +
+    geom_point(aes(x=Alpha_Beta_ratio_expression[,clinical.var], y=value,color=Alpha_Beta_ratio_expression[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+    stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Alpha_Beta_ratio_expression,aes(x = as.numeric(Alpha_Beta_ratio_expression[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~Alpha_Beta_ratio_expression$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson") + xlab(clinical.var))
+  }
+  dev.off()
+
+  KappaLambda_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","KappaLambda_ratio_expression",clinical.var)])
+  KappaLambda_ratio_expression<-na.omit(KappaLambda_ratio_expression)
+  tiff(paste0("Results/boxplot_KappaLambda_ratio_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(KappaLambda_ratio_expression[,clinical.var]))<10){  
+    print(ggboxplot(KappaLambda_ratio_expression, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+    rotate_x_text() +
+    geom_point(aes(x=KappaLambda_ratio_expression[,clinical.var], y=value,color=KappaLambda_ratio_expression[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+    stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(KappaLambda_ratio_expression,aes(x = as.numeric(KappaLambda_ratio_expression[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~KappaLambda_ratio_expression$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
 }
 
-
 ##Histological type
-clinical.patient.tumor$histological_type_2cat<-factor(ifelse(clinical.patient.tumor$histological_type=="Pancreas-Adenocarcinoma Ductal Type","PDAC","PC-Other"))
-clinical.patient.tumor$histological_type_2cat<-factor(clinical.patient.tumor$histological_type_2cat)
-association.test.immuneRep(clinical.patient.tumor,"histological_type_2cat",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$histological_type_2cat<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$histological_type=="Pancreas-Adenocarcinoma Ductal Type","PDAC","PC-Other"))
+PAAD.repertoire.tumor.clinical.patient$histological_type_2cat<-factor(PAAD.repertoire.tumor.clinical.patient$histological_type_2cat)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"histological_type_2cat")
 
 ##anatomic_neoplasm_subdivision
-clinical.patient.tumor$anatomic_neoplasm_subdivision<-factor(clinical.patient.tumor$anatomic_neoplasm_subdivision)
-association.test.immuneRep(clinical.patient.tumor,"anatomic_neoplasm_subdivision",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$anatomic_neoplasm_subdivision<-factor(PAAD.repertoire.tumor.clinical.patient$anatomic_neoplasm_subdivision)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"anatomic_neoplasm_subdivision")
 
 ##gender
-clinical.patient.tumor$gender<-factor(clinical.patient.tumor$gender)
-association.test.immuneRep(clinical.patient.tumor,"gender",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$gender<-factor(PAAD.repertoire.tumor.clinical.patient$gender)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"gender")
 
 ##race_list
-clinical.patient.tumor$race_list<-factor(clinical.patient.tumor$race_list)
-association.test.immuneRep(clinical.patient.tumor,"race_list",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$race_list<-ifelse(PAAD.repertoire.tumor.clinical.patient$race_list=="",NA,as.character(PAAD.repertoire.tumor.clinical.patient$race_list))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"race_list")
 
 ##History of Prior Malignancy
-clinical.patient.tumor$other_dx<-factor(clinical.patient.tumor$other_dx)
-association.test.immuneRep(clinical.patient.tumor,"other_dx",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$other_dx<-factor(PAAD.repertoire.tumor.clinical.patient$other_dx)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"other_dx")
 
-##number_of_lymphnodes_positive_by_he
-association.test.immuneRep(clinical.patient.tumor,"number_of_lymphnodes_positive_by_he",PAAD.repertoire.tumor,markers)
 
 ##neoplasm_histologic_grade
-clinical.patient.tumor$neoplasm_histologic_grade_3cat<-factor(ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G1","G1",
-                                                                     ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G2","G2",
-                                                                            ifelse(clinical.patient.tumor$neoplasm_histologic_grade=="G3","G3",""))))
-association.test.immuneRep(clinical.patient.tumor,"neoplasm_histologic_grade_3cat",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$neoplasm_histologic_grade_3cat<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$neoplasm_histologic_grade=="G1","G1",
+                                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$neoplasm_histologic_grade=="G2","G2",
+                                                                            ifelse(PAAD.repertoire.tumor.clinical.patient$neoplasm_histologic_grade=="G3","G3",NA))))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"neoplasm_histologic_grade_3cat")
 
 ##Age 
-association.test.immuneRep(clinical.patient.tumor,"age_at_initial_pathologic_diagnosis",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$age_at_initial_pathologic_diagnosis<-factor(PAAD.repertoire.tumor.clinical.patient$age_at_initial_pathologic_diagnosis)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"age_at_initial_pathologic_diagnosis")
 
 
 ##Smoking
-clinical.patient.tumor$smoking<-factor(ifelse(clinical.patient.tumor$tobacco_smoking_history_master=="Current smoker (includes daily smokers and non-daily smokers or occasional smokers)","Current",
-                                       ifelse(clinical.patient.tumor$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker","Former")))
-association.test.immuneRep(clinical.patient.tumor,"smoking",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$smoking<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Current smoker (includes daily smokers and non-daily smokers or occasional smokers)","Current",
+                                       ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker","Former")))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"smoking")
 
 ##number_pack_years_smoked
-association.test.immuneRep(clinical.patient.tumor,"number_pack_years_smoked",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$number_pack_years_smoked<-factor(PAAD.repertoire.tumor.clinical.patient$number_pack_years_smoked)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"number_pack_years_smoked")
 
 ##Alcohol
-clinical.patient.tumor$alcohol_history_documented<-factor(clinical.patient.tumor$alcohol_history_documented)
-association.test.immuneRep(clinical.patient.tumor,"alcohol_history_documented",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$alcohol_history_documented<-ifelse(PAAD.repertoire.tumor.clinical.patient$alcohol_history_documented=="",NA,
+                                                                          as.character(PAAD.repertoire.tumor.clinical.patient$alcohol_history_documented))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"alcohol_history_documented")
 
 ##Alcohol category
-clinical.patient.tumor$alcoholic_exposure_category2<-ifelse(clinical.patient.tumor$alcohol_history_documented=="NO","No-drinker",
-                                                     ifelse(clinical.patient.tumor$alcohol_history_documented=="YES" & clinical.patient.tumor$alcoholic_exposure_category=="",NA,
-                                                     ifelse(clinical.patient.tumor$alcoholic_exposure_category=="None","None-Drinker",
-                                                     ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Occasional Drinker","Occasional-Drinker",
-                                                     ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Daily Drinker","Daily-Drinker",
-                                                     ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Social Drinker","Social-Drinker",
-                                                     ifelse(clinical.patient.tumor$alcoholic_exposure_category=="Weekly Drinker","Weekly-Drinker",NA)))))))
-clinical.patient.tumor$alcoholic_exposure_category2<-factor(clinical.patient.tumor$alcoholic_exposure_category2)
-association.test.immuneRep(clinical.patient.tumor,"alcoholic_exposure_category2",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category2<-ifelse(PAAD.repertoire.tumor.clinical.patient$alcohol_history_documented=="NO","No-drinker",
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$alcohol_history_documented=="YES" & PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category=="",NA,
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category=="None","None-Drinker",
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category=="Occasional Drinker","Occasional-Drinker",
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category=="Daily Drinker","Daily-Drinker",
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category=="Social Drinker","Social-Drinker",
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category=="Weekly Drinker","Weekly-Drinker",NA)))))))
+PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category2<-factor(PAAD.repertoire.tumor.clinical.patient$alcoholic_exposure_category2)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"alcoholic_exposure_category2")
 
 ##family history
-clinical.patient.tumor$family_history_of_cancer<-factor(clinical.patient.tumor$family_history_of_cancer)
-association.test.immuneRep(clinical.patient.tumor,"family_history_of_cancer",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$family_history_of_cancer<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$family_history_of_cancer=="",NA,PAAD.repertoire.tumor.clinical.patient$family_history_of_cancer))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"family_history_of_cancer")
 
 ##radiation_therapy
-clinical.patient.tumor$radiation_therapy<-factor(clinical.patient.tumor$radiation_therapy)
-association.test.immuneRep(clinical.patient.tumor,"radiation_therapy",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$radiation_therapy<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$radiation_therapy=="",NA,
+                                                                        PAAD.repertoire.tumor.clinical.patient$radiation_therapy))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"radiation_therapy")
 
 ##primary_therapy_outcome_success
-clinical.patient.tumor$primary_therapy_outcome_success<-factor(clinical.patient.tumor$primary_therapy_outcome_success)
-association.test.immuneRep(clinical.patient.tumor,"primary_therapy_outcome_success",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$primary_therapy_outcome_success<-ifelse(PAAD.repertoire.tumor.clinical.patient$primary_therapy_outcome_success=="",NA,
+                                                                               PAAD.repertoire.tumor.clinical.patient$primary_therapy_outcome_success)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"primary_therapy_outcome_success")
 
 ##history_chronic_pancreatitis
-clinical.patient.tumor$history_of_chronic_pancreatitis<-factor(clinical.patient.tumor$history_of_chronic_pancreatitis)
-association.test.immuneRep(clinical.patient.tumor,"history_of_chronic_pancreatitis",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$history_of_chronic_pancreatitis<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$history_of_chronic_pancreatitis=="",NA,
+                                                                                      PAAD.repertoire.tumor.clinical.patient$history_of_chronic_pancreatitis))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"history_of_chronic_pancreatitis")
 
 #stage_event_tnm_categories
-clinical.patient.tumor$pathologic_stage<-factor(ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage IA" | 
-                                                clinical.patient.tumor$stage_event_pathologic_stage=="Stage IB", "Stage I",
-                                        ifelse(clinical.patient.tumor$stage_event_pathologic_stage == "Stage IIA" |
-                                               clinical.patient.tumor$stage_event_pathologic_stage=="Stage IIB","Stage II",
-                                         ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage III","Stage III",
-                                         ifelse(clinical.patient.tumor$stage_event_pathologic_stage=="Stage IV", "Stage IV",NA)))))
-association.test.immuneRep(clinical.patient.tumor,"pathologic_stage",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.clinical.patient$pathologic_stage<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$stage_event_pathologic_stage=="Stage IA" | 
+                                                                         PAAD.repertoire.tumor.clinical.patient$stage_event_pathologic_stage=="Stage IB", "Stage I",
+                                        ifelse(PAAD.repertoire.tumor.clinical.patient$stage_event_pathologic_stage == "Stage IIA" |
+                                                 PAAD.repertoire.tumor.clinical.patient$stage_event_pathologic_stage=="Stage IIB","Stage II",
+                                         ifelse(PAAD.repertoire.tumor.clinical.patient$stage_event_pathologic_stage=="Stage III","Stage III",
+                                         ifelse(PAAD.repertoire.tumor.clinical.patient$stage_event_pathologic_stage=="Stage IV", "Stage IV",NA)))))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"pathologic_stage")
 
-##history_chronic_pancreatitis
-clinical.patient.tumor$history_of_diabetes<-factor(clinical.patient.tumor$history_of_diabetes)
-association.test.immuneRep(clinical.patient.tumor,"history_of_diabetes",PAAD.repertoire.tumor,markers)
+##history_diabetes
+PAAD.repertoire.tumor.clinical.patient$history_of_diabetes<-ifelse(PAAD.repertoire.tumor.clinical.patient$history_of_diabetes=="",NA,
+                                                                   as.character(PAAD.repertoire.tumor.clinical.patient$history_of_diabetes))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"history_of_diabetes")
 
 
 
@@ -323,35 +364,72 @@ varImpPlot(rf_output)
 ##################################
 #######Clinical follow-up########
 #################################
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_2categ=="Tumor_pancreas"),]
 clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
+PAAD.repertoire.tumor.followuop<-cbind(PAAD.repertoire.tumor,clinical.follow_up.tumor)
+
 ##vital_status
-clinical.follow_up.tumor$vital_status<-factor(clinical.follow_up.tumor$vital_status)
-association.test.immuneRep(clinical.follow_up.tumor,"vital_status",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.followuop$vital_status<-factor(PAAD.repertoire.tumor.followuop$vital_status)
+association.test.immuneRep(PAAD.repertoire.tumor.followuop,"vital_status")
 
 ##new tumor event
-clinical.follow_up.tumor$new_tumor_event_type<-replace(clinical.follow_up.tumor$new_tumor_event_type,clinical.follow_up.tumor$new_tumor_event_type=="#N/A",NA)
-clinical.follow_up.tumor$new_tumor_event_type<-replace(clinical.follow_up.tumor$new_tumor_event_type,
-                                                       clinical.follow_up.tumor$new_tumor_event_type=="Locoregional Recurrence|Distant Metastasis" | 
-                                                         clinical.follow_up.tumor$new_tumor_event_type=="New Primary Tumor",NA)
-clinical.follow_up.tumor$new_tumor_event_type<-factor(clinical.follow_up.tumor$new_tumor_event_type)
-association.test.immuneRep(clinical.follow_up.tumor,"new_tumor_event_type",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.followuop$new_tumor_event_type<-replace(PAAD.repertoire.tumor.followuop$new_tumor_event_type,PAAD.repertoire.tumor.followuop$new_tumor_event_type=="#N/A",NA)
+PAAD.repertoire.tumor.followuop$new_tumor_event_type<-replace(PAAD.repertoire.tumor.followuop$new_tumor_event_type,
+                                                              PAAD.repertoire.tumor.followuop$new_tumor_event_type=="Locoregional Recurrence|Distant Metastasis" | 
+                                                                PAAD.repertoire.tumor.followuop$new_tumor_event_type=="New Primary Tumor",NA)
+PAAD.repertoire.tumor.followuop$new_tumor_event_type<-factor(PAAD.repertoire.tumor.followuop$new_tumor_event_type)
+association.test.immuneRep(PAAD.repertoire.tumor.followuop,"new_tumor_event_type")
 
 #treatment_outcome_first_course
-clinical.follow_up.tumor$treatment_outcome_first_course<-replace(clinical.follow_up.tumor$treatment_outcome_first_course,
-                                                                 clinical.follow_up.tumor$treatment_outcome_first_course=="[Discrepancy]" |
-                                                                 clinical.follow_up.tumor$treatment_outcome_first_course=="[Not Applicable]" | 
-                                                                 clinical.follow_up.tumor$treatment_outcome_first_course=="[Not Available]" |
-                                                                 clinical.follow_up.tumor$treatment_outcome_first_course=="[Unknown]",NA)
-clinical.follow_up.tumor$treatment_outcome_first_course<-factor(clinical.follow_up.tumor$treatment_outcome_first_course)
-association.test.immuneRep(clinical.follow_up.tumor,"treatment_outcome_first_course",PAAD.repertoire.tumor,markers)
+PAAD.repertoire.tumor.followuop$treatment_outcome_first_course<-replace(PAAD.repertoire.tumor.followuop$treatment_outcome_first_course,
+                                                                        PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Discrepancy]" |
+                                                                          PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Not Applicable]" | 
+                                                                          PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Not Available]" |
+                                                                          PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Unknown]",NA)
+PAAD.repertoire.tumor.followuop$treatment_outcome_first_course<-factor(PAAD.repertoire.tumor.followuop$treatment_outcome_first_course)
+association.test.immuneRep(PAAD.repertoire.tumor.followuop,"treatment_outcome_first_course")
 
-###########################
-##### Biospecimen ########
-##########################
-biospecimen.slide.tumor<-biospecimen.slide[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),biospecimen.slide$bcr_patient_barcode),]
+##############################################
+### Survival Analysis  ####
+##############################################
+PAAD.repertoire.tumor.survival<-merge(PAAD.repertoire.tumor.clinical.patient,PAAD.repertoire.tumor.followuop,by="bcr_patient_barcode")
+library(survival)
+library(survminer)
+library(survMisc)
+##OS
+surv_object <- Surv(time = PAAD.repertoire.tumor.survival$OS.time, event = PAAD.repertoire.tumor.survival$OS)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$entropy_recon_IGH.x+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
+               +PAAD.repertoire.tumor.survival$age_at_initial_pathologic_diagnosis+PAAD.repertoire.tumor.survival$pathologic_stage)
+summary(res.cox)
+##Categorical
+KL_mean<-mean(PAAD.repertoire.tumor$entropy_recon_IGH)
+PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$entropy_recon_IGH<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor$KL_ratio_2cat)
+fit1
+ggsurvplot(fit1, data = PAAD.repertoire.tumor)
+comp(ten(fit1))$tests$lrTests
 
-#percent_tumor_nuclei
-association.test.immuneRep(biospecimen.slide.tumor,"percent_neutrophil_infiltration",PAAD.repertoire.tumor,markers)
+#DSS
+clinical.follow_up.tumor.DSS<-clinical.follow_up.tumor[which(clinical.follow_up.tumor$DSS!="#N/A"),]
+clinical.follow_up.tumor.DSS$DSS<-as.integer(as.character(clinical.follow_up.tumor.DSS$DSS))
+surv_object <- Surv(time = clinical.follow_up.tumor.DSS$DSS.time, event = clinical.follow_up.tumor.DSS$DSS)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB[which(clinical.follow_up.tumor$DSS!="#N/A")])
+summary(res.cox)
+
+#Categorical
+KL_mean<-mean(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression)
+PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat<-ifelse(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat)
+fit1
+ggsurvplot(fit1, data = PAAD.repertoire.diversity.gini_IGHV2)
+comp(ten(fit1))$tests$lrTests
+
+##PFI
+surv_object <- Surv(time = clinical.follow_up.tumor$PFI.time, event = clinical.follow_up.tumor$PFI)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB)
+summary(res.cox)
+
+
 
 ################################
 ##clinical outcome with xcell###
@@ -544,46 +622,6 @@ association.test.xcell(biospecimen.slide.xcell,"percent_stromal_cells",xcell.dat
 
 #percent_lymphocyte_infiltration
 association.test.xcell(biospecimen.slide.xcell,"percent_lymphocyte_infiltration",xcell.data.tumor.filter)
-
-##############################################
-### Survival Analysis  ####
-##############################################
-library(survival)
-library(survminer)
-library(survMisc)
-####ImmuneRep
-clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
-##OS
-surv_object <- Surv(time = clinical.follow_up.tumor$OS.time, event = clinical.follow_up.tumor$OS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRG)
-summary(res.cox)
-##Categorical
-KL_mean<-mean(PAAD.repertoire.tumor$entropy_recon_IGH)
-PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$entropy_recon_IGH<=KL_mean,1,2)
-fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor$KL_ratio_2cat)
-fit1
-ggsurvplot(fit1, data = PAAD.repertoire.tumor)
-comp(ten(fit1))$tests$lrTests
-
-#DSS
-clinical.follow_up.tumor.DSS<-clinical.follow_up.tumor[which(clinical.follow_up.tumor$DSS!="#N/A"),]
-clinical.follow_up.tumor.DSS$DSS<-as.integer(as.character(clinical.follow_up.tumor.DSS$DSS))
-surv_object <- Surv(time = clinical.follow_up.tumor.DSS$DSS.time, event = clinical.follow_up.tumor.DSS$DSS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB[which(clinical.follow_up.tumor$DSS!="#N/A")])
-summary(res.cox)
-
-#Categorical
-KL_mean<-mean(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression)
-PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat<-ifelse(PAAD.repertoire.diversity.gini_IGHV2$KappaLambda_ratio_expression<=KL_mean,1,2)
-fit1 <- survfit(surv_object ~ PAAD.repertoire.diversity.gini_IGHV2$KL_ratio_2cat)
-fit1
-ggsurvplot(fit1, data = PAAD.repertoire.diversity.gini_IGHV2)
-comp(ten(fit1))$tests$lrTests
-
-##PFI
-surv_object <- Surv(time = clinical.follow_up.tumor$PFI.time, event = clinical.follow_up.tumor$PFI)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB)
-summary(res.cox)
 
 
 
