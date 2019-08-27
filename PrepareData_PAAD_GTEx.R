@@ -102,7 +102,6 @@ nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
 ##Clones per chain
-
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
 
 clones_count<- unique(data_merge[,c("sample","V_J_lenghCDR3_CloneId","chainType")])
@@ -131,14 +130,14 @@ for (i in 1:length(sample)){
   clones_sample_TRG<-data_sample_unique[which(data_sample_unique$chainType=="TRG"),"V_J_lenghCDR3_CloneId"]
   
   #To write file to run with Recon
-  write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("Data/PAAD_GTEx//RECON/clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_IGK))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_IGL))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  
+  # write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("Data/PAAD_GTEx//RECON/clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_IGK))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_IGL))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("Data/PAAD_GTEx/RECON/clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # 
   fi_IGH<-as.numeric(table(clones_sample_IGH))/length(clones_sample_IGH)
   fi_IGK<-as.numeric(table(clones_sample_IGK))/length(clones_sample_IGK)
   fi_IGL<-as.numeric(table(clones_sample_IGL))/length(clones_sample_IGL)
@@ -169,8 +168,8 @@ diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_
 
 ####After runing recon
 recon<-read.table("Data/PAAD_GTEx/RECON/test_D_number_table.txt",header=T)
-chain<-substr(recon$sample_name,65,67)
-sample<-substr(recon$sample_name,69,104)
+chain<-substr(recon$sample_name,66,68)
+sample<-substr(recon$sample_name,70,105)
 sample<-unlist(strsplit(sample, "\\."))
 sample<-sample[which(nchar(sample)>7)]
 ##0.0D is species richness (Number of clones)
@@ -179,7 +178,7 @@ diversity<-as.data.frame(diversity)
 chain_list<-unique(chain)
 for(i in chain_list){
   recon_chain<-recon[which(chain==i),]
-  sample_chain<-substr(recon_chain$sample_name,69,104)
+  sample_chain<-substr(recon_chain$sample_name,70,105)
   sample_chain<-unlist(strsplit(sample_chain, "\\."))
   sample_chain<-sample_chain[which(nchar(sample_chain)>7)]
   id<-match(rownames(diversity),sample_chain)
@@ -245,17 +244,178 @@ PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(PAAD.repertoire.diver
 id.paad<-match(rownames(PAAD.repertoire.diversity),rownames(PAAD.GTEx.repertoire.diversity))
 id.gtex<-match(rownames(Pancreas.repertoire.diversity),rownames(PAAD.GTEx.repertoire.diversity))
 
+##Outcome
 PAAD.GTEx.repertoire.diversity$outcome<-NA
 PAAD.GTEx.repertoire.diversity$outcome[na.omit(id.paad)]<-as.character(PAAD.repertoire.diversity$Tumor_type_3categ)
 PAAD.GTEx.repertoire.diversity$outcome[na.omit(id.gtex)]<-c("Normal-pancreas (GTEx)")
 
 PAAD.GTEx.repertoire.diversity$outcome<-ifelse(PAAD.GTEx.repertoire.diversity$outcome=="normal_pancreas","normal-pancreas (TCGA)",
-                                           ifelse(PAAD.GTEx.repertoire.diversity$outcome=="Tumor_pancreas","tumor-pancreas (TCGA)",
-                                                  ifelse(PAAD.GTEx.repertoire.diversity$outcome=="Normal-pancreas (GTEx)","Normal-pancreas (GTEx)",NA)))
+                                               ifelse(PAAD.GTEx.repertoire.diversity$outcome=="Tumor_pancreas","tumor-pancreas (TCGA)",
+                                                      ifelse(PAAD.GTEx.repertoire.diversity$outcome=="Normal-pancreas (GTEx)","Normal-pancreas (GTEx)",NA)))
+
+##Annotation sample
+PAAD.GTEx.repertoire.diversity$sample2<-NA
+PAAD.GTEx.repertoire.diversity$sample2[na.omit(id.paad)]<-as.character(substr(PAAD.repertoire.diversity$TCGA_sample,1,12))
+PAAD.GTEx.repertoire.diversity$sample2[na.omit(id.gtex)]<-as.character(Pancreas.repertoire.diversity$SUBJID)
+
+##Sex
+id.paad<-match(clinical.patient$bcr_patient_barcode,PAAD.GTEx.repertoire.diversity$sample2)
+PAAD.GTEx.repertoire.diversity$sex<-NA
+PAAD.GTEx.repertoire.diversity$sex[na.omit(id.paad)]<-as.character(clinical.patient$gender[which(na.omit(id.paad)!=F)])
+id.gtex<-match(annotation_gtex_pancreas$SUBJID,PAAD.GTEx.repertoire.diversity$sample2)
+PAAD.GTEx.repertoire.diversity$sex[na.omit(id.gtex)]<-as.character(annotation_gtex_pancreas$SEX[which(na.omit(id.gtex)!=F)])
+
+PAAD.GTEx.repertoire.diversity$sex<-ifelse(PAAD.GTEx.repertoire.diversity$sex=="Female" | PAAD.GTEx.repertoire.diversity$sex=="FEMALE","Female",
+                                    ifelse(PAAD.GTEx.repertoire.diversity$sex=="Male"| PAAD.GTEx.repertoire.diversity$sex=="MALE","Male",NA))
+
+##Age
+PAAD.GTEx.repertoire.diversity$age<-NA
+PAAD.GTEx.repertoire.diversity$age[na.omit(id.paad)]<-clinical.patient$age_at_initial_pathologic_diagnosis[which(na.omit(id.paad)!=F)]
+PAAD.GTEx.repertoire.diversity$age[na.omit(id.gtex)]<-annotation_gtex_pancreas$AGE[which(na.omit(id.gtex)!=F)]
+
+##Race
+PAAD.GTEx.repertoire.diversity$race<-NA
+PAAD.GTEx.repertoire.diversity$race[na.omit(id.paad)]<-as.character(clinical.patient$race_list[which(na.omit(id.paad)!=F)])
+PAAD.GTEx.repertoire.diversity$race[na.omit(id.gtex)]<-as.character(annotation_gtex_pancreas$RACE[which(na.omit(id.gtex)!=F)])
+
+PAAD.GTEx.repertoire.diversity$race<-ifelse(PAAD.GTEx.repertoire.diversity$race=="Asian" | PAAD.GTEx.repertoire.diversity$race=="ASIAN","Asian",
+                                           ifelse(PAAD.GTEx.repertoire.diversity$race=="BLACK OR AFRICAN AMERICAN"| PAAD.GTEx.repertoire.diversity$race=="Black/AA","Black/AA",
+                                                  ifelse(PAAD.GTEx.repertoire.diversity$race=="White"| PAAD.GTEx.repertoire.diversity$race=="WHITE","White",NA)))
 
 PAAD.GTEx.repertoire.diversity<-PAAD.GTEx.repertoire.diversity[which(is.na(PAAD.GTEx.repertoire.diversity$outcome)==F),]
 
 
 PAAD.GTEx.repertoire.diversity$sample<-rownames(PAAD.GTEx.repertoire.diversity)
+
+save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx//PAAD_GTEx_FullData.Rdata")
+
+
+######################
+### Downsampling ####
+#####################
+load("Data/PAAD_GTEx//PAAD_GTEx_FullData.Rdata")
+
+##Filter by clones > 200
+PAAD.GTEx.repertoire.diversity$Ig_clones<-PAAD.GTEx.repertoire.diversity$clones_IGH+PAAD.GTEx.repertoire.diversity$clones_IGK+
+  PAAD.GTEx.repertoire.diversity$clones_IGL
+PAAD.GTEx.repertoire.diversity_Igclones<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$Ig_clones>200),]
+
+###Dowwn for IG
+sample<-PAAD.GTEx.repertoire.diversity_Igclones$sample
+id<-match(data_clonesInference_Ig$sample,sample)
+data_clonesInference_Ig_qc<-data_clonesInference_Ig[which(is.na(id)==F),]
+min<-min(table(data_clonesInference_Ig_qc$sample)) 
+set.seed(27)
+for (j in 1:5){
+  data_clonesInference_Ig_down<-NULL
+  for (i in 1:length(sample)){
+    print(i)
+    data_clonesInference_Ig_sample<-data_clonesInference_Ig[which(data_clonesInference_Ig$sample==sample[i]),]
+    data_clonesInference_Ig_down<-rbind(data_clonesInference_Ig_down,data_clonesInference_Ig_sample[sample(nrow(data_clonesInference_Ig_sample),min),])
+  }
+  write.table(data_clonesInference_Ig_down,file=paste0("Data/PAAD_GTEx/data_for_cloneInfered_Ig_PAAD_GTEx_down",j,".txt"),row.names = F,sep="\t")
+}
+
+### After passing the nucleotides.py
+##Read the clones and merge with the data
+for (j in 1:5){
+  nucleotides_Ig_down<-read.csv(paste0("Data/PAAD_GTEx//ClonesInfered_Ig_PAAD_GTEx_down",j,".csv"))
+  data_merge_down1<-merge(data_full_cdr3,nucleotides_Ig_down[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
+  
+  ##Clones per chain
+  data_merge_down1$V_J_lenghCDR3_CloneId = paste(data_merge_down1$V_J_lenghCDR3,data_merge_down1$CloneId,sep="_")
+  
+  clones_count<- unique(data_merge_down1[,c("sample","V_J_lenghCDR3_CloneId","chainType")])
+  clones<-data.frame(cbind(table(clones_count$sample,clones_count$chainType)))
+  colnames(clones)<-c("clones_IGH","clones_IGK","clones_IGL")
+  
+  ##Diversity measures
+  sample<-rownames(clones)
+  entropy_IGH<-NULL
+  entropy_IGK<-NULL
+  entropy_IGL<-NULL
+  for (i in 1:length(sample)){
+    print(i)
+    data_sample_unique<-data_merge_down1[which(data_merge_down1$sample==sample[i]),]
+    clones_sample<-data_sample_unique[,"V_J_lenghCDR3_CloneId"]
+    clones_sample_IGH<-data_sample_unique[which(data_sample_unique$chainType=="IGH"),"V_J_lenghCDR3_CloneId"]
+    clones_sample_IGK<-data_sample_unique[which(data_sample_unique$chainType=="IGK"),"V_J_lenghCDR3_CloneId"]
+    clones_sample_IGL<-data_sample_unique[which(data_sample_unique$chainType=="IGL"),"V_J_lenghCDR3_CloneId"]
+    
+    #To write file to run with Recon
+    write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("Data/PAAD_GTEx//RECON/Down/clones_sample_IGH_down_",j,sample[i],".txt",sep=""),sep="\t",col.names=F)
+    write.delim(data.frame(table(table(clones_sample_IGK))),file=paste("Data/PAAD_GTEx/RECON/Down/clones_sample_IGK_down_",j,sample[i],".txt",sep=""),sep="\t",col.names=F)
+    write.delim(data.frame(table(table(clones_sample_IGL))),file=paste("Data/PAAD_GTEx/RECON/Down/clones_sample_IGL_down_",j,sample[i],".txt",sep=""),sep="\t",col.names=F)
+    
+    fi_IGH<-as.numeric(table(clones_sample_IGH))/length(clones_sample_IGH)
+    fi_IGK<-as.numeric(table(clones_sample_IGK))/length(clones_sample_IGK)
+    fi_IGL<-as.numeric(table(clones_sample_IGL))/length(clones_sample_IGL)
+    
+    hi_IGH<-fi_IGH*log2(fi_IGH)
+    hi_IGK<-fi_IGK*log2(fi_IGK)
+    hi_IGL<-fi_IGL*log2(fi_IGL)
+   
+    entropy_IGH[i]=-sum(hi_IGH)
+    entropy_IGK[i]=-sum(hi_IGK)
+    entropy_IGL[i]=-sum(hi_IGL)
+    
+  }
+  assign(paste0("diversity_down",j),cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL))
+}  
+
+####After runing recon
+recon<-read.table("Data/PAAD_GTEx/RECON/Down/test_D_number_table.txt",header=T)
+chain<-substr(recon$sample_name,66,68)
+sample<-substr(recon$sample_name,70,105)
+sample<-unlist(strsplit(sample, "\\."))
+sample<-sample[which(nchar(sample)>7)]
+##0.0D is species richness (Number of clones)
+##Entropy is ln(1.0.D)
+diversity<-as.data.frame(diversity)
+chain_list<-unique(chain)
+for(i in chain_list){
+  recon_chain<-recon[which(chain==i),]
+  sample_chain<-substr(recon_chain$sample_name,70,105)
+  sample_chain<-unlist(strsplit(sample_chain, "\\."))
+  sample_chain<-sample_chain[which(nchar(sample_chain)>7)]
+  id<-match(rownames(diversity),sample_chain)
+  clone_chain<-ifelse(is.na(id)==F,recon_chain[id,"est_0.0D"],0)
+  assign(paste0("clones_recon_",i),clone_chain)
+  entroy_chain<-ifelse(is.na(id)==F,ln(recon_chain[id,"est_1.0D"]),0)
+  assign(paste0("entropy_recon_",i),entroy_chain)
+}
+diversity$clones_recon_IGH<-clones_recon_IGH
+diversity$clones_recon_IGK<-clones_recon_IGK
+diversity$clones_recon_IGL<-clones_recon_IGL
+diversity$clones_recon_TRA<-clones_recon_TRA
+diversity$clones_recon_TRB<-clones_recon_TRB
+diversity$clones_recon_TRD<-clones_recon_TRD
+diversity$clones_recon_TRG<-clones_recon_TRG
+
+diversity$entropy_recon_IGH<-entropy_recon_IGH
+diversity$entropy_recon_IGK<-entropy_recon_IGK
+diversity$entropy_recon_IGL<-entropy_recon_IGL
+diversity$entropy_recon_TRA<-entropy_recon_TRA
+diversity$entropy_recon_TRB<-entropy_recon_TRB
+diversity$entropy_recon_TRD<-entropy_recon_TRD
+diversity$entropy_recon_TRG<-entropy_recon_TRG
+
+
+
+  
+id<-match(rownames(diversity_down1),rownames(PAAD.GTEx.repertoire.diversity))
+
+PAAD.GTEx.repertoire.diversity$clones_IGH_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$clones_IGH,diversity_down2$clones_IGH,diversity_down3$clones_IGH,
+                                                               diversity_down4$clones_IGH,diversity_down5$clones_IGH))
+PAAD.GTEx.repertoire.diversity$clones_IGK_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$clones_IGK,diversity_down2$clones_IGK,diversity_down3$clones_IGK,
+                                                                    diversity_down4$clones_IGK,diversity_down5$clones_IGK))
+PAAD.GTEx.repertoire.diversity$clones_IGL_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$clones_IGL,diversity_down2$clones_IGL,diversity_down3$clones_IGL,
+                                                                            diversity_down4$clones_IGL,diversity_down5$clones_IGL))
+PAAD.GTEx.repertoire.diversity$entropy_IGH_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$entropy_IGH,diversity_down2$entropy_IGH,diversity_down3$entropy_IGH,
+                                                                             diversity_down4$entropy_IGH,diversity_down5$entropy_IGH))
+PAAD.GTEx.repertoire.diversity$entropy_IGK_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$entropy_IGK,diversity_down2$entropy_IGK,diversity_down3$entropy_IGK,
+                                                                             diversity_down4$entropy_IGK,diversity_down5$entropy_IGK))
+PAAD.GTEx.repertoire.diversity$entropy_IGL_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$entropy_IGL,diversity_down2$entropy_IGL,diversity_down3$entropy_IGL,
+                                                                             diversity_down4$entropy_IGL,diversity_down5$entropy_IGL))
 
 save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx//PAAD_GTEx_FullData.Rdata")
