@@ -29,10 +29,15 @@ for(i in files) {
   data <- rbind(data, t)
 }
 
+sra<-read.csv("Data/GTEx/Blood/SraRunTableBloodRNAseq.csv")
+id_rna_blood<-match(data$sample,sra$Run)
+data<-data[which(is.na(id_rna_blood)==F),] ##done in the server
 save(data,file="Data/GTEx/Blood/GTEX_data_blood.Rdata")
 
 #####
 load("Data/GTEx/Blood/GTEX_data_blood.Rdata")
+
+
 ###Chain
 data$chainType<-ifelse(data$bestVGene!="", substr(data$bestVGene,1,3),
                        ifelse(data$bestVGene=="",substr(data$bestJGene,1,3),NA))
@@ -44,8 +49,8 @@ read_count_chain <- table(data$sample, data$chainType)
 reads <- data.frame(cbind(read_count,read_count_chain))
 
 ####### The data needs to be normalized by the unmapped reads 
-totalReads<-read.table("Data/GTEx/Pancreas/MIXCR/report/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
-id<-match(rownames(reads),substr(totalReads$V1,4,13))
+totalReads<-read.table("Data/GTEx/Blood/MIXCR/report/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+id<-match(rownames(reads),unlist(strsplit(as.character(totalReads$V1),"}")))
 reads$totalReads<-totalReads[id,2]
 
 ##Total reads
@@ -92,8 +97,8 @@ data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRA" |
 ###save the data to call the clones by all samples using the nucleotides.py
 data_clonesInference_Ig<-data_full_cdr3_Ig[,c("SEQUENCE_ID","sample","nSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
 data_clonesInference_TCR<-data_full_cdr3_TCR[,c("SEQUENCE_ID","sample","nSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
-write.table(data_clonesInference_Ig,file="Data/GTEx/Pancreas/data_for_cloneInfered_Ig_GTEX_PAAD.txt",row.names = F,sep="\t")
-write.table(data_clonesInference_TCR,file="Data/GTEx/Pancreas/data_for_cloneInfered_TCR_GTEX_PAAD.txt",row.names = F,sep="\t")
+write.table(data_clonesInference_Ig,file="Data/GTEx/Blood/data_for_cloneInfered_Ig_GTEX_PAAD.txt",row.names = F,sep="\t")
+write.table(data_clonesInference_TCR,file="Data/GTEx/Blo/data_for_cloneInfered_TCR_GTEX_PAAD.txt",row.names = F,sep="\t")
 
 ### After passing the nucleotides.py
 ##Read the clones and merge with the data
