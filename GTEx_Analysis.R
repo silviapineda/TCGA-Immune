@@ -25,37 +25,131 @@ setwd("~/TCGA-Immune/")
 
 load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
 
-table(annotation_gtex_pancreas$SEX)
-summary(annotation_gtex_pancreas$AGE)
-summary(annotation_gtex_pancreas$COD)
+
+###############################
+## Merge with Clinical data ###
+###############################
+Pancreas.repertoire.diversity.annotation<-merge(Pancreas.repertoire.diversity,annotation_gtex_pancreas,by="SUBJID")
+
+##Function to run the association between clinical outcome and BCR/TCR
+association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,clinical.var){
+  Ig_expr<-melt(PAAD.repertoire.tumor.clinical.patient[,c("sample","IGH_expression","IGK_expression","IGL_expression",clinical.var)])
+  Ig_expr$value<-log10(Ig_expr$value)
+  Ig_expr<-na.omit(Ig_expr)
+  tiff(paste0("Results/boxplot_Ig_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Ig_expr[,clinical.var]))<10){  
+    print(ggboxplot(Ig_expr, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=Ig_expr[,clinical.var], y=value,color=Ig_expr[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Ig_expr,aes(x = as.numeric(Ig_expr[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~Ig_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+  Ig_entropy<-melt(PAAD.repertoire.tumor.clinical.patient[,c("sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL",clinical.var)])
+  Ig_entropy<-Ig_entropy[which(Ig_entropy$value!=0),]
+  Ig_entropy<-na.omit(Ig_entropy)
+  tiff(paste0("Results/boxplot_Ig_entropy_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Ig_entropy[,clinical.var]))<10){  
+    print(ggboxplot(Ig_entropy, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=Ig_entropy[,clinical.var], y=value,color=Ig_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Ig_entropy,aes(x = as.numeric(Ig_entropy[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~Ig_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+  T_expr<-melt(PAAD.repertoire.tumor.clinical.patient[,c("sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression",clinical.var)])
+  T_expr$value<-log10(T_expr$value)
+  T_expr<-na.omit(T_expr)
+  tiff(paste0("Results/boxplot_T_expr_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(T_expr[,clinical.var]))<10){  
+    print(ggboxplot(T_expr, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=T_expr[,clinical.var], y=value,color=T_expr[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(T_expr,aes(x = as.numeric(T_expr[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~T_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+  T_entropy<-melt(PAAD.repertoire.tumor.clinical.patient[,c("sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG",clinical.var)])
+  T_entropy<-T_entropy[which(T_entropy$value!=0),]
+  T_entropy<-na.omit(T_entropy)
+  tiff(paste0("Results/boxplot_T_entropy_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(T_entropy[,clinical.var]))<10){  
+    print(ggboxplot(T_entropy, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=T_entropy[,clinical.var], y=value,color=T_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(T_entropy,aes(x = as.numeric(T_entropy[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~T_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+  
+  Alpha_Beta_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient[,c("sample","Alpha_Beta_ratio_expression",clinical.var)])
+  Alpha_Beta_ratio_expression<-na.omit(Alpha_Beta_ratio_expression)
+  tiff(paste0("Results/boxplot_Alpha_Beta_ratio_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Alpha_Beta_ratio_expression[,clinical.var]))<10){  
+    print(ggboxplot(Alpha_Beta_ratio_expression, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=Alpha_Beta_ratio_expression[,clinical.var], y=value,color=Alpha_Beta_ratio_expression[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Alpha_Beta_ratio_expression,aes(x = as.numeric(Alpha_Beta_ratio_expression[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~Alpha_Beta_ratio_expression$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson") + xlab(clinical.var))
+  }
+  dev.off()
+  
+  KappaLambda_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient[,c("sample","KappaLambda_ratio_expression",clinical.var)])
+  KappaLambda_ratio_expression<-na.omit(KappaLambda_ratio_expression)
+  tiff(paste0("Results/boxplot_KappaLambda_ratio_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(KappaLambda_ratio_expression[,clinical.var]))<10){  
+    print(ggboxplot(KappaLambda_ratio_expression, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=KappaLambda_ratio_expression[,clinical.var], y=value,color=KappaLambda_ratio_expression[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(KappaLambda_ratio_expression,aes(x = as.numeric(KappaLambda_ratio_expression[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~KappaLambda_ratio_expression$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+}
+
+##Gender
+Pancreas.repertoire.diversity.annotation$SEX<-factor(Pancreas.repertoire.diversity.annotation$SEX)
+association.test.immuneRep(Pancreas.repertoire.diversity.annotation,"SEX")
+
+##Age
+Pancreas.repertoire.diversity.annotation$AGE<-factor(Pancreas.repertoire.diversity.annotation$AGE)
+association.test.immuneRep(Pancreas.repertoire.diversity.annotation,"AGE")
+
+##Race
+Pancreas.repertoire.diversity.annotation$RACE<-ifelse(Pancreas.repertoire.diversity.annotation$RACE=="Indian American",NA,
+                                                             as.character(Pancreas.repertoire.diversity.annotation$RACE))
+association.test.immuneRep(Pancreas.repertoire.diversity.annotation,"RACE")
+
+##COD
+Pancreas.repertoire.diversity.annotation$COD<-factor(Pancreas.repertoire.diversity.annotation$COD)
+association.test.immuneRep(Pancreas.repertoire.diversity.annotation,"COD")
+
+##diabete
+Pancreas.repertoire.diversity.annotation$Diabetes_type2<-factor(Pancreas.repertoire.diversity.annotation$Diabetes_type2)
+association.test.immuneRep(Pancreas.repertoire.diversity.annotation,"Diabetes_type2")
 
 
-cols=brewer.pal(3,name = "Set3")
-
-id<-match(Pancreas.repertoire.diversity$SUBJID,annotation_gtex_pancreas$SUBJID)
-Pancreas.repertoire.diversity$sex<-annotation_gtex_pancreas[id,"SEX"]
-Pancreas.repertoire.diversity$cod<-annotation_gtex_pancreas[id,"COD"]
-
-##Sex
-Ig_expr<-melt(Pancreas.repertoire.diversity[,c("SUBJID","IGH_expression","IGK_expression","IGL_expression","sex")])
-Ig_expr$value<-log10(Ig_expr$value)
-tiff("Results/boxplot_Ig_expression_GTEx_sex.tiff",res=300,h=2500,w=3500)
-ggboxplot(Ig_expr, x = "sex", y = "value",facet.by = "variable",color = "sex",ggtheme = theme_bw()) +
-  rotate_x_text() +
-  geom_point(aes(x=sex, y=value,color=sex), position = position_jitterdodge(dodge.width = 0.8)) +
-  #scale_color_manual(values = c(cols[1],cols[2]), labels = c("Female","Male")) +
-  stat_compare_means(
-    comparisons =list(c("Female","Male")))
-dev.off()
-
-#COD
-Ig_expr<-melt(Pancreas.repertoire.diversity[,c("SUBJID","IGH_expression","IGK_expression","IGL_expression","cod")])
-Ig_expr$value<-log10(Ig_expr$value)
-tiff("Results/boxplot_Ig_expression_GTEx_cod.tiff",res=300,h=2500,w=3500)
-ggboxplot(Ig_expr, x = "cod", y = "value",facet.by = "variable",color = "cod",ggtheme = theme_bw()) +
-  rotate_x_text() +
-  geom_point(aes(x=cod, y=value,color=cod), position = position_jitterdodge(dodge.width = 0.8)) +
-  #scale_color_manual(values = c(cols[1],cols[2]), labels = c("Female","Male")) +
-  stat_compare_means(label = "p.format")
-dev.off()
+#####
+#### Analysis of he validation pancreas
+#####
+load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
+##sex
+Pancreas.Validation.repertoire.diversity$tumor_stage<-factor(Pancreas.Validation.repertoire.diversity$tumor_stage)
+association.test.immuneRep(Pancreas.Validation.repertoire.diversity,"tumor_stage")
 
