@@ -50,7 +50,9 @@ reads <- data.frame(cbind(read_count,read_count_chain))
 
 ####### The data needs to be normalized by the unmapped reads 
 totalReads<-read.table("Data/GTEx/Blood/MIXCR/report/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
-id<-match(rownames(reads),unlist(strsplit(as.character(totalReads$V1),"}")))
+totalReads$V1<-substr(totalReads$V1,2,11)
+totalReads$V1<-unlist(strsplit(totalReads$V1, "}"))
+id<-match(rownames(reads),totalReads$V1)
 reads$totalReads<-totalReads[id,2]
 
 ##Total reads
@@ -97,13 +99,13 @@ data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRA" |
 ###save the data to call the clones by all samples using the nucleotides.py
 data_clonesInference_Ig<-data_full_cdr3_Ig[,c("SEQUENCE_ID","sample","nSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
 data_clonesInference_TCR<-data_full_cdr3_TCR[,c("SEQUENCE_ID","sample","nSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
-write.table(data_clonesInference_Ig,file="Data/GTEx/Blood/data_for_cloneInfered_Ig_GTEX_PAAD.txt",row.names = F,sep="\t")
-write.table(data_clonesInference_TCR,file="Data/GTEx/Blo/data_for_cloneInfered_TCR_GTEX_PAAD.txt",row.names = F,sep="\t")
+write.table(data_clonesInference_Ig,file="Data/GTEx/Blood/data_for_cloneInfered_Ig_GTEX_Blood.txt",row.names = F,sep="\t")
+write.table(data_clonesInference_TCR,file="Data/GTEx/Blo/data_for_cloneInfered_TCR_GTEX_Blood.txt",row.names = F,sep="\t")
 
 ### After passing the nucleotides.py
 ##Read the clones and merge with the data
-nucleotides_Ig<-read.csv("Data/GTEx/Pancreas/ClonesInfered_Ig_GTEX_PAAD.csv")
-nucleotides_TCR<-read.csv("Data/GTEx/Pancreas/ClonesInfered_TCR_GTEX_PAAD.csv")
+nucleotides_Ig<-read.csv("Data/GTEx/Blood//ClonesInfered_Ig_GTEx_Blood.csv")
+nucleotides_TCR<-read.csv("Data/GTEx/Blood/ClonesInfered_TCR_GTEx_Blood.csv")
 nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
@@ -136,13 +138,13 @@ for (i in 1:length(sample)){
   clones_sample_TRG<-data_sample_unique[which(data_sample_unique$chainType=="TRG"),"V_J_lenghCDR3_CloneId"]
   
   #To write file to run with Recon
-  # write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_IGK))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_IGL))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_IGH))),file=paste("clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_IGK))),file=paste("clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_IGL))),file=paste("clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_TRA))),file=paste("clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_TRB))),file=paste("clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_TRD))),file=paste("clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.table(data.frame(table(table(clones_sample_TRG))),file=paste("clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
   # 
   fi_IGH<-as.numeric(table(clones_sample_IGH))/length(clones_sample_IGH)
   fi_IGK<-as.numeric(table(clones_sample_IGK))/length(clones_sample_IGK)
@@ -170,12 +172,17 @@ for (i in 1:length(sample)){
   
 }
 
-diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
+diversity<-cbind(reads,clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
+
+save(diversity,data_merge,"Data/GTEx/Blood/GTEx_Blood_RepertoireResults_diversity.Rdata")
 
 ####After runing recon
-recon<-read.table("Data/GTEx/Pancreas/Recon/test_D_number_table.txt",header=T)
-chain<-substr(recon$sample_name,70,72)
-sample<-substr(recon$sample_name,74,83)
+recon_IG<-read.table("Data/GTEx/Blood/RECON/test_D_number_table_IG.txt",header=T)
+recon_TR<-read.table("Data/GTEx/Blood/RECON/test_D_number_table_TR.txt",header=T)
+
+recon<-rbind(recon_IG,recon_TR)
+chain<-substr(recon$sample_name,67,69)
+sample<-substr(recon$sample_name,71,80)
 sample<-unlist(strsplit(sample, "\\."))
 
 ##0.0D is species richness (Number of clones)
@@ -233,32 +240,30 @@ id.TRG<-match(rownames(diversity),cdr3_length_TRG$Group.1)
 cdr3_length_TRG_2<-ifelse(is.na(id.TRG)==T,0,cdr3_length_TRG$x)
 
 diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2,cdr3_length_TRA_2,cdr3_length_TRB_2,cdr3_length_TRD_2,cdr3_length_TRG_2)
-colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
+colnames(diversity)[51:57]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
                               "cdr3_length_TRD","cdr3_length_TRG")
-data_merge_pancreas<-data_merge
-Pancreas.repertoire.diversity<-cbind(reads,diversity)
-save(data_merge_pancreas,Pancreas.repertoire.diversity,file="Data/GTEx/Pancreas/GTEx_Pancreas_RepertoireResults_diversity.Rdata")
+data_merge_blood<-data_merge
+GTEX.blood.repertoire.diversity<-diversity
+save(data_merge_blood,GTEX.blood.repertoire.diversity,file="Data/GTEx/Pancreas/GTEx_Blood_RepertoireResults_diversity.Rdata")
 
 ####Annotation 
-##ME he quedaod aqui!!!
-sra<-read.csv("Data/GTEx/SraRunTable_sra.csv")
-sra_pancreas<-sra[which(sra$body_site=="Pancreas"),]
+sra<-read.csv("Data/GTEx/Blood/SraRunTableBloodRNAseq.csv")
 
 ###Samples that has passed QC for gene expression
 samples<-read.csv("Data/GTEx/samples_QC_GTEX.csv")
-id<-match(samples$x, sra_pancreas$Sample_Name)
-sra_pancreas_qc<-sra_pancreas[na.omit(id),]
+id<-match(samples$x, sra$Sample_Name)
+sra_qc<-sra[na.omit(id),]
 
 ##Match with GTEX blood diversity
-id<-match(rownames(Pancreas.repertoire.diversity),sra_pancreas_qc$Run)
-Pancreas.repertoire.diversity<-Pancreas.repertoire.diversity[which(is.na(id)==F),] ##180
-Pancreas.repertoire.diversity$SUBJID<-sra_pancreas_qc$submitted_subject_id[na.omit(id)]
+id<-match(rownames(GTEX.blood.repertoire.diversity),sra_qc$Run)
+GTEX.blood.repertoire.diversity<-GTEX.blood.repertoire.diversity[which(is.na(id)==F),] ##391
+GTEX.blood.repertoire.diversity$SUBJID<-sra_qc$submitted_subject_id[na.omit(id)]
 
 annotation_gtex<-read.csv("Data/GTEx/GTEX_annotation_phenotypes.csv")
-id<-match(Pancreas.repertoire.diversity$SUBJID,annotation_gtex$SUBJID)
-annotation_gtex_pancreas<-annotation_gtex[id,]
+id<-match(GTEX.blood.repertoire.diversity$SUBJID,annotation_gtex$SUBJID)
+annotation_gtex_blood<-annotation_gtex[id,]
 
-id<-match(data_merge_pancreas$sample,rownames(Pancreas.repertoire.diversity))
-data_merge_pancreas<-data_merge_pancreas[which(is.na(id)!=F),]
+id<-match(data_merge_blood$sample,rownames(GTEX.blood.repertoire.diversity))
+data_merge_blood<-data_merge_blood[which(is.na(id)!=F),]
 
-save(data_merge_pancreas,Pancreas.repertoire.diversity,file="Data/GTEx/Pancreas/GTEx_FullData.Rdata")
+save(data_merge_blood,GTEX.blood.repertoire.diversity,annotation_gtex_blood,file="Data/GTEx/Blood/GTEx_blood_FullData.Rdata")
