@@ -28,10 +28,15 @@ setwd("~/TCGA-Immune/")
 
 load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
 
+##Restrict only to Normal vs Tumor 
+PAAD.GTEx.repertoire.diversity.tumor.normmal<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$outcome=="normal-pancreas (GTEx)"|
+                                                                                     PAAD.GTEx.repertoire.diversity$outcome== "tumor-pancreas (TCGA)"),]
+PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome<-factor(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+
 ###################################################
 ## Common clones across samples
 #################################################
-id<-match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity))
+id<-match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
 data_merge<-data_merge[which(is.na(id)==F),]
 
 #chain=c("IGHV","IGKV","IGLV")
@@ -61,7 +66,7 @@ clone_type_presence_IGH<-apply(clone_type_IGH,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_IG<-apply(clone_type_IG,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_TCR<-apply(clone_type_TCR,1,function(x) ifelse(x==0,0,1))
 
-###Filter by clones share at least in 2 samples
+###Filter by clones share at least in 20% of the samples
 clone_type_filter_IGK<-clone_type_presence_IGK[which(rowSums(clone_type_presence_IGK)>2),] #
 clone_type_filter_IGK<-clone_type_filter_IGK[,which(colSums(clone_type_filter_IGK)>0)] #
 clone_type_filter_IGL<-clone_type_presence_IGL[which(rowSums(clone_type_presence_IGL)>2),] #
@@ -74,207 +79,148 @@ clone_type_filter_TCR<-clone_type_presence_TCR[which(rowSums(clone_type_presence
 clone_type_filter_TCR<-clone_type_filter_TCR[,which(colSums(clone_type_filter_TCR)>0)] #
 
 ##Heatmp
-PAAD.GTEx.repertoire.diversity$outcome<-factor(PAAD.GTEx.repertoire.diversity$outcome)
 brewer.pal(4,name = "Accent")
-cols=c( "#7FC97F","#386CB0","#FDC086", "#BEAED4")
+cols=c( "#7FC97F","#BEAED4")
 
-annotation_row = data.frame(PAAD.GTEx.repertoire.diversity$outcome)
-ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1], "normal-pancreas (TCGA)" = cols[2], 
-                               "pseudonormal-pancreas (TCGA)" = cols[3],"tumor-pancreas (TCGA)" =cols[4]))
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1],"tumor-pancreas (TCGA)" = cols[2]))
 colnames(annotation_row)<-"outcome"
-rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity)
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
 
-cols = brewer.pal(10,name = "Paired")
+cols2 = brewer.pal(10,name = "Paired")
 
 #IG
 tiff(paste0("Results/heatmap_common_clones_IG.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IG),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[6]),breaks = c(0,0.9,1))
+         annotation_colors = ann_colors,color = c("white",cols2[6]),breaks = c(0,0.9,1))
 dev.off()
 
 #IGH
 tiff(paste0("Results/heatmap_common_clones_IGH.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IGH),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[2]),breaks = c(0,0.9,1))
+         annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
 dev.off()
 
 #IGK
 tiff(paste0("Results/heatmap_common_clones_IGK.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IGK),show_rownames = F, show_colnames = F,border_color=F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[4]),breaks = c(0,0.9,1))
+         annotation_colors = ann_colors,color = c("white",cols2[4]),breaks = c(0,0.9,1))
 dev.off()
 
 #IGL
 tiff(paste0("Results/heatmap_common_clones_IGL.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IGL),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[8]),breaks = c(0,0.9,1))
+         annotation_colors = ann_colors,color = c("white",cols2[8]),breaks = c(0,0.9,1))
 dev.off()
 
 #TCR
 tiff(paste0("Results/heatmap_common_clones_TCR.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_TCR),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[10]),breaks = c(0,0.9,1))
+         annotation_colors = ann_colors,color = c("white",cols2[10]),breaks = c(0,0.9,1))
 dev.off()
 
 #####################################
 ### Principal Components Analysis ###
 #####################################
 library(factoextra)
-pca <- prcomp(t(clone_type_filter_IGL), scale = TRUE)
+pca <- prcomp(t(clone_type_filter_IG), scale = TRUE)
 
-SPP <- PAAD.repertoire.diversity$Tumor_type_2categ
-levels.SPP <- factor(c("normal_pseudonormal_pancreas", "Tumor_pancreas"))
-#cols<-brewer.pal(3,name = "Accent")
+SPP <- PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome
+levels.SPP <- factor(c("normal-pancreas (GTEx)", "tumor-pancreas (TCGA)"))
+
 pc <- c(1,2)
+tiff(paste0("Results/PCA_IG.tiff"),width = 2000, height = 2000, res = 300)
 plot(pca$x[,pc[1]], pca$x[,pc[2]], col=cols[SPP],pch=20,xlab="PCA1",ylab="PCA2")
-legend("topleft", legend=levels(levels.SPP), col=cols,pch=20,cex=0.8)
+legend("bottomright", legend=levels(levels.SPP), col=cols,pch=20,cex=0.8)
+dev.off()
 
 #####Fisher test to find differences by clones in normal vs. tumor
 p_value=NULL
-id<-match(colnames(clone_type_filter_IG),rownames(PAAD.repertoire.diversity))
 for(i in 1:dim(clone_type_filter_IG)[1]){
   print(i)
-  tab<-table(clone_type_filter_IG[i,],PAAD.repertoire.diversity$Tumor_type_2categ[id])
+  tab<-table(clone_type_filter_IG[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
   p_value[i]=fisher.test(tab)$p.value
 }
-clone_type_filter_IG_sign<-clone_type_filter_IG[which(p_value<0.05),]
-annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ[id])
-colnames(annotation_row)<-"Tumor_type_2categ"
-rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)[id]
-ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
-                                         "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_IG_sign<-clone_type_filter_IG[which(p.adj<0.05),] #808 out of 1252 are significant
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F", "#BEAED4")
+ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1],
+                                         "tumor-pancreas (TCGA)" = cols[2]))
 
 tiff(paste0("Results/heatmap_common_clones_IG_sign.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IG_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[6]),breaks = c(0,0.9,1))
+         annotation_colors = ann_colors,color = c("white","red"),breaks = c(0,0.9,1))
 dev.off()
 
-##TCR
-p_value=NULL
-id<-match(colnames(clone_type_filter_TCR),rownames(PAAD.repertoire.diversity))
-for(i in 1:dim(clone_type_filter_TCR)[1]){
-  print(i)
-  tab<-table(clone_type_filter_TCR[i,],PAAD.repertoire.diversity$Tumor_type_2categ[id])
-  p_value[i]=fisher.test(tab)$p.value
-}
-clone_type_filter_TCR_sign<-clone_type_filter_TCR[which(p_value<0.05),]
-annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ[id])
-colnames(annotation_row)<-"Tumor_type_2categ"
-rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)[id]
-ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
-                                         "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
-
-tiff(paste0("Results/heatmap_common_clones_TCR_sign.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_TCR_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols[6]),breaks = c(0,0.9,1))
-dev.off()
 
 ############
 ### 2. Normalization by transforming to relative abundance
-############
-###TCR
-clone_type_TCR_relative<-100*t(apply(clone_type_TCR,1,function (x) x/sum(x))) ##Each cell divided by the total number of counts per sample
-id<-match(rownames(clone_type_filter_TCR),colnames(clone_type_TCR_relative)) ##Filter by clones being in at least two samples
-clone_type_TCR_relative_filter<-clone_type_TCR_relative[,id] ##57
-id.sample<-match(rownames(clone_type_TCR_relative_filter),rownames(PAAD.repertoire.diversity))
-#### Logistoc regression
-p_value=NULL
-for(i in 1:dim(clone_type_TCR_relative_filter)[2]){
-  print(i)
-  mod<-glm(PAAD.repertoire.diversity$Tumor_type_2categ[id.sample]~clone_type_TCR_relative_filter[,i],family = "binomial")
-  p_value[i]=coefficients(summary(mod))[2,4]
-}
-
-clone_type_relative_sign<-clone_type_TCR_relative_filter[,which(p_value<0.05)]
-
-
-##Plot results
-annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ)
-colnames(annotation_row)<-"Tumor_type_2categ"
-rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)
-ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
-                                         "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
-
-tiff("Results/heatmap_relativeAbundance_TCR_sign.tiff",width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_relative_sign),border_color=F,show_colnames = F, annotation_col = annotation_row,
-         annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(4,name="Reds"))(100))
-dev.off()
-
-clone_type_relative_sign_order<-clone_type_relative_sign[order(PAAD.repertoire.diversity$Tumor_type_2categ[id.sample]),]
-df_long <- melt(clone_type_relative_sign_order, id.vars = "Sample", variable.name = "Clones")
-colnames(df_long)<-c("Sample","Clones","value")
-library(randomcoloR)
-n <- 29
-palette <- distinctColorPalette(n)
-tiff("Results/barplot_relativeAbundance_TCR_sign.tiff",width = 5000, height = 3000, res = 300)
-ggplot(df_long, aes(x = Sample, y = value, fill = Clones)) + 
-  geom_bar(stat = "identity") +
-  scale_fill_manual(values=palette)
-dev.off()
-
+###########
 
 ###Ig
 clone_type_IG_relative<-100*t(apply(clone_type_IG,1,function (x) x/sum(x))) ##Each cell divided by the total number of counts per sample
 id<-match(rownames(clone_type_filter_IG),colnames(clone_type_IG_relative)) ##Filter by clones being in at least two samples
-clone_type_IG_relative_filter<-clone_type_IG_relative[,id] ##1442
+clone_type_IG_relative_filter<-clone_type_IG_relative[,id] ##1252
 
 #### Logistoc regression
 p_value=NULL
 for(i in 1:dim(clone_type_IG_relative_filter)[2]){
   print(i)
-  mod<-glm(PAAD.repertoire.diversity$Tumor_type_2categ~clone_type_IG_relative_filter[,i],family = "binomial")
+  mod<-glm(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome~clone_type_IG_relative_filter[,i]+clone_type_filter_IG[i,],family = "binomial")
   p_value[i]=coefficients(summary(mod))[2,4]
 }
 
-clone_type_relative_sign<-clone_type_IG_relative_filter[,which(p_value<0.05)]
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_relative_sign<-clone_type_IG_relative_filter[,which(p.adj<0.05)] #215
 
+alphalist<-seq(0.1,0.9,by=0.01)
+set.seed(54)
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(clone_type_IG_relative_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial"
+                                                        ,standardize=TRUE,alpha=a,nfolds=5))})
+xx<-rep(NA,length(alphalist))
+yy<-rep(NA,length(alphalist))
+for (j in 1:length(alphalist)) {
+  #print(j)
+  if(class(elasticnet[[j]]) != "try-error"){
+    xx[j]<-elasticnet[[j]]$lambda.min
+    id.cv.opt<-grep(elasticnet[[j]]$lambda.min,elasticnet[[j]]$lambda,fixed=TRUE)
+    yy[j]<-elasticnet[[j]]$cvm[id.cv.opt]
+  }
+}
+id.min<-which(yy==min(yy,na.rm=TRUE))
+lambda<-xx[id.min]
+alpha<-alphalist[id.min]
+
+enet<-glmnet(xcell.data.tumor.filter_Igreads_mat,log10(PAAD.repertoire.diversity_Igreads$IG_expression),family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
+cells<-rownames(enet$beta)[which(enet$beta!=0)]
+coef<-enet$beta[which(enet$beta!=0)]
+
+significant_cells<-xcell.data.tumor.filter_Igreads_mat[,match(cells,colnames(xcell.data.tumor.filter_Igreads_mat))] #15
 
 ##Plot results
-annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ)
-colnames(annotation_row)<-"Tumor_type_2categ"
-rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)
-ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
-                                         "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
+ann_colors = list (outcome =  c("normal-pancreas (GTEx)" = cols[1],
+                                "tumor-pancreas (TCGA)" = cols[2]))
 
 tiff("Results/heatmap_relativeAbundance_Ig_sign.tiff",width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_relative_sign),border_color=F,show_colnames = F, annotation_col = annotation_row,
-         annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(4,name="Reds"))(1000))
+         annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(9,name="Reds"))(100))
 dev.off()
 
-clone_type_relative_sign_order<-clone_type_relative_sign[order(PAAD.repertoire.diversity$Tumor_type_2categ),]
+clone_type_relative_sign_order<-clone_type_relative_sign[order(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome),]
 df_long <- melt(clone_type_relative_sign_order, id.vars = "Sample", variable.name = "Clones")
 colnames(df_long)<-c("Sample","Clones","value")
 library(randomcoloR)
-n <- 29
+n <- 215
 palette <- distinctColorPalette(n)
 tiff("Results/barplot_relativeAbundance_Ig_sign.tiff",width = 5000, height = 3000, res = 300)
 ggplot(df_long, aes(x = Sample, y = value, fill = Clones)) + 
   geom_bar(stat = "identity") +
   scale_fill_manual(values=palette)
 dev.off()
-
-
-
-
-#chi-squares distances between parts in subcomposition can be obtained from the full set of row principal coordinates in ca
-clone_type_IG.d<-dist(clone_type_IG.ca$colpcoord)
-
-###########
-## Nonmetric MDS
-############
-library(MASS)
-library(vegan)
-d <- vegdist(clone_type_relative_tumors, method="bray") # euclidean distances between the rows
-fit <- isoMDS(d, k=2) # k is the number of dim
-#fit <- cmdscale(d,eig=TRUE, k=2)
-fit # view results
-
-# plot solution 
-x <- fit$points[,1]
-y <- fit$points[,2]
-tiff("Results/NMDS.tiff",width = 2000, height =2000, res=300)
-plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2", 
-     main="Nonmetric MDS")
-dev.off()
-text(x, y, labels = row.names(clone_type_relative_tumors), cex=.7)
-
