@@ -22,6 +22,7 @@ library("RColorBrewer")
 
 setwd("~/TCGA-Immune/")
 load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+load("Data/GTEx/Blood/GTEx_blood_FullData.Rdata")
 ##################################
 ##1.Obtain the vertex and edges
 ##################################
@@ -116,10 +117,10 @@ Obtain_gini_index<-function(data,receptor,PAAD.GTEx.repertoire.diversity){
 #chainType
 Obtain_gini_index<-function(data,chainType,PAAD.GTEx.repertoire.diversity){
   sample<-rownames(PAAD.GTEx.repertoire.diversity)
-  id<-grep("cab8e91a-ca41-4c62-af53-3aa4057d68d5",sample) #IGH
-  sample<-sample[-id]
-  id<-grep("SRR1089537",sample) #IGH
-  sample<-sample[-id]
+  #id<-grep("cab8e91a-ca41-4c62-af53-3aa4057d68d5",sample) #IGH
+  #sample<-sample[-id]
+  #id<-grep("SRR1089537",sample) #IGH
+  #sample<-sample[-id]
    
   vertex_max<-NULL
   vertex_gini<-NULL
@@ -151,9 +152,9 @@ Obtain_gini_index<-function(data,chainType,PAAD.GTEx.repertoire.diversity){
 }
 
 
-chainType= "IGH"
+chainType= "IGL"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,PAAD.GTEx.repertoire.diversity)))
-id<-match(rownames(cluster_gini_IGH),rownames(PAAD.GTEx.repertoire.diversity))
+id<-match(rownames(cluster_gini_IGK),rownames(PAAD.GTEx.repertoire.diversity))
 PAAD.GTEx.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 PAAD.GTEx.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 PAAD.GTEx.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
@@ -193,7 +194,7 @@ dev.off()
 
 #Tumor
 sample_tumor<-PAAD.GTEx.repertoire.diversity.filter$sample[which(PAAD.GTEx.repertoire.diversity.filter$outcome=="tumor-pancreas (TCGA)")]
-chainType="IGH"
+chainType="IGK"
 for(i in sample_tumor) {
   print(i)
   edges <- read.delim(paste("Data/PAAD_GTEx/Network/",chainType,"/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
@@ -213,8 +214,8 @@ for(i in sample_tumor) {
 }
 
 #Normal
-sample_normal<-PAAD.GTEx.repertoire.diversity.filter$sample[which(PAAD.GTEx.repertoire.diversity.filter$outcome=="Normal-pancreas (GTEx)")]
-chainType="IGH"
+sample_normal<-PAAD.GTEx.repertoire.diversity.filter$sample[which(PAAD.GTEx.repertoire.diversity.filter$outcome=="normal-pancreas (GTEx)")]
+chainType="IGK"
 for(i in sample_normal) {
   print(i)
   edges <- read.delim(paste("Data/PAAD_GTEx/Network/",chainType,"/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
@@ -235,7 +236,7 @@ for(i in sample_normal) {
 
 #Normal TCGA
 sample_normal<-PAAD.GTEx.repertoire.diversity.filter$sample[which(PAAD.GTEx.repertoire.diversity.filter$outcome=="normal-pancreas (TCGA)")]
-chainType="IGH"
+chainType="IGK"
 for(i in sample_normal) {
   print(i)
   edges <- read.delim(paste("Data/PAAD_GTEx/Network/",chainType,"/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
@@ -256,7 +257,7 @@ for(i in sample_normal) {
 
 #PseudoNormal TCGA
 sample_normal<-PAAD.GTEx.repertoire.diversity.filter$sample[which(PAAD.GTEx.repertoire.diversity.filter$outcome=="pseudonormal-pancreas (TCGA)")]
-chainType="IGH"
+chainType="IGK"
 for(i in sample_normal) {
   print(i)
   edges <- read.delim(paste("Data/PAAD_GTEx/Network/",chainType,"/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
