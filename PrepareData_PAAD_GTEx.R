@@ -474,3 +474,33 @@ PAAD.GTEx.repertoire.diversity$entropy_recon_IGK_down[na.omit(id)]<-rowMeans(cbi
 PAAD.GTEx.repertoire.diversity$entropy_recon_IGL_down[na.omit(id)]<-rowMeans(cbind(diversity_down1$entropy_recon_IGL,diversity_down2$entropy_recon_IGL,diversity_down3$entropy_recon_IGL,
                                                                              diversity_down4$entropy_recon_IGL,diversity_down5$entropy_recon_IGL))
 save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+
+
+#######
+##Try to normalize the data using DSEq2 package
+#######
+library("DESeq2")
+load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+count_matrix<-PAAD.GTEx.repertoire.diversity[, c("IGH",   "IGK",   "IGL", "TRA",  "TRB", "TRD", "TRG")]
+coldata<-matrix(NA,nrow(count_matrix),2)
+coldata[,2]<-PAAD.GTEx.repertoire.diversity$outcome
+coldata[,1]<-ifelse(coldata[,2]=="normal-pancreas (GTEx)","TRUE","FALSE")
+rownames(coldata)<-rownames(PAAD.GTEx.repertoire.diversity)
+colnames(coldata)<-c("accepted","type")
+
+dds <- DESeqDataSetFromMatrix(t(count_matrix), coldata, ~ type) 
+normalized_vst <- varianceStabilizingTransformation(dds)
+norm_data_vst<-assay(normalized_vst) 
+
+id<-match(colnames(norm_data_vst),rownames(PAAD.GTEx.repertoire.diversity))
+PAAD.GTEx.repertoire.diversity$IGH_expression_vst[id]<-norm_data_vst[1,]
+PAAD.GTEx.repertoire.diversity$IGK_expression_vst[id]<-norm_data_vst[2,]
+PAAD.GTEx.repertoire.diversity$IGL_expression_vst[id]<-norm_data_vst[3,]
+PAAD.GTEx.repertoire.diversity$TRA_expression_vst[id]<-norm_data_vst[4,]
+PAAD.GTEx.repertoire.diversity$TRB_expression_vst[id]<-norm_data_vst[5,]
+PAAD.GTEx.repertoire.diversity$TRD_expression_vst[id]<-norm_data_vst[6,]
+PAAD.GTEx.repertoire.diversity$TRG_expression_vst[id]<-norm_data_vst[7,]
+
+save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+
+

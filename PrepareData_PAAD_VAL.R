@@ -255,3 +255,33 @@ PAAD.VAL.repertoire.diversity$outcome<-factor(PAAD.VAL.repertoire.diversity$outc
 PAAD.VAL.repertoire.diversity$sample<-rownames(PAAD.VAL.repertoire.diversity)
 
 save(data_merge,PAAD.VAL.repertoire.diversity,file="Data/PAAD_Val/PAAD_VAL_FullData.Rdata")
+
+
+#######
+##Try to normalize the data using DSEq2 package
+#######
+library("DESeq2")
+load("Data/PAAD_Val/PAAD_VAL_FullData.Rdata")
+count_matrix<-PAAD.VAL.repertoire.diversity[, c("IGH",   "IGK",   "IGL", "TRA",  "TRB", "TRD", "TRG")]
+coldata<-matrix(NA,nrow(count_matrix),2)
+coldata[,2]<-as.character(PAAD.VAL.repertoire.diversity$outcome)
+coldata[,1]<-ifelse(coldata[,2]=="normal-pancreas (TCGA)", "TRUE","FALSE")
+rownames(coldata)<-rownames(PAAD.VAL.repertoire.diversity)
+colnames(coldata)<-c("accepted","type")
+
+dds <- DESeqDataSetFromMatrix(t(count_matrix), coldata, ~ type) 
+normalized_vst <- varianceStabilizingTransformation(dds)
+norm_data_vst<-assay(normalized_vst) 
+
+id<-match(colnames(norm_data_vst),rownames(PAAD.VAL.repertoire.diversity))
+PAAD.VAL.repertoire.diversity$IGH_expression_vst[id]<-norm_data_vst[1,]
+PAAD.VAL.repertoire.diversity$IGK_expression_vst[id]<-norm_data_vst[2,]
+PAAD.VAL.repertoire.diversity$IGL_expression_vst[id]<-norm_data_vst[3,]
+PAAD.VAL.repertoire.diversity$TRA_expression_vst[id]<-norm_data_vst[4,]
+PAAD.VAL.repertoire.diversity$TRB_expression_vst[id]<-norm_data_vst[5,]
+PAAD.VAL.repertoire.diversity$TRD_expression_vst[id]<-norm_data_vst[6,]
+PAAD.VAL.repertoire.diversity$TRG_expression_vst[id]<-norm_data_vst[7,]
+
+save(data_merge,PAAD.VAL.repertoire.diversity,file="Data/PAAD_Val/PAAD_VAL_FullData.Rdata")
+
+
