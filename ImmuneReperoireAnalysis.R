@@ -425,6 +425,36 @@ dev.off()
 #########################################################
 load("Data/PAAD_Val/PAAD_VAL_FullData.Rdata")
 
+##Normalization measures
+cols=brewer.pal(3,name = "Set1")
+
+
+tiff("Results/boxplot_norm_expression_TCGA_VAL.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[, c("IGH_expression",   "IGK_expression",   "IGL_expression", 
+                                            "TRA_expression",  "TRB_expression", "TRD_expression", "TRG_expression")]),
+        col=c(cols[1],cols[2],cols[1],cols[1],cols[2])[PAAD.VAL.repertoire.diversity$outcome],main="norm_expression")
+legend("topright",c("TCGA","Validation"),fill=cols)
+dev.off()
+tiff("Results/boxplot_norm_expression_vst_TCGA_VAL.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[, c("IGH_expression_vst",   "IGK_expression_vst",   "IGL_expression_vst", 
+                                              "TRA_expression_vst",  "TRB_expression_vst", "TRD_expression_vst", "TRG_expression_vst")]),
+        col=c(cols[1],cols[2],cols[1],cols[1],cols[2])[PAAD.VAL.repertoire.diversity$outcome],main="norm_expression_vst")
+legend("topright",c("TCGA","Validation"),fill=cols)
+dev.off()
+tiff("Results/boxplot_norm_entropy_TCGA_VAL.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[, c("entropy_IGH", "entropy_IGK", "entropy_IGL", "entropy_TRA",
+                                            "entropy_TRB", "entropy_TRD", "entropy_TRG")]),
+        col=c(cols[1],cols[2],cols[1],cols[1],cols[2])[PAAD.VAL.repertoire.diversity$outcome],main="norm_entropy")
+legend("topright",c("TCGA","Validation"),fill=cols)
+dev.off()
+
+tiff("Results/boxplot_norm_entropy_recon_TCGA_VAL.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[,c("entropy_recon_IGH", "entropy_recon_IGK", "entropy_recon_IGL", 
+                                           "entropy_recon_TRA","entropy_recon_TRB", "entropy_recon_TRD", "entropy_recon_TRG")]),
+        col=c(cols[1],cols[2],cols[1],cols[1],cols[2])[PAAD.VAL.repertoire.diversity$outcome],main="norm_entropy_recon")
+legend("topright",c("TCGA","Validation"),fill=cols)
+dev.off()
+
 ##Filter by number of reads and clones <100
 PAAD.VAL.repertoire.diversity_treads<-PAAD.VAL.repertoire.diversity[which(PAAD.VAL.repertoire.diversity$T_Reads>100),]
 PAAD.VAL.repertoire.diversity_Igreads<-PAAD.VAL.repertoire.diversity[which(PAAD.VAL.repertoire.diversity$Ig_Reads>100),]
@@ -658,8 +688,38 @@ dev.off()
 ### 5. TCGA vs. GTEX pancreas with clones call together ####
 #########################################################
 load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
-
 PAAD.GTEx.repertoire.diversity$outcome<-factor(PAAD.GTEx.repertoire.diversity$outcome)
+
+##Normalization measures
+cols=brewer.pal(3,name = "Set1")
+
+tiff("Results/boxplot_norm_expression_TCGA_GTEX.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.GTEx.repertoire.diversity[, c("IGH_expression",   "IGK_expression",   "IGL_expression", 
+                                            "TRA_expression",  "TRB_expression", "TRD_expression", "TRG_expression")]),
+        col=c(cols[2],cols[1],cols[1],cols[1])[PAAD.GTEx.repertoire.diversity$outcome],main="norm_expression")
+legend("topright",c("TCGA","GTEx"),fill=cols)
+dev.off()
+tiff("Results/boxplot_norm_expression_vst_TCGA_GTEx.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[, c("IGH_expression_vst",   "IGK_expression_vst",   "IGL_expression_vst", 
+                                            "TRA_expression_vst",  "TRB_expression_vst", "TRD_expression_vst", "TRG_expression_vst")]),
+        col=c(cols[2],cols[1],cols[1],cols[1])[PAAD.GTEx.repertoire.diversity$outcome],main="norm_expression_vst")
+legend("topright",c("TCGA","GTEx"),fill=cols)
+dev.off()
+tiff("Results/boxplot_norm_entropy_TCGA_GTEx.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[, c("entropy_IGH", "entropy_IGK", "entropy_IGL", "entropy_TRA",
+                                            "entropy_TRB", "entropy_TRD", "entropy_TRG")]),
+        col=c(cols[2],cols[1],cols[1],cols[1])[PAAD.GTEx.repertoire.diversity$outcome],main="norm_entropy")
+legend("topright",c("TCGA","GTEx"),fill=cols)
+dev.off()
+
+tiff("Results/boxplot_norm_entropy_recon_TCGA_GTEx.tiff",res=300,h=2000,w=3500)
+boxplot(t(PAAD.VAL.repertoire.diversity[,c("entropy_recon_IGH", "entropy_recon_IGK", "entropy_recon_IGL", 
+                                           "entropy_recon_TRA","entropy_recon_TRB", "entropy_recon_TRD", "entropy_recon_TRG")]),
+        col=c(cols[2],cols[1],cols[1],cols[1])[PAAD.GTEx.repertoire.diversity$outcome],main="norm_entropy_recon")
+legend("topright",c("TCGA","GTEx"),fill=cols)
+dev.off()
+
+
 ##Filter by number of reads and clones <100
 PAAD.GTEx.repertoire.diversity_treads<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$T_Reads>100),]
 PAAD.GTEx.repertoire.diversity_Igreads<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$Ig_Reads>100),]
