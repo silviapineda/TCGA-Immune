@@ -477,18 +477,20 @@ save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx/PAAD_GTEx_Fu
 
 
 #######
-##Try to normalize the data using DSEq2 package
+## normalize the data using DSEq2 package
 #######
 library("DESeq2")
 load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
-count_matrix<-PAAD.GTEx.repertoire.diversity[, c("IGH",   "IGK",   "IGL", "TRA",  "TRB", "TRD", "TRG")]
+count_matrix<-PAAD.GTEx.repertoire.diversity[, c("IGH_filter",   "IGK_filter",   "IGL_filter", "TRA_filter",  "TRB_filter", "TRD_filter", "TRG_filter")]
 coldata<-matrix(NA,nrow(count_matrix),2)
 coldata[,2]<-PAAD.GTEx.repertoire.diversity$outcome
-coldata[,1]<-ifelse(coldata[,2]=="normal-pancreas (GTEx)","TRUE","FALSE")
+coldata[,1]<-ifelse(coldata[,2]=="normal-pancreas (GTEx)","GTEx","TCGA")
 rownames(coldata)<-rownames(PAAD.GTEx.repertoire.diversity)
-colnames(coldata)<-c("accepted","type")
+colnames(coldata)<-c("batch","outcome")
+coldata<-data.frame(coldata)
 
-dds <- DESeqDataSetFromMatrix(t(count_matrix), coldata, ~ type) 
+dds <- DESeqDataSetFromMatrix(t(count_matrix), coldata, ~ batch) 
+
 normalized_vst <- varianceStabilizingTransformation(dds)
 norm_data_vst<-assay(normalized_vst) 
 
@@ -502,5 +504,53 @@ PAAD.GTEx.repertoire.diversity$TRD_expression_vst[id]<-norm_data_vst[6,]
 PAAD.GTEx.repertoire.diversity$TRG_expression_vst[id]<-norm_data_vst[7,]
 
 save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+
+
+#######
+##Include GTEX blood normalization
+#######
+load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+load("Data/GTEx/Blood/GTEX_blood_diversity.Rdata")
+
+GTEX.blood.repertoire.diversity$outcome<-"blood (GTEx)"
+PAAD.GTEx.Blood.repertoire.diversity<-rbind(PAAD.GTEx.repertoire.diversity[,c("IGH_filter",   "IGK_filter",   "IGL_filter", "TRA_filter",  "TRB_filter", "TRD_filter",
+                                                                              "TRG_filter","Ig_Reads_filter","T_Reads_filter","IGH_expression_filter","IGK_expression_filter",
+                                                                              "IGL_expression_filter","TRA_expression_filter","TRB_expression_filter",
+                                                                              "TRD_expression_filter","TRG_expression_filter","Alpha_Beta_ratio_expression_filter",
+                                                                              "KappaLambda_ratio_expression_filter",
+                                                                              "clones_IGH", "clones_IGL","clones_IGK", "clones_TRA", "clones_TRB", "clones_TRD", "clones_TRG",
+                                                                              "entropy_IGH", "entropy_IGK", "entropy_IGL", "entropy_TRA",
+                                                                              "entropy_TRB", "entropy_TRD", "entropy_TRG","outcome")],
+                                            GTEX.blood.repertoire.diversity[,c("IGH_filter",   "IGK_filter",   "IGL_filter", "TRA_filter",  "TRB_filter", "TRD_filter",
+                                                                               "TRG_filter","Ig_Reads_filter","T_Reads_filter","IGH_expression_filter","IGK_expression_filter",
+                                                                               "IGL_expression_filter","TRA_expression_filter","TRB_expression_filter",
+                                                                               "TRD_expression_filter","TRG_expression_filter","Alpha_Beta_ratio_expression_filter",
+                                                                               "KappaLambda_ratio_expression_filter","clones_IGH", "clones_IGL","clones_IGK", "clones_TRA", "clones_TRB", "clones_TRD", "clones_TRG",
+                                                                               "entropy_IGH", "entropy_IGK", "entropy_IGL", "entropy_TRA",
+                                                                               "entropy_TRB", "entropy_TRD", "entropy_TRG","outcome")])
+
+
+count_matrix<-PAAD.GTEx.Blood.repertoire.diversity[, c("IGH",   "IGK",   "IGL", "TRA",  "TRB", "TRD", "TRG")]
+coldata<-matrix(NA,nrow(count_matrix),2)
+coldata[,2]<-PAAD.GTEx.Blood.repertoire.diversity$outcome
+coldata[,1]<-ifelse(coldata[,2]=="blood (GTEx)","GTEx",
+                    ifelse(coldata[,2]=="normal-pancreas (GTEx)","GTEx","TCGA"))
+rownames(coldata)<-rownames(PAAD.GTEx.Blood.repertoire.diversity)
+colnames(coldata)<-c("batch","outcome")
+
+dds <- DESeqDataSetFromMatrix(t(count_matrix), coldata, ~ batch) 
+normalized_vst <- varianceStabilizingTransformation(dds)
+norm_data_vst<-assay(normalized_vst) 
+
+id<-match(colnames(norm_data_vst),rownames(PAAD.GTEx.Blood.repertoire.diversity))
+PAAD.GTEx.Blood.repertoire.diversity$IGH_expression_vst[id]<-norm_data_vst[1,]
+PAAD.GTEx.Blood.repertoire.diversity$IGK_expression_vst[id]<-norm_data_vst[2,]
+PAAD.GTEx.Blood.repertoire.diversity$IGL_expression_vst[id]<-norm_data_vst[3,]
+PAAD.GTEx.Blood.repertoire.diversity$TRA_expression_vst[id]<-norm_data_vst[4,]
+PAAD.GTEx.Blood.repertoire.diversity$TRB_expression_vst[id]<-norm_data_vst[5,]
+PAAD.GTEx.Blood.repertoire.diversity$TRD_expression_vst[id]<-norm_data_vst[6,]
+PAAD.GTEx.Blood.repertoire.diversity$TRG_expression_vst[id]<-norm_data_vst[7,]
+
+save(PAAD.GTEx.Blood.repertoire.diversity,annotation_gtex_blood,GTEX.blood.repertoire.diversity,file="Data/PAAD_GTEX_blood_diversity.Rdata")
 
 

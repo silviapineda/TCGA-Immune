@@ -101,6 +101,43 @@ nucleotides_TCR<-read.csv("Data/PAAD/ClonesInfered_PAAD_TCR.csv")
 nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
+####Reads per chain only for clonal information
+##Reads per chain
+read_count <- table(data_merge$sample)
+read_count_chain <- table(data_merge$sample, data_merge$chainType)
+reads_filter <- data.frame(cbind(read_count,read_count_chain))
+####### The data needs to be normalized by the unmapped reads 
+totalReads<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+id<-match(rownames(reads_filter),totalReads$V1)
+reads_filter$totalReads<-totalReads[id,2]
+
+##Total reads
+reads_filter$Ig_Reads<-reads_filter$IGH+reads_filter$IGK+reads_filter$IGL
+reads_filter$T_reads_filter<- reads_filter$TRA+reads_filter$TRB+reads_filter$TRD+reads_filter$TRG
+
+####Normalize the nuber of reads_filter
+reads_filter$IG_expression<-(reads_filter$IGH+reads_filter$IGK+reads_filter$IGL)/reads_filter$totalReads
+reads_filter$IGH_expression<-reads_filter$IGH/reads_filter$totalReads
+reads_filter$IGK_expression<-reads_filter$IGK/reads_filter$totalReads
+reads_filter$IGL_expression<-reads_filter$IGL/reads_filter$totalReads
+
+reads_filter$T_expression<-(reads_filter$TRA+reads_filter$TRB+reads_filter$TRD+reads_filter$TRG)/reads_filter$totalReads
+reads_filter$TRA_expression<-reads_filter$TRA/reads_filter$totalReads
+reads_filter$TRB_expression<-reads_filter$TRB/reads_filter$totalReads
+reads_filter$TRD_expression<-reads_filter$TRD/reads_filter$totalReads
+reads_filter$TRG_expression<-reads_filter$TRG/reads_filter$totalReads
+###Ratio
+reads_filter$Alpha_Beta_ratio_expression<-(reads_filter$TRA_expression+reads_filter$TRB_expression)/reads_filter$T_expression
+reads_filter$KappaLambda_ratio_expression <- (reads_filter$IGK_expression / reads_filter$IGL_expression)
+
+colnames(reads_filter)<-c("read_count_filter","IGH_filter","IGK_filter", "IGL_filter","TRA_filter","TRB_filter","TRD_filter","TRG_filter", 
+                          "totalReads","Ig_Reads_filter","T_Reads_filter","IG_expression_filter", "IGH_expression_filter","IGK_expression_filter",
+                          "IGL_expression_filter", "T_expression_filter" ,               
+                          "TRA_expression_filter", "TRB_expression_filter","TRD_expression_filter","TRG_expression_filter",
+                          "Alpha_Beta_ratio_expression_filter",  "KappaLambda_ratio_expression_filter")
+
+
+
 ##Clones per chain
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
 
@@ -230,7 +267,7 @@ diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2
 colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
                               "cdr3_length_TRD","cdr3_length_TRG")
 
-PAAD_repertoire_diversity<-cbind(reads,diversity)
+PAAD_repertoire_diversity<-cbind(reads,reads_filter,diversity)
 
 save(data_merge,PAAD_repertoire_diversity,file="Data/PAAD/PAAD_RepertoireResults_diversity.Rdata")
 

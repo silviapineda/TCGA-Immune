@@ -30,76 +30,77 @@ PAAD.GTEx.repertoire.diversity.tumor.normmal<-PAAD.GTEx.repertoire.diversity[whi
                                                                                      PAAD.GTEx.repertoire.diversity$outcome== "tumor-pancreas (TCGA)"),]
 PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome<-factor(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
 
-id<-match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
-data_merge_qc<-data_merge[which(is.na(id)==F),]
-
 ###########################################
 ##### Analysis with V gene usage #########
 ##########################################
 
+####Filter the genes that has low clonanlity (clones<100)
+PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones<-PAAD.GTEx.repertoire.diversity.tumor.normmal[which(PAAD.GTEx.repertoire.diversity.tumor.normmal$Ig_clones>100),]
+id<-match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones))
+data_merge_qc<-data_merge[which(is.na(id)==F),]
+
 ###Matrix with the vgenes
 vgenes<-as.data.frame(unclass(table(data_merge_qc$sample,data_merge_qc$bestVGene)))
 vgenes<-vgenes[,-1]
-vgenes_Ig
 ###Genes 
 #Obtain the V usage
 v_usage_Ig<-matrix(NA,nrow(vgenes),ncol(vgenes))
-v_usage_TCR<-matrix(NA,nrow(vgenes),ncol(vgenes))
+#v_usage_TCR<-matrix(NA,nrow(vgenes),ncol(vgenes))
 id.Ig<-NULL
-id.TR<-NULL
+#id.TR<-NULL
 for (i in 1:ncol(vgenes)){
   if(substr(colnames(vgenes)[i],1,3)=="IGH"){
-    v_usage_Ig[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_IGH
+    v_usage_Ig[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$clones_IGH
     id.Ig<-c(id.Ig,i)
   } 
   if(substr(colnames(vgenes)[i],1,3)=="IGK"){
-    v_usage_Ig[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_IGK
+    v_usage_Ig[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$clones_IGK
     id.Ig<-c(id.Ig,i)
   } 
   if(substr(colnames(vgenes)[i],1,3)=="IGL"){
-    v_usage_Ig[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_IGL
+    v_usage_Ig[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$clones_IGL
     id.Ig<-c(id.Ig,i)
   } 
-  if(substr(colnames(vgenes)[i],1,3)=="TRA"){
-    v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRA
-    id.TR<-c(id.TR,i)
-  } 
-  if(substr(colnames(vgenes)[i],1,3)=="TRB"){
-    v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRB
-    id.TR<-c(id.TR,i)
-  } 
-  if(substr(colnames(vgenes)[i],1,3)=="TRD"){
-    v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRD
-    id.TR<-c(id.TR,i)
-  } 
-  if(substr(colnames(vgenes)[i],1,3)=="TRG"){
-    v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRG
-    id.TR<-c(id.TR,i)
-  } 
+  # if(substr(colnames(vgenes)[i],1,3)=="TRA"){
+  #   v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRA
+  #   id.TR<-c(id.TR,i)
+  # } 
+  # if(substr(colnames(vgenes)[i],1,3)=="TRB"){
+  #   v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRB
+  #   id.TR<-c(id.TR,i)
+  # } 
+  # if(substr(colnames(vgenes)[i],1,3)=="TRD"){
+  #   v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRD
+  #   id.TR<-c(id.TR,i)
+  # } 
+  # if(substr(colnames(vgenes)[i],1,3)=="TRG"){
+  #   v_usage_TCR[,i]<-vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$clones_TRG
+  #   id.TR<-c(id.TR,i)
+  # } 
   
 }
 colnames(v_usage_Ig)<-colnames(vgenes)
 rownames(v_usage_Ig)<-rownames(vgenes)
-colnames(v_usage_TCR)<-colnames(vgenes)
-rownames(v_usage_TCR)<-rownames(vgenes)
+#colnames(v_usage_TCR)<-colnames(vgenes)
+#rownames(v_usage_TCR)<-rownames(vgenes)
 
-v_usage_TCR<-v_usage_TCR[,id.TR]
+#v_usage_TCR<-v_usage_TCR[,id.TR]
 v_usage_Ig<-v_usage_Ig[,id.Ig]
 
 v_usage_Ig<-t(apply(v_usage_Ig,1,function(x) replace(x,x=="NaN",0)))
-v_usage_TCR<-t(apply(v_usage_TCR,1,function(x) replace(x,x=="NaN",0)))
+#v_usage_TCR<-t(apply(v_usage_TCR,1,function(x) replace(x,x=="NaN",0)))
 ###FIlTERING
 ###Convert into 0 all those who has a low expression (<0.002)
 #xx<-replace(v_usage_filter,v_usage_filter<0.05,0)
 ###Those who are in lesss than 10%
-v_usage_Ig_filter<-v_usage_Ig[,which(apply(v_usage_Ig,2,function(x) sum(x==0))<292)] #211
-v_usage_TCR_filter<-v_usage_TCR[,which(apply(v_usage_TCR,2,function(x) sum(x==0))<292)] #211
+v_usage_Ig_filter<-v_usage_Ig[,which(apply(v_usage_Ig,2,function(x) sum(x==0))<198)] #140
+#v_usage_TCR_filter<-v_usage_TCR[,which(apply(v_usage_TCR,2,function(x) sum(x==0))<292)] #211
 
 ##IG
 ###Applied ENET 
 alphalist<-seq(0.1,0.9,by=0.1)
 set.seed(54)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(v_usage_Ig_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(v_usage_Ig_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome,family="binomial"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
@@ -114,24 +115,29 @@ for (j in 1:length(alphalist)) {
 id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
-enet<-glmnet(v_usage_Ig_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial",standardize=TRUE,alpha=alpha,lambda=lambda) #86
-genes<-rownames(enet$beta)[which(enet$beta!=0)]
+enet<-glmnet(v_usage_Ig_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome,family="binomial",standardize=TRUE,alpha=alpha,lambda=lambda) #86
+genes<-rownames(enet$beta)[which( as.numeric(enet$beta)!=0)]
 
-v_usage_Ig_filter_sign<-v_usage_Ig_filter[,match(genes,colnames(v_usage_Ig_filter))] #51
+v_usage_Ig_filter_sign<-v_usage_Ig_filter[,match(genes,colnames(v_usage_Ig_filter))] #59
 
 ##Plot results
 brewer.pal(4,name = "Accent")
 cols=c( "#7FC97F","#BEAED4")
 
-annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome)
 ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1],"tumor-pancreas (TCGA)" = cols[2]))
 colnames(annotation_row)<-"outcome"
-rownames(annotation_row)<-rownames(v_usage_filter_sign)
+rownames(annotation_row)<-rownames(v_usage_Ig_filter_sign)
 
 tiff("Results/heatmap_VgeneUsage_Ig_sign.tiff",width = 5000, height = 3000, res = 300)
 pheatmap(t(v_usage_Ig_filter_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(9,name="PuOr"))(10))
 dev.off()
+
+####Box plot specific genes
+boxplot(v_usage_Ig_filter_sign[,"IGHV3-53"]~PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome,col=cols)
+boxplot(v_usage_Ig_filter[,"IGHV3-22"]~PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome,col=cols)
+
 
 
 ##TCR
@@ -181,24 +187,24 @@ dev.off()
 #Obtain the V expression
 v_expression<-matrix(NA,nrow(vgenes),ncol(vgenes))
 for (i in 1:ncol(vgenes)){
-  v_expression[,i]<-100*(vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal$totalReads)
+  v_expression[,i]<-100*(vgenes[,i]/PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$totalReads)
 }
 
 colnames(v_expression)<-colnames(vgenes)
 rownames(v_expression)<-rownames(vgenes)
 
 v_expression_Ig<-v_expression[,which(substr(colnames(v_expression),1,2)=="IG")]
-v_expression_TR<-v_expression[,which(substr(colnames(v_expression),1,2)=="TR")]
+#v_expression_TR<-v_expression[,which(substr(colnames(v_expression),1,2)=="TR")]
 
 ###FIlTERING
 ###Those who are at least in 2 samples
-v_expression_filter<-v_expression_Ig[,which(apply(v_expression_Ig,2,function(x) sum(x==0))<292)] 
+v_expression_filter<-v_expression_Ig[,which(apply(v_expression_Ig,2,function(x) sum(x==0))<198)] 
 
-##TCR
+
 ###Applied ENET
 alphalist<-seq(0.1,0.9,by=0.1)
 set.seed(54)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(v_expression_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(v_expression_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome,family="binomial"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
@@ -213,8 +219,8 @@ for (j in 1:length(alphalist)) {
 id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
-enet<-glmnet(v_expression_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial",standardize=TRUE,alpha=alpha,lambda=lambda) #86
-genes<-rownames(enet$beta)[which(enet$beta!=0)]
+enet<-glmnet(v_expression_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome,family="binomial",standardize=TRUE,alpha=alpha,lambda=lambda) #86
+genes<-rownames(enet$beta)[which(as.numeric(enet$beta)!=0)]
 
 v_expression_filter_sign<-v_expression_filter[,match(genes,colnames(v_expression_filter))] 
 
@@ -222,7 +228,7 @@ v_expression_filter_sign<-v_expression_filter[,match(genes,colnames(v_expression
 brewer.pal(4,name = "Accent")
 cols=c( "#7FC97F","#BEAED4")
 
-annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal_Igclones$outcome)
 ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1],"tumor-pancreas (TCGA)" = cols[2]))
 colnames(annotation_row)<-"outcome"
 rownames(annotation_row)<-rownames(v_expression_filter_sign)
@@ -233,7 +239,7 @@ pheatmap(t(v_expression_filter_sign),scale="row",border_color=F,show_colnames = 
 dev.off()
 
 ###Overlap with IG v gene usage
-intersect(colnames(v_expression_filter_sign),colnames(v_usage_Ig_filter_sign)) #48 (from 57 of v gene usage)
+intersect(colnames(v_expression_filter_sign),colnames(v_usage_Ig_filter_sign)) #53 (from 59 of v gene usage)
 # "IGHV1-58"  "IGHV1-69"  "IGHV3-11"  "IGHV3-15"  "IGHV3-35"  "IGHV3-38"  "IGHV3-43"  "IGHV3-52"  "IGHV3-53"  "IGHV3-60" 
 # "IGHV3-72"  "IGHV3-74"  "IGHV4-28"  "IGHV4-61"  "IGKV1-12"  "IGKV1-13"  "IGKV1-37"  "IGKV1-8"   "IGKV2-24"  "IGKV2-28" 
 # "IGKV2-29"  "IGKV3-11"  "IGKV3-20"  "IGKV4-1"   "IGLV1-40"  "IGLV1-41"  "IGLV1-44"  "IGLV10-67" "IGLV2-11"  "IGLV2-23" 

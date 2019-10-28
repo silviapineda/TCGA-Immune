@@ -1,57 +1,58 @@
-###Running MIXCR
-
-
-FILES=
-
 ## 1. Align sequencing reads
-for i in $(ls /local/GTEX_pancreas/*fastq.gz | rev | cut -c 12- | rev | uniq)
+
+#!/bin/bash/
+echo "start"
+for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*fastq.gz | rev | cut -c 12- | rev | uniq)
 do
-echo $i
-/home/spineda/miniconda3/bin/mixcr align -p rna-seq -s hsa -f -r ${i}_aligments_report.txt -t 20 -OallowPartialAlignments=true ${i}_1.fastq.gz ${i}_2.fastq.gz ${i}_alignments.vdjca
+f=$(basename "$i")
+echo $f
+/home/spineda/miniconda3/bin/mixcr align -p rna-seq -s hsa -f -r ${f}_alignments_report.txt -t 20 -OallowPartialAlignments=true ${i}_1.
+fastq.gz ${i}_2.fastq.gz ${f}_alignments.vdjca
 done
+echo "end"
 
-#2. Partial alignments
-for i in $(ls *alignments.vdjca | rev | cut -c 17- | rev | uniq)
+##2. Partial alignments
 
+#!/bin/bash/
+
+echo "start"
+for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*alignments.vdjca | rev | cut -c 18- | rev | uniq)
 do
-echo $i 
-
-mixcr assemblePartial -f -r ${i}aligments_report_rescued_1.txt ${i}alignments.vdjca ${i}alignments_rescued_1.vdjca
-mixcr assemblePartial -f -r ${i}aligments_report_rescued_2.txt ${i}alignments_rescued_1.vdjca ${i}alignments_rescued_2.vdjca
-
+f=$(basename "$i")
+echo $f
+/home/spineda/miniconda3/bin/mixcr assemblePartial -f -r ${f}_alignments_report_rescued_1.txt ${f}_alignments.vdjca ${f}_alignments_res
+cued_1.vdjca
+/home/spineda/miniconda3/bin/mixcr assemblePartial -f -r ${f}_alignments_report_rescued_2.txt ${f}_alignments_rescued_1.vdjca ${f}_alig
+nments_rescued_2.vdjca
 done
+echo "end"
+
 
 ##3. Perform extension of incomplete TCR CDR3s with uniquely determined V and J genes using germline sequences
-for i in $(ls *alignments_rescued_2.vdjca | rev | cut -c 27- | rev | uniq)
 
+#!/bin/bash/
+
+echo "start"
+for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*alignments_rescued_2.vdjca | rev | cut -c 28- | rev | uniq)
 do
-echo $i
-mixcr extend -f -r ${i}aligments_report_extended.txt  ${i}alignments_rescued_2.vdjca ${i}alignments_extended.vdjca
+f=$(basename "$i")
+echo $f
+/home/spineda/miniconda3/bin/mixcr extend -f -r ${f}_alignments_report_extended.txt  ${f}_alignments_rescued_2.vdjca ${f}_alignments_ex
+tended.vdjca
 done
+echo "end"
 
-##4. Assemble the clonotypes
-#for i in $(ls *alignments_extended.vdjca | rev | cut -c 26- | rev | uniq)
 
-#do
-#echo $i
-#mixcr assemble -r ${i}clonotypes_report.txt -i ${i}index_file ${i}alignments_extended.vdjca ${i}output.clns
+##4. Extract Alignments
 
-#done
+#!/bin/bash/
 
-##5. Extract Alignments
-for i in $(ls *alignments_extended.vdjca | rev | cut -c 26- | rev | uniq)
-
+echo "start"
+for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*alignments_extended.vdjca | rev | cut -c 27- | rev | uniq)
 do
-echo $i
-mixcr exportAlignments -readId -vHit -dHit -jHit -vGene -dGene -jGene -vAlignment -dAlignment -jAlignment -nFeature VGene -nFeature CDR3 -aaFeature CDR3 -lengthOf VGene ${i}alignments_extended.vdjca ${i}alignments.txt
-
+f=$(basename "$i")
+echo $f
+/home/spineda/miniconda3/bin/mixcr exportAlignments -f -targetSequences -readIds -vHit -dHit -jHit -vGene -dGene -jGene -vAlignment -dA
+lignment -jAlignment -nFeature VGene -nFeature CDR3 -aaFeature CDR3 -lengthOf VGene ${f}_alignments_extended.vdjca ${f}_alignments.txt
 done
-
-##6. Extract Clones
-#for i in $(ls *alignments_extended.vdjca | rev | cut -c 26- | rev | uniq)
-#do
-#echo $i
-#mixcr exportClones -f -cloneId -sequence -count -vHit -jHit -vAlignment -jAlignment -nFeature CDR3 -aaFeature CDR3 ${i}output.clns ${i}clones.txt
-
-#mixcr exportClones -f -cloneId -sequence -count -vHit -jHit -vAlignment -jAlignment -nFeature CDR3 -aaFeature CDR3  {SRR3478950}_output.clns {SRR3478950}_clones.txt
-#done
+echo "end"

@@ -177,6 +177,7 @@ for(i in 1:dim(clone_type_IG_relative_filter)[2]){
 p.adj<-p.adjust(p_value,"fdr")
 clone_type_relative_sign<-clone_type_IG_relative_filter[,which(p.adj<0.05)] #215
 
+#ENET
 alphalist<-seq(0.1,0.9,by=0.01)
 set.seed(54)
 elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(clone_type_IG_relative_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial"
@@ -195,11 +196,10 @@ id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
 
-enet<-glmnet(xcell.data.tumor.filter_Igreads_mat,log10(PAAD.repertoire.diversity_Igreads$IG_expression),family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda)
-cells<-rownames(enet$beta)[which(enet$beta!=0)]
-coef<-enet$beta[which(enet$beta!=0)]
+enet<-glmnet(clone_type_IG_relative_filter,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome,family="binomial",standardize=TRUE,alpha=alpha,lambda=lambda)
+clones<-rownames(enet$beta)[which(enet$beta!=0)]
 
-significant_cells<-xcell.data.tumor.filter_Igreads_mat[,match(cells,colnames(xcell.data.tumor.filter_Igreads_mat))] #15
+clone_type_relative_sign<-clone_type_IG_relative_filter[,match(clones,colnames(clone_type_IG_relative_filter))] #23
 
 ##Plot results
 annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)

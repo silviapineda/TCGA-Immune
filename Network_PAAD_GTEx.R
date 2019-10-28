@@ -121,7 +121,9 @@ Obtain_gini_index<-function(data,chainType,PAAD.GTEx.repertoire.diversity){
   #sample<-sample[-id]
   #id<-grep("SRR1089537",sample) #IGH
   #sample<-sample[-id]
-   
+  #id<-grep("SRR1095479",sample) #IGK
+  #sample<-sample[-id]
+  
   vertex_max<-NULL
   vertex_gini<-NULL
   cluster_max<-NULL
@@ -143,7 +145,7 @@ Obtain_gini_index<-function(data,chainType,PAAD.GTEx.repertoire.diversity){
     j=j+1
   }
   
-  #clonal_expansion<-(num_reads_max_cluster/summary_data[,isotype])*100
+  #clonal_expansion<-(num_reads_max_cluster/summary_data[,chainType])*100
   results<-cbind(cluster_gini,vertex_gini,vertex_max,cluster_max,num_reads_max_cluster,clusters)
   
   rownames(results)<-sample
@@ -154,11 +156,14 @@ Obtain_gini_index<-function(data,chainType,PAAD.GTEx.repertoire.diversity){
 
 chainType= "IGL"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,PAAD.GTEx.repertoire.diversity)))
-id<-match(rownames(cluster_gini_IGK),rownames(PAAD.GTEx.repertoire.diversity))
+id<-match(rownames(cluster_gini_IGL),rownames(PAAD.GTEx.repertoire.diversity))
 PAAD.GTEx.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 PAAD.GTEx.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 PAAD.GTEx.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 PAAD.GTEx.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+
+##To save the varibles with vertex and cluster
+save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
 
 PAAD.GTEx.repertoire.diversity.filter<-
   PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity[,paste0("cluster_gini_",chainType)]!=0 &

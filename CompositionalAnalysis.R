@@ -17,47 +17,70 @@ print(x)
 library(zCompositions)
 library(easyCODA)
 library(ellipse)
+library(factoextra)
+library(RColorBrewer)
+library(sva)
 
 ##Colors: brewer.pal(4, "Accent")
 ##"#BEAED4" (IGH) "#7FC97F" (IGK) "#FDC086" (IGL)
 setwd("~/TCGA-Immune/")
 
-load("Data/PAAD/PAAD_FullData.Rdata")
+load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
 
-data_merge_Ig_aa<-read.csv("Data/PAAD/ClonesInfered_Ig_aa.csv")
-data_merge_TCR_aa<-read.csv("Data/PAAD/ClonesInfered_TCR_aa.csv")
-data_merge_aa<-rbind(data_merge_Ig_aa,data_merge_TCR_aa)
-data_merge<-merge(data_merge,data_merge_aa[,c("seqID","CloneId")],by=c("seqID"))
-data_merge$V_J_lenghCDR3aa_CloneId<-paste(data_merge$V_J_lenghCDR3aa,data_merge$CloneId.y,sep="_")
-
-##Filter for those that are pancreas or normal-pseudonormal
-data_merge_qc<-data_merge[which(is.na(match(data_merge$sample,rownames(PAAD.repertoire.diversity)))==F),]
-
-##Filter for those that are only pancreas
-##Filter for those that are pancreas or normal-pseudonormal
-PAAD.repertoire.diversity.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_2categ=="Tumor_pancreas"),]
-data_merge_pancreas<-data_merge[which(is.na(match(data_merge$sample,rownames(PAAD.repertoire.diversity.tumor)))==F),]
+##Filter for those that are pancreas or normal
+PAAD.GTEx.repertoire.diversity.tumor.normal<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$outcome=="normal-pancreas (GTEx)" |
+                                                                                  PAAD.GTEx.repertoire.diversity$outcome=="tumor-pancreas (TCGA)"),]
+data_merge_qc<-data_merge[which(is.na(match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normal)))==F),]
 
 ############
 ## 1. Build the matrix with the clones by samples
 ###########
 ## Pancreas ans pseudonormal
 data_qc_chain_IGK<-data_merge_qc[which(data_merge_qc$chainType=="IGK"),]
-clone_type_IGK<-t(as.data.frame(unclass(table(data_qc_chain_IGK$V_J_lenghCDR3aa_CloneId,factor(data_qc_chain_IGK$sample))))) 
+clone_type_IGK<-t(as.data.frame(unclass(table(data_qc_chain_IGK$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGK$sample))))) 
 data_qc_chain_IGL<-data_merge_qc[which(data_merge_qc$chainType=="IGL"),]
-clone_type_IGL<-t(as.data.frame(unclass(table(data_qc_chain_IGL$V_J_lenghCDR3aa_CloneId,factor(data_qc_chain_IGL$sample))))) 
+clone_type_IGL<-t(as.data.frame(unclass(table(data_qc_chain_IGL$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGL$sample))))) 
 data_qc_chain_IGH<-data_merge_qc[which(data_merge_qc$chainType=="IGH"),]
-clone_type_IGH<-t(as.data.frame(unclass(table(data_qc_chain_IGH$V_J_lenghCDR3aa_CloneId,factor(data_qc_chain_IGH$sample))))) 
+clone_type_IGH<-t(as.data.frame(unclass(table(data_qc_chain_IGH$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGH$sample))))) 
 data_qc_chain_IG<-data_merge_qc[which(data_merge_qc$chainType=="IGH" |
                                         data_merge_qc$chainType=="IGK" |
                                         data_merge_qc$chainType=="IGL"),]
-clone_type_IG<-t(as.data.frame(unclass(table(data_qc_chain_IG$V_J_lenghCDR3aa_CloneId,factor(data_qc_chain_IG$sample))))) 
+clone_type_IG<-t(as.data.frame(unclass(table(data_qc_chain_IG$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IG$sample))))) 
 
 data_qc_chain_TCR<-data_merge_qc[which(data_merge_qc$chainType=="TRA" | 
                                          data_merge_qc$chainType=="TRB" |
                                          data_merge_qc$chainType=="TRD" | 
                                          data_merge_qc$chainType=="TRG"),]
-clone_type_TCR<-t(as.data.frame(unclass(table(data_qc_chain_TCR$V_J_lenghCDR3aa_CloneId,factor(data_qc_chain_TCR$sample))))) 
+clone_type_TCR<-t(as.data.frame(unclass(table(data_qc_chain_TCR$V_J_lenghCDR3_CloneId,factor(data_qc_chain_TCR$sample))))) 
+
+### Calculate relative abundances and logtransform
+clone_type_IG_relative <- clone_type_IG / colSums(clone_type_IG)
+min<-min(clone_type_IG_relative[clone_type_IG_relative!=0])/2
+clone_type_IG_relative <- clone_type_IG_relative+min
+clone_type_IG_relative_log<-log2(clone_type_IG_relative)
+
+#####################################
+### Principal Components Analysis ###
+#####################################
+pca <- prcomp(t(clone_type_IG_relative_log), scale = TRUE)
+
+SPP <- factor(PAAD.GTEx.repertoire.diversity.tumor.normal$outcome)
+levels.SPP <- factor(c("normal-pancreas (GTEx)", "tumor-pancreas (TCGA)"))
+
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F","#BEAED4")
+
+
+pc <- c(1,2)
+tiff(paste0("Results/PCA_clones_relative_abundance_IG.tiff"),width = 2000, height = 2000, res = 300)
+plot(pca$x[,pc[1]], pca$x[,pc[2]], col=cols[SPP],pch=20,xlab="PCA1",ylab="PCA2")
+legend("bottomright", legend=levels(levels.SPP), col=cols,pch=20,cex=0.8)
+dev.off()
+
+
+### Correct by batch effect using Combat
+combat_edata1 = ComBat(dat=clone_type_IG_relative_log, batch=PAAD.GTEx.repertoire.diversity.tumor.normal$outcome, mod=NULL, par.prior=TRUE, prior.plots=FALSE)
+
 
 
 ###Filter by clones share at least in 2 samples

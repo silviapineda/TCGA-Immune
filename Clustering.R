@@ -24,15 +24,10 @@ library(viridis)
 setwd("~/TCGA-Immune/")
 
 load("Data/PAAD/PAAD_FullData.Rdata")
-PAAD.repertoire.diversity$Tumor_type_2categ<-ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas","Tumor_pancres",
-                                                    ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","Adjacent_normal_pancreas",
-                                                           ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","Adjacent_normal_pancreas",NA)))
-PAAD.repertoire.diversity$Tumor_type_2categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_2categ)
-
 ###################################
 ##### Only tumors #################
 ###################################
-PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas"),] #14
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_3categ=="Tumor_pancreas"),] #14
 PAAD.repertoire.tumor$TCGA_sample<-substr(PAAD.repertoire.tumor$TCGA_sample,1,15)
 xCell.data.tumor<-t(xCell.data.PAAD[,match(PAAD.repertoire.tumor$TCGA_sample,colnames(xCell.data.PAAD))])
 xCell.pvalue.tumor<-t(xCell.pvalue.PAAD[,match(PAAD.repertoire.tumor$TCGA_sample,colnames(xCell.pvalue.PAAD))])
@@ -65,7 +60,7 @@ dev.off()
 ####################
 #### Clustering ###
 ###################
-
+mat<-t(xCell.data.tumor)
 # Prepare Data
 mydata <- scale(t(mat)) # standardize variables
 rownames(mydata)<-substr(rownames(mydata),1,12)

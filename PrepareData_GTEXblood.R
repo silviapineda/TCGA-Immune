@@ -109,6 +109,44 @@ nucleotides_TCR<-read.csv("Data/GTEx/Blood/ClonesInfered_TCR_GTEx_Blood.csv")
 nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
+####Reads per chain only for clonal information
+##Reads per chain
+read_count <- table(data_merge$sample)
+read_count_chain <- table(data_merge$sample, data_merge$chainType)
+reads_filter <- data.frame(cbind(read_count,read_count_chain))
+
+####### The data needs to be normalized by the unmapped reads 
+totalReads<-read.table("Data/GTEx/Blood/MIXCR/report/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+totalReads$V1<-substr(totalReads$V1,2,11)
+totalReads$V1<-unlist(strsplit(totalReads$V1, "}"))
+id<-match(rownames(reads),totalReads$V1)
+reads_filter$totalReads<-totalReads[id,2]
+
+##Total reads
+reads_filter$Ig_Reads<-reads_filter$IGH+reads_filter$IGK+reads_filter$IGL
+reads_filter$T_reads_filter<- reads_filter$TRA+reads_filter$TRB+reads_filter$TRD+reads_filter$TRG
+
+####Normalize the nuber of reads_filter
+reads_filter$IG_expression<-(reads_filter$IGH+reads_filter$IGK+reads_filter$IGL)/reads_filter$totalReads
+reads_filter$IGH_expression<-reads_filter$IGH/reads_filter$totalReads
+reads_filter$IGK_expression<-reads_filter$IGK/reads_filter$totalReads
+reads_filter$IGL_expression<-reads_filter$IGL/reads_filter$totalReads
+
+reads_filter$T_expression<-(reads_filter$TRA+reads_filter$TRB+reads_filter$TRD+reads_filter$TRG)/reads_filter$totalReads
+reads_filter$TRA_expression<-reads_filter$TRA/reads_filter$totalReads
+reads_filter$TRB_expression<-reads_filter$TRB/reads_filter$totalReads
+reads_filter$TRD_expression<-reads_filter$TRD/reads_filter$totalReads
+reads_filter$TRG_expression<-reads_filter$TRG/reads_filter$totalReads
+###Ratio
+reads_filter$Alpha_Beta_ratio_expression<-(reads_filter$TRA_expression+reads_filter$TRB_expression)/reads_filter$T_expression
+reads_filter$KappaLambda_ratio_expression <- (reads_filter$IGK_expression / reads_filter$IGL_expression)
+
+colnames(reads_filter)<-c("read_count_filter","IGH_filter","IGK_filter", "IGL_filter","TRA_filter","TRB_filter","TRD_filter","TRG_filter", 
+                          "totalReads","Ig_Reads_filter","T_Reads_filter","IG_expression_filter", "IGH_expression_filter","IGK_expression_filter",
+                          "IGL_expression_filter", "T_expression_filter" ,               
+                          "TRA_expression_filter", "TRB_expression_filter","TRD_expression_filter","TRG_expression_filter",
+                          "Alpha_Beta_ratio_expression_filter",  "KappaLambda_ratio_expression_filter")
+
 ##Clones per chain
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
 
@@ -138,14 +176,15 @@ for (i in 1:length(sample)){
   clones_sample_TRG<-data_sample_unique[which(data_sample_unique$chainType=="TRG"),"V_J_lenghCDR3_CloneId"]
   
   #To write file to run with Recon
-  write.table(data.frame(table(table(clones_sample_IGH))),file=paste("clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.table(data.frame(table(table(clones_sample_IGK))),file=paste("clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.table(data.frame(table(table(clones_sample_IGL))),file=paste("clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.table(data.frame(table(table(clones_sample_TRA))),file=paste("clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.table(data.frame(table(table(clones_sample_TRB))),file=paste("clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.table(data.frame(table(table(clones_sample_TRD))),file=paste("clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.table(data.frame(table(table(clones_sample_TRG))),file=paste("clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # 
+  # write.table(data.frame(table(table(clones_sample_IGH))),file=paste("clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.table(data.frame(table(table(clones_sample_IGK))),file=paste("clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.table(data.frame(table(table(clones_sample_IGL))),file=paste("clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.table(data.frame(table(table(clones_sample_TRA))),file=paste("clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.table(data.frame(table(table(clones_sample_TRB))),file=paste("clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.table(data.frame(table(table(clones_sample_TRD))),file=paste("clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.table(data.frame(table(table(clones_sample_TRG))),file=paste("clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # # 
+  
   fi_IGH<-as.numeric(table(clones_sample_IGH))/length(clones_sample_IGH)
   fi_IGK<-as.numeric(table(clones_sample_IGK))/length(clones_sample_IGK)
   fi_IGL<-as.numeric(table(clones_sample_IGL))/length(clones_sample_IGL)
@@ -172,7 +211,7 @@ for (i in 1:length(sample)){
   
 }
 
-diversity<-cbind(reads,clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
+diversity<-cbind(reads,reads_filter,clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
 
 save(diversity,data_merge,"Data/GTEx/Blood/GTEx_Blood_RepertoireResults_diversity.Rdata")
 
