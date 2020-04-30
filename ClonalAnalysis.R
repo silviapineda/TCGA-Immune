@@ -28,11 +28,11 @@ library(MASS)
 ##"#BEAED4" (IGH) "#7FC97F" (IGK) "#FDC086" (IGL)
 setwd("~/TCGA-Immune/")
 
-load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+load("Data/PAAD/PAAD_FullData.Rdata")
 
 ##Filter for those that are pancreas or normal
-PAAD.GTEx.repertoire.diversity.tumor.normal<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$outcome=="normal-pancreas (GTEx)" |
-                                                                                    PAAD.GTEx.repertoire.diversity$outcome=="tumor-pancreas (TCGA)"),]
+PAAD.repertoire.diversity.tumor.normal<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$outcome=="normal-pancreas" |
+                                        PAAD.repertoire.diversity$outcome=="tumor-pancreas (TCGA)"),]
 data_merge_qc<-data_merge[which(is.na(match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normal)))==F),]
 
 ############

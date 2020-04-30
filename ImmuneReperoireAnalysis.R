@@ -34,7 +34,8 @@ setwd("~/TCGA-Immune/")
 #################
 load("Data/PAAD/PAAD_FullData.Rdata")
 brewer.pal(3,name = "Accent")
-cols=c( "#7FC97F", "#FDC086", "#BEAED4" )
+brewer.pal(3,name = "Pastel1")
+cols=c( "#7FC97F", "#FBB4AE","#BEAED4", "#FDC086")
 
 #Barplot
 tiff("Results/barplot_Treads.tiff",res=300,h=2500,w=4000)
@@ -42,6 +43,13 @@ barplot(PAAD.repertoire.diversity$T_Reads,col=cols[PAAD.repertoire.diversity$Tum
 abline(h=100)
 legend("topright", legend=levels(PAAD.repertoire.diversity$Tumor_type_3categ),col=cols,pch=15, cex=0.8)
 dev.off()
+
+tiff("Results/barplot_Igreads.tiff",res=300,h=2500,w=4000)
+barplot(PAAD.repertoire.diversity$Ig_Reads_filter,col=cols[PAAD.repertoire.diversity$Tumor_type_4categ],main="Number of Ig-Reads",xlab = "Samples", ylab = "Reads",las=2)
+abline(h=100)
+legend("topright", legend=levels(PAAD.repertoire.diversity$Tumor_type_4categ),col=cols,pch=15, cex=0.8)
+dev.off()
+
 
 tiff("Results/Corr_plot_reads.tiff",res=300,h=2500,w=4000)
 plot(PAAD.repertoire.diversity$Total_Reads,PAAD.repertoire.diversity$totalSeqReads,col=cols[PAAD.repertoire.diversity$Tumor_type_3categ],pch=19,
@@ -54,101 +62,134 @@ summary(PAAD.repertoire.diversity$IG_Reads[which(PAAD.repertoire.diversity$Tumor
 summary(PAAD.repertoire.diversity$T_Reads[which(PAAD.repertoire.diversity$Tumor_type_3categ=="normal_pancreas")])
 summary(PAAD.repertoire.diversity$totalSeqReads)
 
-##Filter by number of reads and clones <100
-PAAD.repertoire.diversity_treads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_Reads>100),]
-PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Ig_Reads>100),]
-PAAD.repertoire.diversity$T_clones<-PAAD.repertoire.diversity$clones_recon_TRA+PAAD.repertoire.diversity$clones_recon_TRB+
+##Filter by number of reads>100 and clones <100
+PAAD.repertoire.diversity_treads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_Reads_filter>100),]
+PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Ig_Reads_filter>110),]
+
+#Recon
+PAAD.repertoire.diversity$T_clones_recon<-PAAD.repertoire.diversity$clones_recon_TRA+PAAD.repertoire.diversity$clones_recon_TRB+
                                     PAAD.repertoire.diversity$clones_recon_TRD+PAAD.repertoire.diversity$clones_recon_TRG
-PAAD.repertoire.diversity$Ig_clones<-PAAD.repertoire.diversity$clones_recon_IGH+PAAD.repertoire.diversity$clones_recon_IGK+
+PAAD.repertoire.diversity$Ig_clones_recon<-PAAD.repertoire.diversity$clones_recon_IGH+PAAD.repertoire.diversity$clones_recon_IGK+
                                      PAAD.repertoire.diversity$clones_recon_IGL
+PAAD.repertoire.diversity_tclones_recon<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_clones_recon>100),]
+PAAD.repertoire.diversity_Igclones_recon<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Ig_clones_recon>100),]
+
+#
+PAAD.repertoire.diversity$T_clones<-PAAD.repertoire.diversity$clones_TRA+PAAD.repertoire.diversity$clones_TRB+
+  PAAD.repertoire.diversity$clones_TRD+PAAD.repertoire.diversity$clones_TRG
+PAAD.repertoire.diversity$Ig_clones<-PAAD.repertoire.diversity$clones_IGH+PAAD.repertoire.diversity$clones_IGK+
+  PAAD.repertoire.diversity$clones_IGL
 PAAD.repertoire.diversity_tclones<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$T_clones>100),]
 PAAD.repertoire.diversity_Igclones<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Ig_clones>100),]
 
+#These are outliers that disappear when filter by cdr3
+#id<-match(c("TCGA-F2-6879-01A","TCGA-FB-AAQ3-01A","TCGA-F2-6880-01A","TCGA-HZ-A8P1-01A"),PAAD.repertoire.diversity$TCGA_sample)
 ####Summary plots
-Ig_expr<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression","Tumor_type_3categ")])
+Ig_expr<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","IGH_expression_filter","IGK_expression_filter","IGL_expression_filter","Tumor_type_4categ")])
 Ig_expr$value<-log10(Ig_expr$value)
-tiff("Results/boxplot_Ig_expression_PAAD.tiff",res=300,h=2500,w=3000)
-ggboxplot(Ig_expr, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw(),xlab = F) +
+tiff("Results/boxplot_Ig_expression_filter_PAAD.tiff",res=300,h=2500,w=3000)
+ggboxplot(Ig_expr, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 
 dev.off()
 
-TR_expr<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression","Tumor_type_3categ")])
+TR_expr<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","TRA_expression_filter","TRB_expression_filter","TRD_expression_filter","TRG_expression_filter","Tumor_type_4categ")])
 TR_expr<-TR_expr[which(TR_expr$value!=0),]
 TR_expr$value<-log10(TR_expr$value)
-tiff("Results/boxplot_TR_expression_PAAD.tiff",res=300,h=2500,w=3500)
-ggboxplot(TR_expr, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+tiff("Results/boxplot_TR_expression_filter_PAAD.tiff",res=300,h=2500,w=3500)
+ggboxplot(TR_expr, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
-Ig_entropy<-melt(PAAD.repertoire.diversity_Igclones[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","Tumor_type_3categ")])
+Ig_entropy<-melt(PAAD.repertoire.diversity_Igclones[,c("TCGA_sample","entropy_IGH","entropy_IGK","entropy_IGL","Tumor_type_4categ")])
 tiff("Results/boxplot_Ig_entropy_PAAD.tiff",res=300,h=2500,w=3000)
-ggboxplot(Ig_entropy, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+ggboxplot(Ig_entropy, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
-TR_entropy<-melt(PAAD.repertoire.diversity_tclones[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","Tumor_type_3categ")])
+Ig_entropy<-melt(PAAD.repertoire.diversity_Igclones[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL","Tumor_type_4categ")])
+tiff("Results/boxplot_Ig_entropy_recon_PAAD.tiff",res=300,h=2500,w=3000)
+ggboxplot(Ig_entropy, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
+  stat_compare_means(
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
+dev.off()
+
+TR_entropy<-melt(PAAD.repertoire.diversity_tclones[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG","Tumor_type_4categ")])
+TR_entropy<-TR_entropy[which(TR_entropy$value!=0),]
+tiff("Results/boxplot_TR_entropy_recon_PAAD.tiff",res=300,h=2500,w=3500)
+ggboxplot(TR_entropy, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
+  rotate_x_text() +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
+  stat_compare_means(
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
+dev.off()
+
+TR_entropy<-melt(PAAD.repertoire.diversity_tclones[,c("TCGA_sample","entropy_TRA","entropy_TRB","entropy_TRD","entropy_TRG","Tumor_type_4categ")])
 TR_entropy<-TR_entropy[which(TR_entropy$value!=0),]
 tiff("Results/boxplot_TR_entropy_PAAD.tiff",res=300,h=2500,w=3500)
-ggboxplot(TR_entropy, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+ggboxplot(TR_entropy, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
-kappa_lambda<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","KappaLambda_ratio_expression","Tumor_type_3categ")])
-tiff("Results/boxplot_kappa_lambda_PAAD.tiff",res=300,h=2500,w=3000)
-ggboxplot(kappa_lambda, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+kappa_lambda<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","KappaLambda_ratio_expression_filter","Tumor_type_4categ")])
+tiff("Results/boxplot_kappa_lambda_PAAD_filter.tiff",res=300,h=2500,w=3000)
+ggboxplot(kappa_lambda, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
-alpha_beta_ratio<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","Alpha_Beta_ratio_expression","Tumor_type_3categ")])
-tiff("Results/boxplot_alpha_beta_PAAD.tiff",res=300,h=2500,w=3500)
-ggboxplot(alpha_beta_ratio, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+alpha_beta_ratio<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","Alpha_Beta_ratio_expression_filter","Tumor_type_4categ")])
+tiff("Results/boxplot_alpha_beta_PAAD_filter.tiff",res=300,h=2500,w=3500)
+ggboxplot(alpha_beta_ratio, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
-Ig_cdr3length<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","Tumor_type_3categ")])
-tiff("Results/boxplot_Ig_cdr3_length.tiff",res=300,h=2500,w=3000)
-ggboxplot(Ig_cdr3length, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+Ig_cdr3length<-melt(PAAD.repertoire.diversity_Igreads[,c("TCGA_sample","cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","Tumor_type_4categ")])
+tiff("Results/boxplot_Ig_cdr3_length_filter.tiff",res=300,h=2500,w=3000)
+ggboxplot(Ig_cdr3length, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
-TCR_cdr3length<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","cdr3_length_TRA","cdr3_length_TRB","cdr3_length_TRD","cdr3_length_TRG","Tumor_type_3categ")])
+TCR_cdr3length<-melt(PAAD.repertoire.diversity_treads[,c("TCGA_sample","cdr3_length_TRA","cdr3_length_TRB","cdr3_length_TRD","cdr3_length_TRG","Tumor_type_4categ")])
 TCR_cdr3length<-TCR_cdr3length[which(TCR_cdr3length$value!=0),]
-tiff("Results/boxplot_TCR_cdr3_length.tiff",res=300,h=2500,w=3000)
-ggboxplot(TCR_cdr3length, x = "Tumor_type_3categ", y = "value",facet.by = "variable",color = "Tumor_type_3categ",ggtheme = theme_bw()) +
+tiff("Results/boxplot_TCR_cdr3_length_filter.tiff",res=300,h=2500,w=3000)
+ggboxplot(TCR_cdr3length, x = "Tumor_type_4categ", y = "value",facet.by = "variable",color = "Tumor_type_4categ",ggtheme = theme_bw()) +
   rotate_x_text() +
-  geom_point(aes(x=Tumor_type_3categ, y=value, color=Tumor_type_3categ), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols[1], cols[2],cols[3]), labels = c("normal pancreas (TCGA)", "pseudonormal pancreas (TCGA)","tumor pancreas (TCGA)")) +
+  geom_point(aes(x=Tumor_type_4categ, y=value, color=Tumor_type_4categ), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("normal pancreas","PAC-Other","PDAC", "pseudonormal pancreas")) +
   stat_compare_means(
-    comparisons =list(c("normal_pancreas","Tumor_pancreas"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","Tumor_pancreas")))
+    comparisons =list(c("normal_pancreas","PDAC"),c("normal_pancreas","pseudonormal_pancreas"),c("pseudonormal_pancreas","PDAC"),c("PDAC","PAC-Other")))
 dev.off()
 
 #########################

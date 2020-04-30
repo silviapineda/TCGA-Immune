@@ -249,23 +249,27 @@ cdr3_length_TRD<-cdr3_length[which(cdr3_length$Group.2=="TRD"),]
 cdr3_length_TRG<-cdr3_length[which(cdr3_length$Group.2=="TRG"),]
 
 id.IGH<-match(rownames(diversity),cdr3_length_IGH$Group.1)
-cdr3_length_IGH_2<-ifelse(is.na(id.IGH)==T,0,cdr3_length_IGH$x)
+diversity$cdr3_length_IGH<-cdr3_length$x[id.IGH]
+diversity$cdr3_length_IGH<-replace(diversity$cdr3_length_IGH,is.na(diversity$cdr3_length_IGH)==T,0)
 id.IGK<-match(rownames(diversity),cdr3_length_IGK$Group.1)
-cdr3_length_IGK_2<-ifelse(is.na(id.IGK)==T,0,cdr3_length_IGK$x)
+diversity$cdr3_length_IGK<-cdr3_length$x[id.IGK]
+diversity$cdr3_length_IGK<-replace(diversity$cdr3_length_IGK,is.na(diversity$cdr3_length_IGK)==T,0)
 id.IGL<-match(rownames(diversity),cdr3_length_IGL$Group.1)
-cdr3_length_IGL_2<-ifelse(is.na(id.IGL)==T,0,cdr3_length_IGL$x)
+diversity$cdr3_length_IGL<-cdr3_length$x[id.IGL]
+diversity$cdr3_length_IGL<-replace(diversity$cdr3_length_IGL,is.na(diversity$cdr3_length_IGL)==T,0)
 id.TRA<-match(rownames(diversity),cdr3_length_TRA$Group.1)
-cdr3_length_TRA_2<-ifelse(is.na(id.TRA)==T,0,cdr3_length_TRA$x)
+diversity$cdr3_length_TRA<-cdr3_length$x[id.TRA]
+diversity$cdr3_length_TRA<-replace(diversity$cdr3_length_TRA,is.na(diversity$cdr3_length_TRA)==T,0)
 id.TRB<-match(rownames(diversity),cdr3_length_TRB$Group.1)
-cdr3_length_TRB_2<-ifelse(is.na(id.TRB)==T,0,cdr3_length_TRB$x)
+diversity$cdr3_length_TRB<-cdr3_length$x[id.TRB]
+diversity$cdr3_length_TRB<-replace(diversity$cdr3_length_TRB,is.na(diversity$cdr3_length_TRB)==T,0)
 id.TRD<-match(rownames(diversity),cdr3_length_TRD$Group.1)
-cdr3_length_TRD_2<-ifelse(is.na(id.TRD)==T,0,cdr3_length_TRD$x)
+diversity$cdr3_length_TRD<-cdr3_length$x[id.TRD]
+diversity$cdr3_length_TRD<-replace(diversity$cdr3_length_TRD,is.na(diversity$cdr3_length_TRD)==T,0)
 id.TRG<-match(rownames(diversity),cdr3_length_TRG$Group.1)
-cdr3_length_TRG_2<-ifelse(is.na(id.TRG)==T,0,cdr3_length_TRG$x)
+diversity$cdr3_length_TRG<-cdr3_length$x[id.TRG]
+diversity$cdr3_length_TRG<-replace(diversity$cdr3_length_TRG,is.na(diversity$cdr3_length_TRG)==T,0)
 
-diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2,cdr3_length_TRA_2,cdr3_length_TRB_2,cdr3_length_TRD_2,cdr3_length_TRG_2)
-colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
-                              "cdr3_length_TRD","cdr3_length_TRG")
 
 PAAD_repertoire_diversity<-cbind(reads,reads_filter,diversity)
 
@@ -383,6 +387,20 @@ PAAD.repertoire.diversity$Tumor_type_3categ<-ifelse(PAAD.repertoire.diversity$Tu
 PAAD.repertoire.diversity$Tumor_type_3categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_3categ)
 PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$Tumor_type_3categ)==F),]
 
+
+##Adding the tumor_type_4categ variable
+id<-match(substr(PAAD.repertoire.diversity$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode)
+PAAD.repertoire.diversity$Tumor_type_4categ<-ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas" & 
+                                                    clinical.patient$histological_type[id]=="Pancreas-Adenocarcinoma Ductal Type","PDAC",
+                                                    ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas" & 
+                                                             clinical.patient$histological_type[id]=="Pancreas-Adenocarcinoma-Other Subtype","PAC-Other",
+                                                    ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","normal_pancreas",
+                                                           ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","normal_pancreas",
+                                                                  ifelse(PAAD.repertoire.diversity$Tumor_type=="Pseudonormal (<1% neoplastic cellularity)","pseudonormal_pancreas",NA)))))
+PAAD.repertoire.diversity$Tumor_type_4categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_4categ)
+
+
 save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
      file="Data/PAAD/PAAD_FullData.Rdata")
+
 

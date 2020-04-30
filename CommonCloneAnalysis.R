@@ -96,10 +96,13 @@ clone_type_filter_TCR<-clone_type_presence_TCR[which(rowSums(clone_type_presence
 clone_type_filter_TCR<-clone_type_filter_TCR[,which(colSums(clone_type_filter_TCR)>0)] #
 
 ##Heatmp
-annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_2categ)
-ann_colors = list (Tumor_type_2categ = c("normal_pseudonormal_pancreas" = brewer.pal(3,"Accent")[1],
-                                         "Tumor_pancreas"= brewer.pal(3,"Accent")[2]))
-colnames(annotation_row)<-"Tumor_type_2categ"
+annotation_row = data.frame(PAAD.repertoire.diversity$Tumor_type_4categ)
+cols=c( "#7FC97F", "#FBB4AE","#BEAED4", "#FDC086")
+ann_colors = list (Tumor_type_4categ = c("normal_pancreas" = cols[1],
+                                         "PAC-Other" = cols[2],
+                                         "PDAC"= cols[3],
+                                         "pseudonormal_pancreas" = cols[4]))
+colnames(annotation_row)<-"Tumor_type_4categ"
 rownames(annotation_row)<-rownames(PAAD.repertoire.diversity)
 
 cols = brewer.pal(10,name = "Paired")
