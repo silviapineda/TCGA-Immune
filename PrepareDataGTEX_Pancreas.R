@@ -292,6 +292,6 @@ id<-match(Pancreas.repertoire.diversity$SUBJID,annotation_gtex$SUBJID)
 annotation_gtex_pancreas<-annotation_gtex[id,]
 
 id<-match(data_merge_pancreas$sample,rownames(Pancreas.repertoire.diversity))
-data_merge_pancreas<-data_merge_pancreas[which(is.na(id)!=F),]
+data_merge_pancreas<-data_merge_pancreas[which(is.na(id)==F),]
 
 save(data_merge_pancreas,Pancreas.repertoire.diversity,annotation_gtex_pancreas,file="Data/GTEx/Pancreas/GTEx_FullData.Rdata")

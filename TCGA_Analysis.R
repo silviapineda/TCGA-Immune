@@ -26,46 +26,61 @@ setwd("~/TCGA-Immune/")
 load("Data/PAAD/PAAD_FullData.Rdata")
 
 ###################################
-##### Only tumors #################
+##### Only PADC #################
 ###################################
-PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas"),] #14
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC"),] #131
 PAAD.repertoire.tumor$TCGA_sample<-substr(PAAD.repertoire.tumor$TCGA_sample,1,15)
+
+###Correlation between Ig and T exopression
+library("ggpubr")
+tiff("Results/PAAD/Ig_T_expression_correlarion",h=2000,w=4000,res=300)
+ggscatter(PAAD.repertoire.tumor, x = "IG_expression", y = "T_expression", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson")
+dev.off()
+
+
 xCell.data.tumor<-t(xCell.data.PAAD[,match(PAAD.repertoire.tumor$TCGA_sample,colnames(xCell.data.PAAD))])
 xCell.pvalue.tumor<-t(xCell.pvalue.PAAD[,match(PAAD.repertoire.tumor$TCGA_sample,colnames(xCell.pvalue.PAAD))])
 
 ####Filter by p-value
 xCell.pvalue.tumor.filter<-t(apply(xCell.pvalue.tumor,1,function (x) replace(x,x>=0.2,1)))
-xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter==1) <= 148*0.8] ##(148*0.8)  45 cells
+xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter==1) <= 131*0.8] ##(148*0.8)  45 cells
 
 ##################################
 ## Heatmap for the BCR and TCR ###
 #################################
 #IG
 PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$Ig_Reads>100),]
-Ig_markers<-c("IGH_expression","IGK_expression","IGL_expression")
+Ig_markers<-c("cluster_gini_IGH","vertex_gini_IGH", "cluster_gini_IGK","vertex_gini_IGK", "cluster_gini_IGL","vertex_gini_IGL")
 mat<-PAAD.repertoire.diversity_Igreads[,Ig_markers]
 rownames(mat)<-substr(PAAD.repertoire.diversity_Igreads$TCGA_sample,1,12)
+tiff("Results/PAAD/Ig_expression_heatmap",h=2000,w=4000,res=300)
 pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+dev.off()
 
 #TR
 PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$T_Reads>100),]
 T_markers<-c("TRA_expression","TRB_expression","TRD_expression","TRG_expression")
 mat<-PAAD.repertoire.diversity_treads[,T_markers]
 rownames(mat)<-substr(PAAD.repertoire.diversity_treads$TCGA_sample,1,12)
+tiff("Results/PAAD/T_expression_heatmap",h=2000,w=4000,res=300)
 pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
-
+dev.off()
 #All
 ALL_markers<-c("IGH_expression","IGK_expression","IGL_expression","TRA_expression","TRB_expression","TRD_expression","TRG_expression")
 mat<-PAAD.repertoire.tumor[,ALL_markers]
 rownames(mat)<-substr(PAAD.repertoire.tumor$TCGA_sample,1,12)
+tiff("Results/PAAD/Ig_T_expression_heatmap",h=2000,w=4000,res=300)
 pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+dev.off()
 
 ###Applied ENET to find cells associated with T or B expression
 ##############
 ##T_reads
 ##############
-PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$T_Reads>100),] #139
-xcell.data.tumor.filter_treads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$T_Reads>100),] #139
+PAAD.repertoire.diversity_treads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$T_Reads>100),] #123
+xcell.data.tumor.filter_treads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$T_Reads>100),] #123
 xcell.data.tumor.filter_treads_mat<-xcell.data.tumor.filter_treads[ , -which(colnames(xcell.data.tumor.filter_treads) %in% c("ImmuneScore","StromaScore","MicroenvironmentScore"))]
 
 library(dplyr)
@@ -103,7 +118,7 @@ annotation_col = data.frame(
 
 rownames(annotation_col)<-rownames(significant_cells)
 ann_colors = list (T_expression = brewer.pal(9,"Reds"))
-tiff("Results/T_expression.tiff",res=300,w=3500,h=3000)
+tiff("Results/T_expression_xcell.tiff",res=300,w=3500,h=3000)
 pheatmap(t(significant_cells),scale="row",annotation_col = annotation_col,annotation_colors = ann_colors,show_colnames = F,border_color=F,
          color = colorRampPalette(brewer.pal(9,name="PuOr"))(12))
 dev.off()
@@ -111,8 +126,8 @@ dev.off()
 ##############
 ##IG_reads
 #############
-PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$Ig_Reads>100),] #147
-xcell.data.tumor.filter_Igreads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$Ig_Reads>100),] #147
+PAAD.repertoire.diversity_Igreads<-PAAD.repertoire.tumor[which(PAAD.repertoire.tumor$Ig_Reads>100),] #131
+xcell.data.tumor.filter_Igreads<-xcell.data.tumor.filter[which(PAAD.repertoire.tumor$Ig_Reads>100),] #131
 xcell.data.tumor.filter_Igreads_mat<-xcell.data.tumor.filter_Igreads[ , -which(colnames(xcell.data.tumor.filter_Igreads) %in% c("ImmuneScore","StromaScore","MicroenvironmentScore"))]
 
 alphalist<-seq(0.1,0.9,by=0.01)
@@ -145,7 +160,7 @@ annotation_col = data.frame(
 
 rownames(annotation_col)<-rownames(significant_cells)
 ann_colors = list (IG_expression = brewer.pal(6,"Greens"))
-tiff("Results/IG_expression.tiff",res=300,w=3500,h=3000)
+tiff("Results/IG_expression_xcell.tiff",res=300,w=3500,h=3000)
 pheatmap(t(significant_cells),scale="row",annotation_col = annotation_col,annotation_colors = ann_colors,show_colnames = F,border_color=F,
          color = colorRampPalette(brewer.pal(9,name="PuOr"))(12))
 dev.off()
@@ -154,7 +169,7 @@ dev.off()
 ###############################
 ## Merge with Clinical data ###
 ###############################
-PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_2categ=="Tumor_pancreas"),]
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC"),]
 clinical.patient.tumor<-clinical.patient[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode),]
 PAAD.repertoire.tumor.clinical.patient<-cbind(PAAD.repertoire.tumor,clinical.patient.tumor)
 
@@ -353,7 +368,7 @@ clinical_variablers<-c("histological_type_2cat","anatomic_neoplasm_subdivision",
                        "family_history_of_cancer","radiation_therapy","primary_therapy_outcome_success",
                        "history_of_chronic_pancreatitis","history_of_diabetes")
 
-rf_output <- randomForest(PAAD.repertoire.tumor$clones_recon_TRA~.,data=clinical.patient.tumor[,clinical_variablers],
+rf_output <- randomForest(PAAD.repertoire.tumor$entropy_recon_IGH~.,data=clinical.patient.tumor[,clinical_variablers],
                           importance=T,proximity=TRUE, keep.forest=T,na.action=na.omit)
 
 ## Look at variable importance:
@@ -364,7 +379,7 @@ varImpPlot(rf_output)
 ##################################
 #######Clinical follow-up########
 #################################
-PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_2categ=="Tumor_pancreas"),]
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC"),]
 clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
 PAAD.repertoire.tumor.followuop<-cbind(PAAD.repertoire.tumor,clinical.follow_up.tumor)
 
@@ -398,15 +413,17 @@ library(survminer)
 library(survMisc)
 ##OS
 surv_object <- Surv(time = PAAD.repertoire.tumor.survival$OS.time, event = PAAD.repertoire.tumor.survival$OS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$entropy_recon_IGH.x+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
-               +PAAD.repertoire.tumor.survival$age_at_initial_pathologic_diagnosis+PAAD.repertoire.tumor.survival$pathologic_stage)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$KappaLambda_ratio_expression.x+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
+               + as.numeric(as.character(PAAD.repertoire.tumor.survival$age_at_initial_pathologic_diagnosis))+PAAD.repertoire.tumor.survival$pathologic_stage)
 summary(res.cox)
 ##Categorical
-KL_mean<-mean(PAAD.repertoire.tumor$entropy_recon_IGH)
-PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$entropy_recon_IGH<=KL_mean,1,2)
+KL_mean<-mean(PAAD.repertoire.tumor$entropy_IGH)
+PAAD.repertoire.tumor$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor$entropy_IGH<=KL_mean,1,2)
 fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor$KL_ratio_2cat)
 fit1
+tiff("Results/PAAD/KM_Entropy_recon_TRB.tiff",res=300,h=2000,w=2000)
 ggsurvplot(fit1, data = PAAD.repertoire.tumor)
+dev.off()
 comp(ten(fit1))$tests$lrTests
 
 #DSS

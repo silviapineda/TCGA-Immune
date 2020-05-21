@@ -56,8 +56,8 @@ Obtain_vertex_edges<-function(data,chainType){
     assign(paste0("edges",i),unique(data.frame(groups)))
     df_vertex<-data.frame(table(data_sample$CloneId_CDR3))
     assign(paste0("vertex",i),df_vertex[which(df_vertex$Freq!=0),])
-    write.table(get(paste0("edges",i)),paste0("Results/Network/edges_",chainType,"_",i,".txt"),sep="\t",row.names = F)
-    write.table(get(paste0("vertex",i)),paste0("Results/Network/vertex_",chainType,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("edges",i)),paste0("Data/PAAD/Network/edges_",chainType,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("vertex",i)),paste0("Data/PAAD/Network/vertex_",chainType,"_",i,".txt"),sep="\t",row.names = F)
   }
 }
 
@@ -116,8 +116,8 @@ Obtain_gini_index<-function(data,receptor,PAAD.repertoire.diversity){
 #chainType
 Obtain_gini_index<-function(data,chainType,PAAD.repertoire.diversity){
   sample<-rownames(PAAD.repertoire.diversity)
-  #id<-grep("cab8e91a-ca41-4c62-af53-3aa4057d68d5",sample) #IGH
-  #sample<-sample[-id]
+  id<-grep("cab8e91a-ca41-4c62-af53-3aa4057d68d5",sample) #IGH
+  sample<-sample[-id]
   #id<-grep("SRR1089537",sample) #IGH
   #sample<-sample[-id]
   #id<-grep("SRR1095479",sample) #IGK
@@ -130,7 +130,10 @@ Obtain_gini_index<-function(data,chainType,PAAD.repertoire.diversity){
   num_reads_max_cluster<-NULL
   clusters<-NULL
   clonal_expansion<-NULL
+  clones_size<-list()
   j<-1
+  CDR3_length<-NULL
+  vertex_size<-NULL
   
   for (i in sample){
     print(i)
@@ -141,6 +144,7 @@ Obtain_gini_index<-function(data,chainType,PAAD.repertoire.diversity){
     cluster_max[j]<-max(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
     clusters[j]<-sum(table(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId)))
     cluster_gini[j]<-Gini(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
+    clones_size[[j]]<-table(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
     id1<-grep(cluster_max[j],table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
     id2<-table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId)[id1]
     id3<-NULL
@@ -155,10 +159,28 @@ Obtain_gini_index<-function(data,chainType,PAAD.repertoire.diversity){
     id5<-match(id4,get(paste0("vertex",i))$Var1)
     num_reads_max_cluster[j]<-sum(get(paste0("vertex",i))$Freq[id5])
     j=j+1
+    xx<-strsplit(as.character(get(paste0("vertex",i))$Var1),"_")
+    CDR3_length<-c(CDR3_length,unlist(lapply(xx, `[[`, 3)))
+    vertex_size<-c(vertex_size,get(paste0("vertex",i))$Freq)
+    #tiff(paste0("Results/PAAD/Network/Vertex_Size_CDR3_",i,".tiff"),res=300,h=2000,w=2000)
+    #plot(CDR3_length,vertex_size,xlab="CDR3 length",ylab="Vertex size")
+    #dev.off()
   }
+  vertex_size_2<-vertex_size[vertex_size<3000]
+  CDR3_length_2<-as.numeric(CDR3_length[vertex_size<3000])
+  tiff(paste0("Results/PAAD/Network/Vertex_Size_CDR3.tiff"),res=300,h=2000,w=4000)
+  plot(CDR3_length_2,vertex_size_2,xlab="CDR3 length",ylab="Vertex size",xaxt="n")
+  axis(1,at=min(CDR3_length_2):max(CDR3_length_2))
+  dev.off()
+  #tiff("Results/PAAD/Cluster_barplot.tiff",res=300,h=1000,w=6000)
+  #barplot(table(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId)),xlab="Number of vertex per cluster",ylab="Number of clusters")
+  #dev.off()
+  #tiff("Results/PAAD/Vertex_barplot.tiff",res=300,h=1000,w=6000)
+  #barplot(table(get(paste0("vertex",i))$Freq),xlab="Number of reads per vertex",ylab="number of vertex")
+  #dev.off()
   
-  clonal_expansion<-(num_reads_max_cluster/PAAD.repertoire.diversity[sample,chainType])*100
-  results<-cbind(cluster_gini,vertex_gini,vertex_max,cluster_max,num_reads_max_cluster,clusters,clonal_expansion)
+  #clonal_expansion<-(num_reads_max_cluster/PAAD.repertoire.diversity[sample,chainType])*100
+  results<-cbind(cluster_gini,vertex_gini,vertex_max,cluster_max,num_reads_max_cluster,clusters)
   
   rownames(results)<-sample
   
@@ -166,14 +188,14 @@ Obtain_gini_index<-function(data,chainType,PAAD.repertoire.diversity){
 }
 
 
-chainType= "IGL"
+chainType= "IGH"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,PAAD.repertoire.diversity)))
-id<-match(rownames(cluster_gini_IGK),rownames(PAAD.repertoire.diversity))
+id<-match(rownames(cluster_gini_IGH),rownames(PAAD.repertoire.diversity))
 PAAD.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 PAAD.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 PAAD.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 PAAD.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
-PAAD.repertoire.diversity[id,paste0("clonal_expansion_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"clonal_expansion"]
+#PAAD.repertoire.diversity[id,paste0("clonal_expansion_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"clonal_expansion"]
 
 ##To save the varibles with vertex and cluster
 save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation
@@ -219,18 +241,19 @@ sample_tumor<-rownames(PAAD.repertoire.diversity.filter)[which(PAAD.repertoire.d
 chainType="IGH"
 for(i in sample_tumor) {
   print(i)
+  i="4ca559ef-d8b9-400b-972c-693257124c3d"
   edges <- read.delim(paste("Data/PAAD/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/2
+    V(net)$size <- V(net)$Freq/200
     V(net)$color <- c("#BEAED4")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
     tiff(paste("Results/PAAD/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
-    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=1000))
+    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
     dev.off()
   }
 }
@@ -243,14 +266,14 @@ for(i in sample_normal) {
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/2
+    V(net)$size <- V(net)$Freq/200
     V(net)$color <- c("#7FC97F")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
     tiff(paste("Results/PAAD/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
-    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=1000))
+    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
     dev.off()
   }
 }
@@ -263,14 +286,14 @@ for(i in sample_normal) {
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/2
+    V(net)$size <- V(net)$Freq/200
     V(net)$color <- c("#FDC086")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
     tiff(paste("Results/PAAD/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
-    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=1000))
+    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
     dev.off()
   }
 }

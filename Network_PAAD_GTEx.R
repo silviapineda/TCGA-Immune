@@ -21,8 +21,8 @@ library("dplyr")
 library("RColorBrewer")
 
 setwd("~/TCGA-Immune/")
-load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
-load("Data/GTEx/Blood/GTEx_blood_FullData.Rdata")
+load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
+#load("Data/GTEx/Blood/GTEx_blood_FullData.Rdata")
 ##################################
 ##1.Obtain the vertex and edges
 ##################################
@@ -39,7 +39,7 @@ Obtain_vertex_edges<-function(data,receptor){
     assign(paste0("edges",i),unique(data.frame(groups)))
     df_vertex<-data.frame(table(data_sample$CloneId_CDR3))
     assign(paste0("vertex",i),df_vertex[which(df_vertex$Freq!=0),])
-    write.table(get(paste0("edges",i)),paste0("Results/Network/edges_",receptor,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("edges",i)),paste0("Results/GTEx/Network/edges_",receptor,"_",i,".txt"),sep="\t",row.names = F)
     write.table(get(paste0("vertex",i)),paste0("Results/Network/vertex_",receptor,"_",i,".txt"),sep="\t",row.names = F)
   }
 }
@@ -57,12 +57,12 @@ Obtain_vertex_edges<-function(data,chainType){
     assign(paste0("edges",i),unique(data.frame(groups)))
     df_vertex<-data.frame(table(data_sample$CloneId_CDR3))
     assign(paste0("vertex",i),df_vertex[which(df_vertex$Freq!=0),])
-    write.table(get(paste0("edges",i)),paste0("Results/Network/edges_",chainType,"_",i,".txt"),sep="\t",row.names = F)
-    write.table(get(paste0("vertex",i)),paste0("Results/Network/vertex_",chainType,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("edges",i)),paste0("Results/GTEx//Network/edges_",chainType,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("vertex",i)),paste0("Results/GTEx//Network/vertex_",chainType,"_",i,".txt"),sep="\t",row.names = F)
   }
 }
 
-network_IGH<-Obtain_vertex_edges(data_merge,"IGH")
+network_IGH<-Obtain_vertex_edges(data_merge_pancreas,"IGH")
 network_IGK<-Obtain_vertex_edges(data_merge,"IGK")
 network_IGL<-Obtain_vertex_edges(data_merge,"IGL")
 #network_TRAV<-Obtain_vertex_edges(data_merge,"TRAV")
@@ -95,8 +95,8 @@ Obtain_gini_index<-function(data,receptor,PAAD.GTEx.repertoire.diversity){
   j<-1
   
   for (i in sample){
-    assign(paste0("edges",i),read.delim(paste0("Results/Network/edges_",receptor,"_",i,".txt")))
-    assign(paste0("vertex",i),read.delim(paste0("Results/Network/vertex_",receptor,"_",i,".txt")))
+    assign(paste0("edges",i),read.delim(paste0("Results/GTEx//Network/edges_",receptor,"_",i,".txt")))
+    assign(paste0("vertex",i),read.delim(paste0("Results/GTEx//Network/vertex_",receptor,"_",i,".txt")))
     vertex_max[j]<-max(get(paste0("vertex",i))$Freq)
     vertex_gini[j]<-Gini(get(paste0("vertex",i))$Freq)
     cluster_max[j]<-max(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
