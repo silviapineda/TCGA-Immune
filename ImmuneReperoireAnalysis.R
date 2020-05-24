@@ -959,7 +959,7 @@ dev.off()
 ###################################
 ### 6. Compare with GTEX Blood  ###
 ###################################
-load("Data/PAAD_GTEX_blood_diversity.Rdata")
+load("Data/PAAD/PAAD_GTEX_blood_diversity.Rdata")
 
 PAAD.GTEx.Blood.repertoire.diversity$outcome<-factor(PAAD.GTEx.Blood.repertoire.diversity$outcome)
 PAAD.GTEx.Blood.repertoire.diversity$sample<-rownames(PAAD.GTEx.Blood.repertoire.diversity)

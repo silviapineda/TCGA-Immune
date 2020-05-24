@@ -147,7 +147,8 @@ dev.off()
 ########################
 
 #Normal
-sample_normal<-rownames(Pancreas.repertoire.diversity.filter)
+sample_normal<-rownames(Pancreas.repertoire.diversity)
+sample_normal<-sample_normal[which(sample_normal!="SRR1089537")]
 chainType="IGH"
 for(i in sample_normal) {
   print(i)
@@ -155,8 +156,8 @@ for(i in sample_normal) {
   vertex <- read.delim(paste("Results/GTEx/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/200
-    V(net)$color <- c("#386CB0")
+    V(net)$size <- V(net)$Freq/10
+    V(net)$color <- c("#7FC97F")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4

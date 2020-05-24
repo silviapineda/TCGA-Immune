@@ -1,0 +1,108 @@
+rm(list = ls(all = TRUE))
+x <-date()
+print(x)
+###########################################################################################
+### PROJECT: Immune Repertoire. Analysis B cells antibodies for pregnancy outcomes
+###
+### CITATION: 
+###
+### PROCESS: 
+###           
+### DESCRIP: Network analysis
+###         
+###
+### Author: Silvia Pineda
+### Date: January, 2019
+############################################################################################
+library(ggplot2)
+library("igraph")
+library("ineq")
+library("dplyr")
+library("RColorBrewer")
+
+setwd("~/TCGA-Immune/")
+load("Data/PAAD/PAAD_FullData.Rdata")
+load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
+load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
+load("Data/Validation_Normal_pancreas/Pancreas_Normal_Validation_FullData.Rdata")
+
+########################
+##4.Plot the network
+########################
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+
+#### TCGA - Only PDAC samples
+PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC"),] #131
+PAAD.repertoire.tumor$TCGA_sample<-substr(PAAD.repertoire.tumor$TCGA_sample,1,15)
+#### GTEX - Pancreas
+GTEX.repertoire.normal<-Pancreas.repertoire.diversity
+##Tumor Validation
+Validation.repertoire.tumor<-Pancreas.Validation.repertoire.diversity[which(Pancreas.Validation.repertoire.diversity$tissue=="pancreas tumor"),]
+##Normal Validation
+Validation.repertoire.normal<-Pancreas.Normal.Validation.repertoire.diversity
+
+Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.tumor[,c("cluster_gini_IGH","vertex_gini_IGH")],
+                                        GTEX.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH")],
+                                        Validation.repertoire.tumor[,c("cluster_gini_IGH","vertex_gini_IGH")],
+                                        Validation.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH")])
+Cluster_vertex_gini_distribution$outcome<-c(rep("TCGA-PDAC",nrow(PAAD.repertoire.tumor)),rep("GTEX-Normal",nrow(GTEX.repertoire.normal)),
+                                           rep("Validation-PDAC",nrow(Validation.repertoire.tumor)),rep("Validation-Normal",nrow(Validation.repertoire.normal)))
+Cluster_vertex_gini_distribution$outcome<-factor(Cluster_vertex_gini_distribution$outcome)
+
+chainType="IGH"
+tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
+par(fig=c(0,0.8,0,0.8))
+plot(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)], 
+     Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)],
+     col = cols[factor(Cluster_vertex_gini_distribution$outcome)],
+     pch=20,ylab = c("Gini (Vextex)"),xlab = c("Gini (Cluster)"))
+legend("bottomright",legend=c("GTEX-Normal",
+                              "TCGA-PDAC",
+                              "Validation-Normal",
+                              "Validation-PDAC"), 
+       col=cols,pch=20,cex=0.8)
+
+par(fig=c(0,0.8,0.55,1), new=TRUE)
+summary(glm(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome))
+boxplot(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome,
+        col=cols, horizontal=TRUE, axes=FALSE)
+
+
+
+par(fig=c(0.65,1,0,0.8),new=TRUE)
+summary(glm(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome))
+boxplot(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome,
+        col=cols, axes=FALSE)
+
+dev.off()
+
+tiff(paste0("Results/network_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_IGH",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y= cluster_gini_IGH, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
+                                                  "TCGA-PDAC",
+                                                  "Validation-Normal",
+                                                  "Validation-PDAC")) +
+  
+  stat_compare_means(
+    comparisons =list(c("GTEX-Normal","Validation-Normal"),c("GTEX-Normal","TCGA-PDAC"),
+                      c("TCGA-PDAC","Validation-PDAC"),c("Validation-Normal","Validation-PDAC"),
+                      c("TCGA-PDAC","Validation-Normal")))
+
+dev.off()
+
+tiff(paste0("Results/network_vertex_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IGH",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y= vertex_gini_IGH, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
+                                                  "TCGA-PDAC",
+                                                  "Validation-Normal",
+                                                  "Validation-PDAC")) +
+  
+  stat_compare_means(
+    comparisons =list(c("GTEX-Normal","Validation-Normal"),c("GTEX-Normal","TCGA-PDAC"),
+                      c("TCGA-PDAC","Validation-PDAC"),c("Validation-Normal","Validation-PDAC"),
+                      c("TCGA-PDAC","Validation-Normal")))
+dev.off()

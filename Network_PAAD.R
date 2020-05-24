@@ -25,24 +25,6 @@ load("Data/PAAD/PAAD_FullData.Rdata")
 ##################################
 ##1.Obtain the vertex and edges
 ##################################
-#Receptor
-Obtain_vertex_edges<-function(data,receptor){
-  data<-data[which(data$receptor==receptor),]
-  data$CloneId_CDR3<-paste0(data[,c("V_J_lenghCDR3_CloneId")],data[,c("nSeqCDR3")])
-  sample<-unique(data$sample)
-  for (i in sample){
-    print(i)
-    data_sample<-data[which(data$sample==i),]
-    df_sample<-data_sample[,c("CloneId_CDR3","V_J_lenghCDR3_CloneId")]
-    groups <- group_by(df_sample,CloneId_CDR3,V_J_lenghCDR3_CloneId)
-    assign(paste0("edges",i),unique(data.frame(groups)))
-    df_vertex<-data.frame(table(data_sample$CloneId_CDR3))
-    assign(paste0("vertex",i),df_vertex[which(df_vertex$Freq!=0),])
-    write.table(get(paste0("edges",i)),paste0("Results/Network/edges_",receptor,"_",i,".txt"),sep="\t",row.names = F)
-    write.table(get(paste0("vertex",i)),paste0("Results/Network/vertex_",receptor,"_",i,".txt"),sep="\t",row.names = F)
-  }
-}
-
 #chainType
 Obtain_vertex_edges<-function(data,chainType){
   data<-data[which(data$chainType==chainType),]
@@ -237,16 +219,17 @@ dev.off()
 ########################
 
 #Tumor
-sample_tumor<-rownames(PAAD.repertoire.diversity.filter)[which(PAAD.repertoire.diversity.filter$Tumor_type_3categ=="Tumor_pancreas")]
+sample_tumor<-rownames(PAAD.repertoire.diversity)[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC")]
+sample_tumor<-sample_tumor[which(sample_tumor!="cab8e91a-ca41-4c62-af53-3aa4057d68d5")]
 chainType="IGH"
 for(i in sample_tumor) {
   print(i)
-  i="4ca559ef-d8b9-400b-972c-693257124c3d"
+  #i="5e9e81e2-0e8b-4aca-aced-6ce451fa3262"
   edges <- read.delim(paste("Data/PAAD/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/200
+    V(net)$size <- V(net)$Freq/50
     V(net)$color <- c("#BEAED4")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
@@ -259,40 +242,40 @@ for(i in sample_tumor) {
 }
 
 #Normal
-sample_normal<-rownames(PAAD.repertoire.diversity.filter)[which(PAAD.repertoire.diversity.filter$Tumor_type_3categ=="normal_pancreas")]
+sample_normal<-rownames(PAAD.repertoire.diversity)[which(PAAD.repertoire.diversity$Tumor_type_3categ=="normal_pancreas")]
 for(i in sample_normal) {
   print(i)
   edges <- read.delim(paste("Data/PAAD/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/200
-    V(net)$color <- c("#7FC97F")
+    V(net)$size <- V(net)$Freq/100
+    V(net)$color <- c("#FDC086")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
-    tiff(paste("Results/PAAD/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
+    tiff(paste("Results/PAAD/Network/network_",chainType,"_normal_",i,".tiff",sep=""),res=300,h=3000,w=3000)
     plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
     dev.off()
   }
 }
 
 #PseudoNormal
-sample_normal<-rownames(PAAD.repertoire.diversity.filter)[which(PAAD.repertoire.diversity.filter$Tumor_type_3categ=="pseudonormal_pancreas")]
+sample_normal<-rownames(PAAD.repertoire.diversity)[which(PAAD.repertoire.diversity$Tumor_type_3categ=="pseudonormal_pancreas")]
 for(i in sample_normal) {
   print(i)
   edges <- read.delim(paste("Data/PAAD/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/200
-    V(net)$color <- c("#FDC086")
+    V(net)$size <- V(net)$Freq/100
+    V(net)$color <- c("#B3CDE3")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
-    tiff(paste("Results/PAAD/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
+    tiff(paste("Results/PAAD/Network/network_",chainType,"_pseudonormal_",i,".tiff",sep=""),res=300,h=3000,w=3000)
     plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
     dev.off()
   }

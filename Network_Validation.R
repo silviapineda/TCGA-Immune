@@ -21,8 +21,7 @@ library("dplyr")
 library("RColorBrewer")
 
 setwd("~/TCGA-Immune/")
-load("Data/Validation_Normal_pancreas/Pancreas_Normal_Validation_FullData.Rdata")
-#load("Data/GTEx/Blood/GTEx_blood_FullData.Rdata")
+load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
 ##################################
 ##1.Obtain the vertex and edges
 ##################################
@@ -39,8 +38,8 @@ Obtain_vertex_edges<-function(data,chainType){
     assign(paste0("edges",i),unique(data.frame(groups)))
     df_vertex<-data.frame(table(data_sample$CloneId_CDR3))
     assign(paste0("vertex",i),df_vertex[which(df_vertex$Freq!=0),])
-    write.table(get(paste0("edges",i)),paste0("Results/Validation/Normal/Network/edges_",chainType,"_",i,".txt"),sep="\t",row.names = F)
-    write.table(get(paste0("vertex",i)),paste0("Results/Validation/Normal/Network/vertex_",chainType,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("edges",i)),paste0("Results/Validation/Tumor//Network/edges_",chainType,"_",i,".txt"),sep="\t",row.names = F)
+    write.table(get(paste0("vertex",i)),paste0("Results/Validation/Tumor/Network/vertex_",chainType,"_",i,".txt"),sep="\t",row.names = F)
   }
 }
 
@@ -64,7 +63,7 @@ network_IGL<-Obtain_vertex_edges(data_merge,"IGL")
 ###############################################
 
 #chainType
-Obtain_gini_index<-function(data,chainType,Pancreas.Normal.Validation.repertoire.diversity){
+Obtain_gini_index<-function(data,chainType,Pancreas.Validation.repertoire.diversity){
   sample<-rownames(Pancreas.Normal.Validation.repertoire.diversity)
   
   vertex_max<-NULL
@@ -77,8 +76,8 @@ Obtain_gini_index<-function(data,chainType,Pancreas.Normal.Validation.repertoire
   
   for (i in sample){
     print(i)
-    assign(paste0("edges",i),read.delim(paste0("Results/Validation/Normal/Network/edges_",chainType,"_",i,".txt")))
-    assign(paste0("vertex",i),read.delim(paste0("Results/Validation/Normal/Network/vertex_",chainType,"_",i,".txt")))
+    assign(paste0("edges",i),read.delim(paste0("Results/Validation/Tumor//Network/edges_",chainType,"_",i,".txt")))
+    assign(paste0("vertex",i),read.delim(paste0("Results/Validation/Tumor//Network/vertex_",chainType,"_",i,".txt")))
     vertex_max[j]<-max(get(paste0("vertex",i))$Freq)
     vertex_gini[j]<-Gini(get(paste0("vertex",i))$Freq)
     cluster_max[j]<-max(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
@@ -98,7 +97,7 @@ Obtain_gini_index<-function(data,chainType,Pancreas.Normal.Validation.repertoire
 
 
 chainType= "IGH"
-assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Normal.Validation.repertoire.diversity)))
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Validation.repertoire.diversity)))
 id<-match(rownames(cluster_gini_IGH),rownames(Pancreas.Normal.Validation.repertoire.diversity))
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
@@ -106,112 +105,50 @@ Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_max_",chainTyp
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 
 ##To save the varibles with vertex and cluster
-save(data_merge,Pancreas.Normal.Validation.repertoire.diversity,file="Data/Validation_Normal_pancreas//Pancreas_Normal_Validation_FullData.Rdata")
+save(data_merge,Pancreas.Validation.repertoire.diversity,file="Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
 
-Pancreas.Normal.Validation.repertoire.diversity.filter<-
-  Pancreas.Normal.Validation.repertoire.diversity[which(Pancreas.Normal.Validation.repertoire.diversity[,paste0("cluster_gini_",chainType)]!=0 &
-                                                          Pancreas.Normal.Validation.repertoire.diversity[,paste0("vertex_gini_",chainType)]!=0 ),]
 
 ########################
 ##4.Plot the network
 ########################
 #Tumor
-brewer.pal(3,name = "Paired")[1]
-sample_tumor<-Pancreas.Validation.repertoire.diversity.filter$sample[which(Pancreas.Validation.repertoire.diversity.filter$tissue=="pancreas tumor")]
+sample_tumor<-Pancreas.Validation.repertoire.diversity$sample[which(Pancreas.Validation.repertoire.diversity$tissue=="pancreas tumor")]
 chainType="IGH"
 for(i in sample_tumor) {
   print(i)
-  edges <- read.delim(paste("Results/Validation/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
-  vertex <- read.delim(paste("Results/Validation/Network/vertex_",chainType,"_",i,".txt",sep = ""))
+  edges <- read.delim(paste("Results/Validation/Tumor/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
+  vertex <- read.delim(paste("Results/Validation/Tumor/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/200
-    V(net)$color <- c("#A6CEE3")
+    V(net)$size <- V(net)$Freq/100
+    V(net)$color <- c("#B3CDE3")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
-    tiff(paste("Results/Validation/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
+    tiff(paste("Results/Validation/Tumor//Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
     plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
     dev.off()
   }
 }
 
 #Normal
-brewer.pal(4,name = "Pastel2")[4]
-sample_normal<-Pancreas.Validation.repertoire.diversity.filter$sample[which(Pancreas.Validation.repertoire.diversity.filter$tissue=="normal pancreas")]
-chainType="IGH"
-for(i in sample_normal) {
-  print(i)
-  edges <- read.delim(paste("Results/Validation/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
-  vertex <- read.delim(paste("Results/Validation/Network/vertex_",chainType,"_",i,".txt",sep = ""))
-  if(length(edges$edge1)!=0){
-    net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/200
-    V(net)$color <- c("#F4CAE4")
-    net <- simplify(net, remove.multiple = F, remove.loops = T) 
-    E(net)$arrow.mode <- 0
-    E(net)$width <- 0.4
-    E(net)$color <- c("black")
-    tiff(paste("Results/Validation/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
-    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
-    dev.off()
-  }
-}
-
-
-
-###3Plot all the samples together
-load("Data/PAAD/PAAD_FullData.Rdata")
-load("Data/GTEx/GTEx_FullData.Rdata")
-
-Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Pancreas.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Pancreas.Validation.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")])
-Cluster_vertex_gini_distribution$outcome<-c(as.character(PAAD.repertoire.diversity$Tumor_type_4categ),rep("GTEX_normal_pancreas",nrow(Pancreas.repertoire.diversity)),
-                                            as.character(Pancreas.Validation.repertoire.diversity$tissue))
-
-Cluster_vertex_gini_distribution<-Cluster_vertex_gini_distribution[which(Cluster_vertex_gini_distribution$outcome!="PAC-Other" & Cluster_vertex_gini_distribution$outcome!="pseudonormal_pancreas" ),]
-Cluster_vertex_gini_distribution$outcome<-factor(Cluster_vertex_gini_distribution$outcome)
-Cluster_vertex_gini_distribution.filter<-
-  Cluster_vertex_gini_distribution[which(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)]!=0 &
-                                           Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]!=0 ),]
-
-
-tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
-#cols=brewer.pal(6,name = "Set1")
-
-#Tumor TCGA "#BEAED4" 
-#Normal TCGA #7FC97F
-
-#Normal Valudation #F4CAE4
-#Tumor Validation #A6CEE3
-
-#Normal GTEx #FDC086
-
-cols= c("#FDC086","#F4CAE4", "#7FC97F", "#A6CEE3", "#BEAED4")
-
-par(fig=c(0,0.8,0,0.8))
-plot(Cluster_vertex_gini_distribution.filter[,paste0("cluster_gini_",chainType)], 
-     Cluster_vertex_gini_distribution.filter[,paste0("vertex_gini_",chainType)],
-     col = cols[factor(Cluster_vertex_gini_distribution.filter$outcome)],
-     pch=20,ylab = c("Gini (Vextex)"),xlab = c("Gini (Cluster)"))
-legend("bottomright",legend=c("GTEX_normal_pancreas",
-                              "Validation_adj_normal_pancreas", 
-                              "TCGA_adj_normal_pancreas", "Validation_pancreas_tumor",
-                              "TCGA_PDAC"), 
-       col=cols,pch=20,cex=0.8)
-
-par(fig=c(0,0.8,0.55,1), new=TRUE)
-summary(glm(Cluster_vertex_gini_distribution.filter[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome))
-boxplot(Cluster_vertex_gini_distribution.filter[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome,
-        col=cols, horizontal=TRUE, axes=FALSE)
-
-par(fig=c(0.65,1,0,0.8),new=TRUE)
-summary(glm(Cluster_vertex_gini_distribution.filter[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome))
-boxplot(Cluster_vertex_gini_distribution.filter[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome,
-        col=cols, axes=FALSE)
-
-dev.off()
-
-
+# sample_normal<-Pancreas.Validation.repertoire.diversity$sample[which(Pancreas.Validation.repertoire.diversity$tissue=="normal pancreas")]
+# chainType="IGH"
+# for(i in sample_normal) {
+#   print(i)
+#   edges <- read.delim(paste("Results/Validation/Tumor//Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
+#   vertex <- read.delim(paste("Results/Validation/Tumor//Network/vertex_",chainType,"_",i,".txt",sep = ""))
+#   if(length(edges$edge1)!=0){
+#     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
+#     V(net)$size <- V(net)$Freq/100
+#     V(net)$color <- c("#F4CAE4")
+#     net <- simplify(net, remove.multiple = F, remove.loops = T) 
+#     E(net)$arrow.mode <- 0
+#     E(net)$width <- 0.4
+#     E(net)$color <- c("black")
+#     tiff(paste("Results/Validation/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
+#     plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
+#     dev.off()
+#   }
+# }

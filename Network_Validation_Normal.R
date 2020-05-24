@@ -108,15 +108,11 @@ Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_max_",chainTy
 ##To save the varibles with vertex and cluster
 save(data_merge,Pancreas.Normal.Validation.repertoire.diversity,file="Data/Validation_Normal_pancreas//Pancreas_Normal_Validation_FullData.Rdata")
 
-Pancreas.Normal.Validation.repertoire.diversity.filter<-
-  Pancreas.Normal.Validation.repertoire.diversity[which(Pancreas.Normal.Validation.repertoire.diversity[,paste0("cluster_gini_",chainType)]!=0 &
-                                                          Pancreas.Normal.Validation.repertoire.diversity[,paste0("vertex_gini_",chainType)]!=0 ),]
 
 ########################
 ##4.Plot the network
 ########################
 #Normal
-brewer.pal(4,name = "Set3")[1]
 sample_normal<-Pancreas.Normal.Validation.repertoire.diversity$sample
 chainType="IGH"
 for(i in sample_normal) {
@@ -126,7 +122,7 @@ for(i in sample_normal) {
   #if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
     V(net)$size <- V(net)$Freq/2
-    V(net)$color <- c( "#8DD3C7")
+    V(net)$color <- c( "#FDC086")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
@@ -137,8 +133,6 @@ for(i in sample_normal) {
   
   #}
 }
-
-
 
 ###Plot all the samples together
 load("Data/PAAD/PAAD_FullData.Rdata")
