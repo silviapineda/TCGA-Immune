@@ -303,6 +303,6 @@ id<-match(GTEX.blood.repertoire.diversity$SUBJID,annotation_gtex$SUBJID)
 annotation_gtex_blood<-annotation_gtex[id,]
 
 id<-match(data_merge_blood$sample,rownames(GTEX.blood.repertoire.diversity))
-data_merge_blood<-data_merge_blood[which(is.na(id)!=F),]
+data_merge_blood2<-data_merge_blood[which(is.na(id)==F),]
 
 save(data_merge_blood,GTEX.blood.repertoire.diversity,annotation_gtex_blood,file="Data/GTEx/Blood/GTEx_blood_FullData.Rdata")
