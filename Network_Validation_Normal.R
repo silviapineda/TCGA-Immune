@@ -97,9 +97,9 @@ Obtain_gini_index<-function(data,chainType,Pancreas.Normal.Validation.repertoire
 }
 
 
-chainType= "IGL"
+chainType= "IGH"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Normal.Validation.repertoire.diversity)))
-id<-match(rownames(cluster_gini_IGL),rownames(Pancreas.Normal.Validation.repertoire.diversity))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Normal.Validation.repertoire.diversity))
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
