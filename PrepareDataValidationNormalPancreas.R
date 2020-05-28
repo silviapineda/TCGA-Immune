@@ -209,7 +209,7 @@ for (i in 1:length(sample)){
 diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
 
 ####After runing recon
-recon<-read.table("Data/Validation_Normal_pancreas/Recon/test_D_number_table.txt",header=T)
+recon<-read.table("Data/Validation_Normal_pancreas/Recon/text_D_number.txt",header=T)
 chain<-substr(recon$sample_name,83,85)
 sample<-substr(recon$sample_name,87,95)
 ##0.0D is species richness (Number of clones)
@@ -233,7 +233,7 @@ diversity$clones_recon_TRB<-clones_recon_TRB
 diversity$clones_recon_TRD<-clones_recon_TRD
 diversity$clones_recon_TRD<-0
 diversity$clones_recon_TRG<-clones_recon_TRG
-
+diversity$clones_recon_TRG<-0
 diversity$entropy_recon_IGH<-entropy_recon_IGH
 diversity$entropy_recon_IGK<-entropy_recon_IGK
 diversity$entropy_recon_IGL<-entropy_recon_IGL
