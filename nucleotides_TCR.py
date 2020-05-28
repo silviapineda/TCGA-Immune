@@ -19,7 +19,7 @@ from multiprocessing import Pool
 
 def MatchNucleotides( a,b ):
     misMatches = 0
-    max_mismatches = int(len(a) * 0.10)
+    max_mismatches = int(len(a) * 1)
     for i in range(0, len(a)):
         if(a[i]!=b[i]):
             misMatches = misMatches + 1
@@ -88,14 +88,14 @@ def main():
     ###### Main program ####
     ########################
     print("Start")
-    nucleotides_Dataframe = pd.read_csv("~/TCGA-Immune/Data/Validation_Normal_pancreas/data_for_cloneInfered_Ig_PancreasValidation.txt",sep="\t")
+    nucleotides_Dataframe = pd.read_csv("~/TCGA-Immune/Data/PAAD/data_for_cloneInfered_TCR_PAAD.txt",sep="\t")
     
     result_ClonesInfered = pd.DataFrame([])
     result = ProcessSample(nucleotides_Dataframe)
     result_ClonesInfered = result_ClonesInfered.append(result)
 
     ###Result
-    result_ClonesInfered.to_csv('~/TCGA-Immune/Data/Validation_Normal_pancreas/ClonesInfered_Ig_ValidationNormal.csv')
+    result_ClonesInfered.to_csv('~/TCGA-Immune/Data/PAAD/ClonesInfered_TCR_PAAD.csv')
     print("End")
 
 main()
