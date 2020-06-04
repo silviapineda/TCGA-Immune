@@ -19,6 +19,7 @@ library("igraph")
 library("ineq")
 library("dplyr")
 library("RColorBrewer")
+library("ggpubr")
 
 setwd("~/TCGA-Immune/")
 load("Data/PAAD/PAAD_FullData.Rdata")
@@ -42,15 +43,15 @@ Validation.repertoire.tumor<-Pancreas.Validation.repertoire.diversity[which(Panc
 ##Normal Validation
 Validation.repertoire.normal<-Pancreas.Normal.Validation.repertoire.diversity
 
-Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.tumor[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        GTEX.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Validation.repertoire.tumor[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Validation.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH")])
+Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.tumor[,c("cluster_gini_IGL","vertex_gini_IGL")],
+                                        GTEX.repertoire.normal[,c("cluster_gini_IGL","vertex_gini_IGL")],
+                                        Validation.repertoire.tumor[,c("cluster_gini_IGL","vertex_gini_IGL")],
+                                        Validation.repertoire.normal[,c("cluster_gini_IGL","vertex_gini_IGL")])
 Cluster_vertex_gini_distribution$outcome<-c(rep("TCGA-PDAC",nrow(PAAD.repertoire.tumor)),rep("GTEX-Normal",nrow(GTEX.repertoire.normal)),
                                            rep("Validation-PDAC",nrow(Validation.repertoire.tumor)),rep("Validation-Normal",nrow(Validation.repertoire.normal)))
 Cluster_vertex_gini_distribution$outcome<-factor(Cluster_vertex_gini_distribution$outcome)
 
-chainType="IGH"
+chainType="IGL"
 tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
 par(fig=c(0,0.8,0,0.8))
 plot(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)], 
@@ -78,9 +79,9 @@ boxplot(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Clus
 dev.off()
 
 tiff(paste0("Results/network_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
-ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_IGH",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_IGL",color = "outcome",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=outcome, y= cluster_gini_IGH, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  geom_point(aes(x=outcome, y= cluster_gini_IGL, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
                                                   "TCGA-PDAC",
                                                   "Validation-Normal",
@@ -94,9 +95,9 @@ ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_I
 dev.off()
 
 tiff(paste0("Results/network_vertex_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
-ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IGH",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IGL",color = "outcome",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=outcome, y= vertex_gini_IGH, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  geom_point(aes(x=outcome, y= vertex_gini_IGL, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
                                                   "TCGA-PDAC",
                                                   "Validation-Normal",
@@ -120,9 +121,9 @@ GTEX.repertoire.normal<-Pancreas.repertoire.diversity
 ##GTEx - Blood
 GTEX.blood.repertoire.diversity<-GTEX.blood.repertoire.diversity[which(is.na(GTEX.blood.repertoire.diversity$totalReads)==F),]
 
-Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        GTEX.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        GTEX.blood.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")])
+Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire[,c("cluster_gini_IGK","vertex_gini_IGK")],
+                                        GTEX.repertoire.normal[,c("cluster_gini_IGK","vertex_gini_IGK")],
+                                        GTEX.blood.repertoire.diversity[,c("cluster_gini_IGK","vertex_gini_IGK")])
 
 Cluster_vertex_gini_distribution$outcome<-c(as.character(PAAD.repertoire$Tumor_type_4categ),rep("GTEX-Normal",nrow(GTEX.repertoire.normal)),
                                 rep("GTEX-Blood",nrow(GTEX.blood.repertoire.diversity)))
@@ -133,7 +134,7 @@ Cluster_vertex_gini_distribution$outcome<-replace(Cluster_vertex_gini_distributi
 Cluster_vertex_gini_distribution$outcome<-factor(Cluster_vertex_gini_distribution$outcome)
 
 
-chainType="IGH"
+chainType="IGK"
 cols= c("#FBB4AE","#7FC97F","#FDC086","#BEAED4","#B3CDE3")
 tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL_blood.tiff"),h=2000,w=2000,res=300)
 par(fig=c(0,0.8,0,0.8))
@@ -141,7 +142,7 @@ plot(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)],
      Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)],
      col = cols[factor(Cluster_vertex_gini_distribution$outcome)],
      pch=20,ylab = c("Gini (Vextex)"),xlab = c("Gini (Cluster)"))
-legend("bottomright",legend = c("GTEX-Blood",
+legend("topleft",legend = c("GTEX-Blood",
                                        "GTEX-Normal",
                                        "TCGA-normal-adj-pancreas",
                                        "TCGA-PDAC",
@@ -163,9 +164,9 @@ boxplot(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Clus
 dev.off()
 
 tiff(paste0("Results/network_cluster_gini_",chainType,"_ALL_blood.tiff"),h=2000,w=2000,res=300)
-ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_IGH",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_IGK",color = "outcome",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=outcome, y= cluster_gini_IGH, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  geom_point(aes(x=outcome, y= cluster_gini_IGK, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Blood",
                                                   "GTEX-Normal",
                                                   "TCGA-normal-adj-pancreas",
@@ -181,9 +182,9 @@ ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_I
 dev.off()
 
 tiff(paste0("Results/network_vertex_gini_",chainType,"_ALL_blood.tiff"),h=2000,w=2000,res=300)
-ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IGH",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IGK",color = "outcome",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=outcome, y= vertex_gini_IGH, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  geom_point(aes(x=outcome, y= vertex_gini_IGK, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Blood",
                                                   "GTEX-Normal",
                                                   "TCGA-normal-adj-pancreas",

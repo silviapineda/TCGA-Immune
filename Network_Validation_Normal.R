@@ -104,6 +104,20 @@ Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainT
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+chainType= "IGK"
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Normal.Validation.repertoire.diversity)))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Normal.Validation.repertoire.diversity))
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+chainType= "IGL"
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Normal.Validation.repertoire.diversity)))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Normal.Validation.repertoire.diversity))
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
+Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 
 ##To save the varibles with vertex and cluster
 save(data_merge,Pancreas.Normal.Validation.repertoire.diversity,file="Data/Validation_Normal_pancreas//Pancreas_Normal_Validation_FullData.Rdata")

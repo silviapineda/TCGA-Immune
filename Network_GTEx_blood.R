@@ -21,7 +21,7 @@ library("dplyr")
 library("RColorBrewer")
 
 setwd("~/TCGA-Immune/")
-load("~/TCGA_Immune/MIXCR/GTEx_Blood/GTEX/GTEx_blood_FullData.Rdata")
+load("~/TCGA_Immune/MIXCR/GTEx_blood_FullData.Rdata")
 ##################################
 ##1.Obtain the vertex and edges
 ##################################
@@ -82,8 +82,8 @@ Obtain_gini_index<-function(data,chainType,Diversity){
   
   for (i in sample){
     print(i)
-    assign(paste0("edges",i),read.delim(paste0("~/TCGA_Immune/MIXCR/GTEx_Blood/edges_",chainType,"_",i,".txt")))
-    assign(paste0("vertex",i),read.delim(paste0("~/TCGA_Immune/MIXCR/GTEx_Blood/vertex_",chainType,"_",i,".txt")))
+    assign(paste0("edges",i),read.delim(paste0("~/TCGA_Immune/MIXCR/network_GTEx_blood/edges_",chainType,"_",i,".txt")))
+    assign(paste0("vertex",i),read.delim(paste0("~/TCGA_Immune/MIXCR/network_GTEx_blood/vertex_",chainType,"_",i,".txt")))
     vertex_max[j]<-max(get(paste0("vertex",i))$Freq)
     vertex_gini[j]<-Gini(get(paste0("vertex",i))$Freq)
     cluster_max[j]<-max(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
@@ -111,22 +111,22 @@ GTEX.blood.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0(
 GTEX.blood.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 chainType= "IGK"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge_blood,chainType,GTEX.blood.repertoire.diversity)))
-id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.repertoire.diversity))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(GTEX.blood.repertoire.diversity))
 GTEX.blood.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 GTEX.blood.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 GTEX.blood.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 GTEX.blood.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 chainType= "IGL"
 assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge_blood,chainType,GTEX.blood.repertoire.diversity)))
-id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.repertoire.diversity))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(GTEX.blood.repertoire.diversity))
 GTEX.blood.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
 GTEX.blood.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 GTEX.blood.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 GTEX.blood.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 
 ##To save the varibles with vertex and cluster
-save(data_merge_blood,annotation_gtex_blood,GTEX.blood.repertoire.diversity,file="~/TCGA_Immune/MIXCR/GTEx_Blood/GTEx_FullData.Rdata")
-save(annotation_gtex_blood,GTEX.blood.repertoire.diversity,file="~/TCGA_Immune/MIXCR/GTEx_Blood/GTEx_FullData_OnlyDiversity.Rdata")
+save(annotation_gtex_blood,GTEX.blood.repertoire.diversity,file="GTEx_FullData_OnlyDiversity.Rdata")
+save(data_merge_blood,annotation_gtex_blood,GTEX.blood.repertoire.diversity,file="GTEx_FullData.Rdata")
 
 ########################
 ##4.Plot the network
