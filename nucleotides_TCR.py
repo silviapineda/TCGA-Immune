@@ -88,14 +88,14 @@ def main():
     ###### Main program ####
     ########################
     print("Start")
-    nucleotides_Dataframe = pd.read_csv("~/TCGA-Immune/Data/PAAD/data_for_cloneInfered_TCR_PAAD.txt",sep="\t")
+    nucleotides_Dataframe = pd.read_csv("~/TCGA-Immune/MIXCR/data_for_cloneInfered_TCR_GTEX_Blood.txt",sep="\t")
     
     result_ClonesInfered = pd.DataFrame([])
     result = ProcessSample(nucleotides_Dataframe)
     result_ClonesInfered = result_ClonesInfered.append(result)
 
     ###Result
-    result_ClonesInfered.to_csv('~/TCGA-Immune/Data/PAAD/ClonesInfered_TCR_PAAD.csv')
+    result_ClonesInfered.to_csv('~/TCGA-Immune/MIXCR/ClonesInfered_TCR_GTEx_Blood.csv')
     print("End")
 
 main()

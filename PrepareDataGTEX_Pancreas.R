@@ -173,11 +173,11 @@ for (i in 1:length(sample)){
   # write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
   # write.delim(data.frame(table(table(clones_sample_IGK))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
   # write.delim(data.frame(table(table(clones_sample_IGL))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  # 
+  write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("Data/GTEx/Pancreas/Recon/clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+
   fi_IGH<-as.numeric(table(clones_sample_IGH))/length(clones_sample_IGH)
   fi_IGK<-as.numeric(table(clones_sample_IGK))/length(clones_sample_IGK)
   fi_IGL<-as.numeric(table(clones_sample_IGL))/length(clones_sample_IGL)
