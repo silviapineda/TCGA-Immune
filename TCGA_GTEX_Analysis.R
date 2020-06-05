@@ -271,7 +271,7 @@ PAAD.repertoire$TCGA_sample<-substr(PAAD.repertoire$TCGA_sample,1,15)
 #### GTEX - Pancreas
 GTEX.repertoire.normal<-Pancreas.repertoire.diversity
 ##GTEx - Blood
-load("Data/PAAD/PAAD_GTEX_blood_diversity.Rdata")
+load("Data/GTEx/Blood/GTEx_FullData_OnlyDiversity.Rdata")
 GTEX.blood.repertoire.diversity<-GTEX.blood.repertoire.diversity[which(is.na(GTEX.blood.repertoire.diversity$totalReads)==F),]
 
 Repertoire.Diversity<-rbind(PAAD.repertoire[,c("Ig_Reads","T_Reads","IGH_expression","IGK_expression","IGL_expression",
@@ -475,11 +475,11 @@ dev.off()
 ###############################
 clinical.patient.tumor<-clinical.patient[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.patient$bcr_patient_barcode),]
 PAAD.repertoire.tumor.clinical.patient<-cbind(PAAD.repertoire.tumor,clinical.patient.tumor)
-PAAD.repertoire.tumor.clinical.patient<-PAAD.repertoire.tumor.clinical.patient[which(PAAD.repertoire.tumor.clinical.patient$Ig_Reads>200),]
 
 ##Function to run the association between clinical outcome and BCR/TCR
 association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,clinical.var){
-  Ig_expr<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression",clinical.var)])
+  PAAD.repertoire.tumor.clinical.patient.Ig<-PAAD.repertoire.tumor.clinical.patient[which(PAAD.repertoire.tumor.clinical.patient$Ig_Reads>200),]
+  Ig_expr<-melt(PAAD.repertoire.tumor.clinical.patient.Ig[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression",clinical.var)])
   Ig_expr$value<-log10(Ig_expr$value)
   Ig_expr<-na.omit(Ig_expr)
   tiff(paste0("Results/ImmuneRep/Clinical//boxplot_Ig_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
@@ -494,9 +494,10 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
   }
   dev.off()
 
-  Ig_entropy<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","entropy_recon_IGH","entropy_recon_IGK","entropy_recon_IGL",clinical.var)])
+  Ig_entropy<-melt(PAAD.repertoire.tumor.clinical.patient.Ig[,c("TCGA_sample","entropy_IGH","entropy_IGK","entropy_IGL",clinical.var)])
   Ig_entropy<-Ig_entropy[which(Ig_entropy$value!=0),]
   Ig_entropy<-na.omit(Ig_entropy)
+  
   tiff(paste0("Results/ImmuneRep/Clinical//boxplot_Ig_entropy_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
   if(length(table(Ig_entropy[,clinical.var]))<10){  
     print(ggboxplot(Ig_entropy, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
@@ -509,7 +510,8 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
   }
   dev.off()
 
-  T_expr<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression",clinical.var)])
+  PAAD.repertoire.tumor.clinical.patient.T<-PAAD.repertoire.tumor.clinical.patient[which(PAAD.repertoire.tumor.clinical.patient$T_Reads>100),]
+  T_expr<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression",clinical.var)])
   T_expr$value<-log10(T_expr$value)
   T_expr<-na.omit(T_expr)
   tiff(paste0("Results/ImmuneRep/Clinical//boxplot_T_expr_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
@@ -524,7 +526,7 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
   }
   dev.off()
 
-  T_entropy<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","entropy_recon_TRA","entropy_recon_TRB","entropy_recon_TRD","entropy_recon_TRG",clinical.var)])
+  T_entropy<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","entropy_TRA","entropy_TRB",clinical.var)])
   T_entropy<-T_entropy[which(T_entropy$value!=0),]
   T_entropy<-na.omit(T_entropy)
   tiff(paste0("Results/ImmuneRep/Clinical//boxplot_T_entropy_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
@@ -540,7 +542,7 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
   dev.off()
   
 
-  Alpha_Beta_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","Alpha_Beta_ratio_expression",clinical.var)])
+  Alpha_Beta_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","Alpha_Beta_ratio_expression",clinical.var)])
   Alpha_Beta_ratio_expression<-na.omit(Alpha_Beta_ratio_expression)
   tiff(paste0("Results/ImmuneRep/Clinical//boxplot_Alpha_Beta_ratio_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
   if(length(table(Alpha_Beta_ratio_expression[,clinical.var]))<10){  
@@ -554,7 +556,7 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
   }
   dev.off()
 
-  KappaLambda_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient[,c("TCGA_sample","KappaLambda_ratio_expression",clinical.var)])
+  KappaLambda_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient.Ig[,c("TCGA_sample","KappaLambda_ratio_expression",clinical.var)])
   KappaLambda_ratio_expression<-na.omit(KappaLambda_ratio_expression)
   tiff(paste0("Results/ImmuneRep/Clinical//boxplot_KappaLambda_ratio_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
   if(length(table(KappaLambda_ratio_expression[,clinical.var]))<10){  
@@ -696,20 +698,19 @@ library(survminer)
 library(survMisc)
 ##OS
 surv_object <- Surv(time = PAAD.repertoire.tumor.survival$OS.time, event = PAAD.repertoire.tumor.survival$OS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$KappaLambda_ratio_expression.x+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$cluster_gini_IGH.y+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
                + as.numeric(as.character(PAAD.repertoire.tumor.survival$age_at_initial_pathologic_diagnosis))+PAAD.repertoire.tumor.survival$pathologic_stage)
 summary(res.cox)
 
 ##Categorical
-KL_mean<-mean(PAAD.repertoire.tumor.survival$entropy_IGH.x)
-PAAD.repertoire.tumor.survival$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor.survival$entropy_IGH.x<=KL_mean,1,2)
+KL_mean<-mean(PAAD.repertoire.tumor.survival$entropy_TRB.x)
+PAAD.repertoire.tumor.survival$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor.survival$entropy_TRB.x<=KL_mean,1,2)
 fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.survival$KL_ratio_2cat)
 fit1
-tiff("Results/ImmuneRep//KM_Entropy_IGH.tiff",res=300,h=2000,w=2000)
+tiff("Results/ImmuneRep//KM_Entropy_TRB.tiff",res=300,h=2000,w=2000)
 ggsurvplot(fit1, data = PAAD.repertoire.tumor.survival)
 dev.off()
 comp(ten(fit1))$tests$lrTests
-
 
 #DSS
 clinical.follow_up.tumor.DSS<-clinical.follow_up.tumor[which(clinical.follow_up.tumor$DSS!="#N/A"),]
@@ -731,3 +732,49 @@ surv_object <- Surv(time = clinical.follow_up.tumor$PFI.time, event = clinical.f
 res.cox <- coxph(surv_object~PAAD.repertoire.tumor$entropy_recon_TRB)
 summary(res.cox)
 
+
+
+##############################################
+## Merge with ImmuneFeaturesLandscapePAAD ###
+#############################################
+ImmuneFeaturesLandscapePAAD<-read.csv("Data/PAAD/ImmuneFeaturesLandscapePAAD.csv")
+ImmuneFeaturesLandscape.tumor<-ImmuneFeaturesLandscapePAAD[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),ImmuneFeaturesLandscapePAAD$TCGA.Participant.Barcode),]
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-cbind(PAAD.repertoire.tumor,ImmuneFeaturesLandscape.tumor)
+
+       
+tiff("Results/ImmuneRep/kappaLambda.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$KappaLambda_ratio_expression,ylab="KappaLambda_ratio") 
+dev.off()
+tiff("Results/ImmuneRep/cluster_gini_IGH.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$cluster_gini_IG,ylab="cluster_gini_IGH") 
+dev.off()
+tiff("Results/ImmuneRep/expression_IGH.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$IGH_expression,ylab="IGH_Expression") 
+dev.off()
+tiff("Results/ImmuneRep/SNV.Neoantigens.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens,ylab="SNV.Neoantigens") 
+dev.off()
+tiff("Results/ImmuneRep/Indel.Neoantigens.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Indel.Neoantigens,ylab="Indel.Neoantigens") 
+dev.off()
+tiff("Results/ImmuneRep/Silent.Mutation.Rate.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Silent.Mutation.Rate,ylab="Silent.Mutation.Rate") 
+dev.off()
+tiff("Results/ImmuneRep/Nonsilent.Mutation.Rate.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Nonsilent.Mutation.Rate,ylab="Nonsilent.Mutation.Rate") 
+dev.off()
+
+####Delete the outlier to perform analysis
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-PAAD.repertoire.tumor.ImmuneFeaturesLandscape[which(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens<6000),]
+
+association.test.immuneRep<- function (PAAD.repertoire.tumor.ImmuneFeaturesLandscape,clinical.var){
+  PAAD.repertoire.tumor.ImmuneFeaturesLandscape.Ig<-PAAD.repertoire.tumor.ImmuneFeaturesLandscape[which(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Ig_Reads>200),]
+  Ig_expr<-melt(PAAD.repertoire.tumor.ImmuneFeaturesLandscape.Ig[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression",clinical.var)])
+  Ig_expr$value<-log10(Ig_expr$value)
+  Ig_expr<-na.omit(Ig_expr)
+  tiff(paste0("Results/ImmuneRep/Neoantigen/plot_Ig_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  print(ggplot(Ig_expr,aes(x = as.numeric(Ig_expr[,clinical.var]), y = value)) + geom_point() + 
+          facet_grid(.~Ig_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  dev.off()
+}
+association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"SNV.Neoantigens")
