@@ -88,6 +88,47 @@ data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRA" |
                                            data_full_cdr3$chainType=="TRD" | 
                                            data_full_cdr3$chainType=="TRG"),]
 
+##20%
+sample<-data_full_cdr3_Ig$sample
+data_subsample<-NULL
+for (i in sample){
+  print(i)
+  data_sample<-data_full_cdr3_Ig[which(data_full_cdr3_Ig$sample==i),]
+  data_subsample<-rbind(data_subsample,data_sample[sample(dim(data_sample)[1], round(dim(data_sample)[1]*0.2)),])
+}
+data_subsample_20<-data_subsample
+
+#40%
+sample<-data_full_cdr3_Ig$sample
+data_subsample<-NULL
+for (i in sample){
+  print(i)
+  data_sample<-data_full_cdr3_Ig[which(data_full_cdr3_Ig$sample==i),]
+  data_subsample<-rbind(data_subsample,data_sample[sample(dim(data_sample)[1], round(dim(data_sample)[1]*0.2)),])
+}
+data_subsample_20<-data_subsample
+
+#20%
+sample<-data_full_cdr3_Ig$sample
+data_subsample<-NULL
+for (i in sample){
+  print(i)
+  data_sample<-data_full_cdr3_Ig[which(data_full_cdr3_Ig$sample==i),]
+  data_subsample<-rbind(data_subsample,data_sample[sample(dim(data_sample)[1], round(dim(data_sample)[1]*0.2)),])
+}
+data_subsample_20<-data_subsample
+
+#20%
+sample<-data_full_cdr3_Ig$sample
+data_subsample<-NULL
+for (i in sample){
+  print(i)
+  data_sample<-data_full_cdr3_Ig[which(data_full_cdr3_Ig$sample==i),]
+  data_subsample<-rbind(data_subsample,data_sample[sample(dim(data_sample)[1], round(dim(data_sample)[1]*0.2)),])
+}
+data_subsample_20<-data_subsample
+
+
 ###save the data to call the clones by all samples using the nucleotides.py
 data_clonesInference_Ig<-data_full_cdr3_Ig[,c("SEQUENCE_ID","sample","nSeqCDR3","aaSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
 data_clonesInference_TCR<-data_full_cdr3_TCR[,c("SEQUENCE_ID","sample","nSeqCDR3","aaSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]

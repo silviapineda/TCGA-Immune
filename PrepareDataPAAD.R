@@ -404,3 +404,69 @@ save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clin
      file="Data/PAAD/PAAD_FullData.Rdata")
 
 
+
+########################################################################
+### Perform the subsampled data to obtain the diversity measures   ####
+######################################################################
+load("Data/PAAD/PAAD_FullData.Rdata")
+
+##Diversity measures
+Obtain_diversity<-function(data,PAAD.repertoire.diversity,chainType,sample_order){
+  sample<-rownames(PAAD.repertoire.diversity)
+  entropy<-NULL
+  data<-data[which(data$chainType==chainType),]
+  for (i in 1:length(sample)){
+    print(i)
+    data_sample_unique<-data[which(data$sample==sample[i]),]
+    data_subsample<-data_sample_unique[sample(dim(data_sample_unique)[1], round(dim(data_sample_unique)[1]*sample_order)),]
+    clones_sample<-data_subsample[,"V_J_lenghCDR3_CloneId"]
+  
+    fi<-as.numeric(table(clones_sample))/length(clones_sample)
+    hi<-fi*log2(fi)
+    entropy[i]=-sum(hi)
+  }
+  return(entropy)
+}
+
+chainType="TRG"
+for (i in 1:5){
+  assign(paste0("entropy_",i,"_",chainType),Obtain_diversity(data_merge,PAAD.repertoire.diversity,chainType,0.2))
+}
+PAAD.repertoire.diversity[,paste0("entropy_20_",chainType)]<-rowMeans(cbind(get(paste0("entropy_1_",chainType)),
+                                                                                   get(paste0("entropy_2_",chainType)),
+                                                                                   get(paste0("entropy_3_",chainType)),
+                                                                                   get(paste0("entropy_4_",chainType)),
+                                                                                   get(paste0("entropy_5_",chainType))))
+
+for (i in 1:5){
+  assign(paste0("entropy_",i,"_",chainType),Obtain_diversity(data_merge,PAAD.repertoire.diversity,chainType,0.4))
+}
+PAAD.repertoire.diversity[,paste0("entropy_40_",chainType)]<-rowMeans(cbind(get(paste0("entropy_1_",chainType)),
+                                                                              get(paste0("entropy_2_",chainType)),
+                                                                              get(paste0("entropy_3_",chainType)),
+                                                                              get(paste0("entropy_4_",chainType)),
+                                                                              get(paste0("entropy_5_",chainType))))
+
+for (i in 1:5){
+  assign(paste0("entropy_",i,"_",chainType),Obtain_diversity(data_merge,PAAD.repertoire.diversity,chainType,0.6))
+}
+PAAD.repertoire.diversity[,paste0("entropy_60_",chainType)]<-rowMeans(cbind(get(paste0("entropy_1_",chainType)),
+                                                                              get(paste0("entropy_2_",chainType)),
+                                                                              get(paste0("entropy_3_",chainType)),
+                                                                              get(paste0("entropy_4_",chainType)),
+                                                                              get(paste0("entropy_5_",chainType))))
+
+
+for (i in 1:5){
+  assign(paste0("entropy_",i,"_",chainType),Obtain_diversity(data_merge,PAAD.repertoire.diversity,chainType,0.8))
+}
+PAAD.repertoire.diversity[,paste0("entropy_80_",chainType)]<-rowMeans(cbind(get(paste0("entropy_1_",chainType)),
+                                                                              get(paste0("entropy_2_",chainType)),
+                                                                              get(paste0("entropy_3_",chainType)),
+                                                                              get(paste0("entropy_4_",chainType)),
+                                                                              get(paste0("entropy_5_",chainType))))
+
+save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
+     file="Data/PAAD/PAAD_FullData.Rdata")
+
+
