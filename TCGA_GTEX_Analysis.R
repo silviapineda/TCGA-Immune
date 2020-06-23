@@ -668,6 +668,36 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
   }
   dev.off()
 
+  
+  Ig_cluster<-melt(PAAD.repertoire.tumor.clinical.patient.Ig[,c("TCGA_sample","cluster_gini_IGH","cluster_gini_IGK","cluster_gini_IGL",clinical.var)])
+  Ig_cluster<-na.omit(Ig_cluster)
+  tiff(paste0("Results/ImmuneRep/Clinical//boxplot_Ig_cluster_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Ig_cluster[,clinical.var]))<10){  
+    print(ggboxplot(Ig_cluster, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=Ig_cluster[,clinical.var], y=value,color=Ig_cluster[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Ig_cluster,aes(x = as.numeric(Ig_cluster[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~Ig_cluster$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+  Ig_vertex<-melt(PAAD.repertoire.tumor.clinical.patient.Ig[,c("TCGA_sample","vertex_gini_IGH","vertex_gini_IGK","vertex_gini_IGL",clinical.var)])
+  Ig_vertex<-na.omit(Ig_vertex)
+  tiff(paste0("Results/ImmuneRep/Clinical//boxplot_Ig_vertex_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(Ig_vertex[,clinical.var]))<10){  
+    print(ggboxplot(Ig_vertex, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=Ig_vertex[,clinical.var], y=value,color=Ig_vertex[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(Ig_vertex,aes(x = as.numeric(Ig_vertex[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~Ig_vertex$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  
+  
   PAAD.repertoire.tumor.clinical.patient.T<-PAAD.repertoire.tumor.clinical.patient[which(PAAD.repertoire.tumor.clinical.patient$T_Reads>100),]
   T_expr<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression",clinical.var)])
   T_expr$value<-log10(T_expr$value)
@@ -727,6 +757,8 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
             facet_grid(.~KappaLambda_ratio_expression$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
   }
   dev.off()
+  
+  
 }
 
 ##Histological type
@@ -763,8 +795,17 @@ association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"age_at_initia
 
 ##Smoking
 PAAD.repertoire.tumor.clinical.patient$smoking<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Current smoker (includes daily smokers and non-daily smokers or occasional smokers)","Current",
-                                       ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker","Former")))
+                                       ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Lifelong Non-smoker (less than 100 cigarettes smoked in Lifetime)","Non-smoker",
+                                              ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Current reformed smoker for > 15 years (greater than 15 years)","Former",
+                                                     ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Current reformed smoker for ≤15 years (less than or equal to 15 years)","Former",
+                                                            ifelse(PAAD.repertoire.tumor.clinical.patient$tobacco_smoking_history_master=="Current reformed smoker, duration not specified","Former",NA))))))
 association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"smoking")
+
+##Smoking 2
+PAAD.repertoire.tumor.clinical.patient$smoking2<-factor(ifelse(PAAD.repertoire.tumor.clinical.patient$smoking=="Current" |
+                                                                 PAAD.repertoire.tumor.clinical.patient$smoking=="Former" ,"Ever-Smoker",
+                                                               ifelse(PAAD.repertoire.tumor.clinical.patient$smoking=="Non-smoker","Non-smoker",NA)))
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"smoking2")
 
 ##number_pack_years_smoked
 PAAD.repertoire.tumor.clinical.patient$number_pack_years_smoked<-factor(PAAD.repertoire.tumor.clinical.patient$number_pack_years_smoked)
@@ -823,50 +864,68 @@ association.test.immuneRep(PAAD.repertoire.tumor.clinical.patient,"history_of_di
 #################################
 #######Clinical follow-up########
 #################################
-clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
-PAAD.repertoire.tumor.followuop<-cbind(PAAD.repertoire.tumor,clinical.follow_up.tumor)
+clinical.follow_up.tumor<-clinical.folow_up[match(substr(PAAD.repertoire.tumor.clinical.patient$TCGA_sample,1,12),clinical.folow_up$bcr_patient_barcode),]
+PAAD.repertoire.tumor.clinical.followuop<-cbind(PAAD.repertoire.tumor.clinical.patient,clinical.follow_up.tumor)
 
 ##vital_status
-PAAD.repertoire.tumor.followuop$vital_status<-factor(PAAD.repertoire.tumor.followuop$vital_status)
-association.test.immuneRep(PAAD.repertoire.tumor.followuop,"vital_status")
+PAAD.repertoire.tumor.clinical.followuop$vital_status<-factor(PAAD.repertoire.tumor.clinical.followuop$vital_status)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.followuop,"vital_status")
 
 ##new tumor event
-PAAD.repertoire.tumor.followuop$new_tumor_event_type<-replace(PAAD.repertoire.tumor.followuop$new_tumor_event_type,PAAD.repertoire.tumor.followuop$new_tumor_event_type=="#N/A",NA)
-PAAD.repertoire.tumor.followuop$new_tumor_event_type<-replace(PAAD.repertoire.tumor.followuop$new_tumor_event_type,
-                                                              PAAD.repertoire.tumor.followuop$new_tumor_event_type=="Locoregional Recurrence|Distant Metastasis" | 
-                                                                PAAD.repertoire.tumor.followuop$new_tumor_event_type=="New Primary Tumor",NA)
-PAAD.repertoire.tumor.followuop$new_tumor_event_type<-factor(PAAD.repertoire.tumor.followuop$new_tumor_event_type)
-association.test.immuneRep(PAAD.repertoire.tumor.followuop,"new_tumor_event_type")
+PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type<-replace(PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type,PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type=="#N/A",NA)
+PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type<-replace(PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type,
+                                                                       PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type=="Locoregional Recurrence|Distant Metastasis" | 
+                                                                         PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type=="New Primary Tumor",NA)
+PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type<-factor(PAAD.repertoire.tumor.clinical.followuop$new_tumor_event_type)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.followuop,"new_tumor_event_type")
 
 #treatment_outcome_first_course
-PAAD.repertoire.tumor.followuop$treatment_outcome_first_course<-replace(PAAD.repertoire.tumor.followuop$treatment_outcome_first_course,
-                                                                        PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Discrepancy]" |
-                                                                          PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Not Applicable]" | 
-                                                                          PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Not Available]" |
-                                                                          PAAD.repertoire.tumor.followuop$treatment_outcome_first_course=="[Unknown]",NA)
-PAAD.repertoire.tumor.followuop$treatment_outcome_first_course<-factor(PAAD.repertoire.tumor.followuop$treatment_outcome_first_course)
-association.test.immuneRep(PAAD.repertoire.tumor.followuop,"treatment_outcome_first_course")
+PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course<-replace(PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course,
+                                                                                 PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course=="[Discrepancy]" |
+                                                                                   PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course=="[Not Applicable]" | 
+                                                                                   PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course=="[Not Available]" |
+                                                                                   PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course=="[Unknown]",NA)
+PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course<-factor(PAAD.repertoire.tumor.clinical.followuop$treatment_outcome_first_course)
+association.test.immuneRep(PAAD.repertoire.tumor.clinical.followuop,"treatment_outcome_first_course")
 
 #############################################
 ### Survival Analysis  ####
 ##############################################
-PAAD.repertoire.tumor.survival<-merge(PAAD.repertoire.tumor.clinical.patient,PAAD.repertoire.tumor.followuop,by="bcr_patient_barcode")
+PAAD.repertoire.tumor.survival<-PAAD.repertoire.tumor.clinical.followuop
 library(survival)
 library(survminer)
 library(survMisc)
 ##OS
+#PAAD.repertoire.tumor.survival$number_pack_years_smoked<-as.numeric(as.character(PAAD.repertoire.tumor.survival$number_pack_years_smoked))
 surv_object <- Surv(time = PAAD.repertoire.tumor.survival$OS.time, event = PAAD.repertoire.tumor.survival$OS)
-res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$cluster_gini_IGH.y+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
+PAAD.repertoire.tumor.survival$number_pack_years_smoked<-as.numeric(as.character(PAAD.repertoire.tumor.survival$number_pack_years_smoked))
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival$number_pack_years_smoked+PAAD.repertoire.tumor.survival$gender+PAAD.repertoire.tumor.survival$race_list
                + as.numeric(as.character(PAAD.repertoire.tumor.survival$age_at_initial_pathologic_diagnosis))+PAAD.repertoire.tumor.survival$pathologic_stage)
 summary(res.cox)
 
 ##Categorical
-KL_mean<-mean(PAAD.repertoire.tumor.survival$entropy_TRB.x)
-PAAD.repertoire.tumor.survival$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor.survival$entropy_TRB.x<=KL_mean,1,2)
+KL_mean<-mean(PAAD.repertoire.tumor.survival$KappaLambda_ratio_expression)
+PAAD.repertoire.tumor.survival$KL_ratio_2cat<-ifelse(as.numeric(PAAD.repertoire.tumor.survival$KappaLambda_ratio_expression)<=KL_mean,1,2)
 fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.survival$KL_ratio_2cat)
 fit1
-tiff("Results/ImmuneRep//KM_Entropy_TRB.tiff",res=300,h=2000,w=2000)
+tiff("Results/ImmuneRep//KM_KappaLambda.tiff",res=300,h=2000,w=2000)
 ggsurvplot(fit1, data = PAAD.repertoire.tumor.survival)
+dev.off()
+comp(ten(fit1))$tests$lrTests
+
+##Stratified by smokers
+PAAD.repertoire.tumor.survival.smokers<-PAAD.repertoire.tumor.survival[which(PAAD.repertoire.tumor.survival$smoking2=="Non-smoker"),]
+surv_object <- Surv(time = PAAD.repertoire.tumor.survival.smokers$OS.time, event = PAAD.repertoire.tumor.survival.smokers$OS)
+res.cox <- coxph(surv_object~PAAD.repertoire.tumor.survival.smokers$entropy_TRB+PAAD.repertoire.tumor.survival.smokers$gender+PAAD.repertoire.tumor.survival.smokers$race_list
+                 + as.numeric(as.character(PAAD.repertoire.tumor.survival.smokers$age_at_initial_pathologic_diagnosis))+PAAD.repertoire.tumor.survival.smokers$pathologic_stage)
+summary(res.cox)
+##Categorical
+KL_mean<-mean(PAAD.repertoire.tumor.survival.smokers$entropy_IGH)
+PAAD.repertoire.tumor.survival.smokers$KL_ratio_2cat<-ifelse(PAAD.repertoire.tumor.survival.smokers$entropy_IGH<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.survival.smokers$KL_ratio_2cat)
+fit1
+tiff("Results/ImmuneRep//KM_kappaLambda_Smokers.tiff",res=300,h=2000,w=2000)
+ggsurvplot(fit1, data = PAAD.repertoire.tumor.survival.smokers)
 dev.off()
 comp(ten(fit1))$tests$lrTests
 
@@ -896,18 +955,21 @@ summary(res.cox)
 ## Merge with ImmuneFeaturesLandscapePAAD ###
 #############################################
 ImmuneFeaturesLandscapePAAD<-read.csv("Data/PAAD/ImmuneFeaturesLandscapePAAD.csv")
-ImmuneFeaturesLandscape.tumor<-ImmuneFeaturesLandscapePAAD[match(substr(PAAD.repertoire.tumor$TCGA_sample,1,12),ImmuneFeaturesLandscapePAAD$TCGA.Participant.Barcode),]
-PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-cbind(PAAD.repertoire.tumor,ImmuneFeaturesLandscape.tumor)
-
+ImmuneFeaturesLandscape.tumor<-ImmuneFeaturesLandscapePAAD[match(substr(PAAD.repertoire.tumor.clinical.followuop$TCGA_sample,1,12),ImmuneFeaturesLandscapePAAD$TCGA.Participant.Barcode),]
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-cbind(PAAD.repertoire.tumor.clinical.followuop,ImmuneFeaturesLandscape.tumor)
        
+
 tiff("Results/ImmuneRep/kappaLambda.outlier.tiff",res=300,h=2000,w=4000)
 barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$KappaLambda_ratio_expression,ylab="KappaLambda_ratio") 
 dev.off()
-tiff("Results/ImmuneRep/cluster_gini_IGH.outlier.tiff",res=300,h=2000,w=4000)
-barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$cluster_gini_IG,ylab="cluster_gini_IGH") 
+tiff("Results/ImmuneRep/cluster_gini_IGL.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$cluster_gini_IGL,ylab="cluster_gini_IGL") 
 dev.off()
 tiff("Results/ImmuneRep/expression_IGH.outlier.tiff",res=300,h=2000,w=4000)
 barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$IGH_expression,ylab="IGH_Expression") 
+dev.off()
+tiff("Results/ImmuneRep/vertex_gini_IGH.outlier.tiff",res=300,h=2000,w=4000)
+barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$vertex_gini_IGH,ylab="vertex_gini_IGH") 
 dev.off()
 tiff("Results/ImmuneRep/SNV.Neoantigens.outlier.tiff",res=300,h=2000,w=4000)
 barplot(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens,ylab="SNV.Neoantigens") 
@@ -925,14 +987,55 @@ dev.off()
 ####Delete the outlier to perform analysis
 PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-PAAD.repertoire.tumor.ImmuneFeaturesLandscape[which(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens<6000),]
 
-association.test.immuneRep<- function (PAAD.repertoire.tumor.ImmuneFeaturesLandscape,clinical.var){
-  PAAD.repertoire.tumor.ImmuneFeaturesLandscape.Ig<-PAAD.repertoire.tumor.ImmuneFeaturesLandscape[which(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Ig_Reads>200),]
-  Ig_expr<-melt(PAAD.repertoire.tumor.ImmuneFeaturesLandscape.Ig[,c("TCGA_sample","IGH_expression","IGK_expression","IGL_expression",clinical.var)])
-  Ig_expr$value<-log10(Ig_expr$value)
-  Ig_expr<-na.omit(Ig_expr)
-  tiff(paste0("Results/ImmuneRep/Neoantigen/plot_Ig_expression_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
-  print(ggplot(Ig_expr,aes(x = as.numeric(Ig_expr[,clinical.var]), y = value)) + geom_point() + 
-          facet_grid(.~Ig_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens<-factor(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens)
+association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"SNV.Neoantigens")
+
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Indel.Neoantigens<-factor(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Indel.Neoantigens)
+association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"Indel.Neoantigens")
+
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Silent.Mutation.Rate<-factor(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Silent.Mutation.Rate)
+association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"Silent.Mutation.Rate")
+
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Nonsilent.Mutation.Rate<-factor(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$Nonsilent.Mutation.Rate)
+association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"Nonsilent.Mutation.Rate")
+
+#Association with neoantigens
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-cbind(PAAD.repertoire.tumor.clinical.followuop,ImmuneFeaturesLandscape.tumor)
+####Delete the outlier to perform analysis
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape<-PAAD.repertoire.tumor.ImmuneFeaturesLandscape[which(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$SNV.Neoantigens<6000),]
+
+association.test.immuneRep.neo<- function (PAAD.repertoire.tumor.ImmuneFeaturesLandscape,clinical.var){
+  neoantigens<-melt(PAAD.repertoire.tumor.ImmuneFeaturesLandscape[,c("TCGA_sample","SNV.Neoantigens","Indel.Neoantigens",clinical.var)])
+  neoantigens<-na.omit(neoantigens)
+  tiff(paste0("Results/ImmuneRep/Neoantigen///boxplot_neoantigens_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(neoantigens[,clinical.var]))<10){  
+    print(ggboxplot(neoantigens, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=neoantigens[,clinical.var], y=value,color=neoantigens[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(neoantigens,aes(x = as.numeric(neoantigens[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~neoantigens$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+  mutations<-melt(PAAD.repertoire.tumor.ImmuneFeaturesLandscape[,c("TCGA_sample","Silent.Mutation.Rate","Nonsilent.Mutation.Rate",clinical.var)])
+  mutations<-na.omit(mutations)
+  tiff(paste0("Results/ImmuneRep/Clinical//boxplot_mutations_TCGA_",clinical.var,".tiff"),res=300,h=2500,w=3500)
+  if(length(table(mutations[,clinical.var]))<10){  
+    print(ggboxplot(mutations, x = clinical.var, y = "value",facet.by = "variable",color = clinical.var,ggtheme = theme_bw()) +
+            rotate_x_text() +
+            geom_point(aes(x=mutations[,clinical.var], y=value,color=mutations[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format"))
+  } else {  
+    print(ggplot(mutations,aes(x = as.numeric(mutations[,clinical.var]), y = value)) + geom_point() + 
+            facet_grid(.~mutations$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
   dev.off()
 }
-association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"SNV.Neoantigens")
+ 
+##PAck years 
+PAAD.repertoire.tumor.ImmuneFeaturesLandscape$number_pack_years_smoked<-factor(PAAD.repertoire.tumor.ImmuneFeaturesLandscape$number_pack_years_smoked)
+association.test.immuneRep.neo(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"number_pack_years_smoked")
+
+##Smoking 
+association.test.immuneRep(PAAD.repertoire.tumor.ImmuneFeaturesLandscape,"smoking")
