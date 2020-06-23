@@ -26,21 +26,266 @@ library(reshape2)
 ##"#BEAED4" (IGH) "#7FC97F" (IGK) "#FDC086" (IGL)
 setwd("~/TCGA-Immune/")
 
-load("Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+load("Data/PAAD_GTEx_ValTumor_ValNormal/PAAD_GTEx_ValTumor_ValNormal_FullData.Rdata")
 
-##Restrict only to Normal vs Tumor 
-PAAD.GTEx.repertoire.diversity.tumor.normmal<-PAAD.GTEx.repertoire.diversity[which(PAAD.GTEx.repertoire.diversity$outcome=="normal-pancreas (GTEx)"|
-                                                                                     PAAD.GTEx.repertoire.diversity$outcome== "tumor-pancreas (TCGA)"),]
+########################################
+## GTEx vs. TCGA Analysis ##############
+########################################
+PAAD.GTEx.repertoire.diversity.tumor.normmal<-PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity[which(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (GTEx)"|
+                                                                                                        PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (TCGA)"),]
 PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome<-factor(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
 
 ###################################################
 ## Common clones across samples
 #################################################
 id<-match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
-data_merge<-data_merge[which(is.na(id)==F),]
+data_merge_filter<-data_merge[which(is.na(id)==F),]
 
 #chain=c("IGHV","IGKV","IGLV")
 ############
+## 1. Build the matrix with the clones by samples
+data_chain_IGK<-data_merge_filter[which(data_merge_filter$chainType=="IGK"),]
+clone_type_IGK<-t(as.data.frame(unclass(table(data_chain_IGK$V_J_lenghCDR3_CloneId,factor(data_chain_IGK$sample))))) 
+data_chain_IGL<-data_merge_filter[which(data_merge_filter$chainType=="IGL"),]
+clone_type_IGL<-t(as.data.frame(unclass(table(data_chain_IGL$V_J_lenghCDR3_CloneId,factor(data_chain_IGL$sample))))) 
+data_chain_IGH<-data_merge_filter[which(data_merge_filter$chainType=="IGH"),]
+clone_type_IGH<-t(as.data.frame(unclass(table(data_chain_IGH$V_J_lenghCDR3_CloneId,factor(data_chain_IGH$sample))))) 
+
+data_chain_TRA<-data_merge_filter[which(data_merge_filter$chainType=="TRA"),]
+clone_type_TRA<-t(as.data.frame(unclass(table(data_chain_TRA$V_J_lenghCDR3_CloneId,factor(data_chain_TRA$sample))))) 
+data_chain_TRB<-data_merge_filter[which(data_merge_filter$chainType=="TRB"),]
+clone_type_TRB<-t(as.data.frame(unclass(table(data_chain_TRB$V_J_lenghCDR3_CloneId,factor(data_chain_TRB$sample))))) 
+data_chain_TRD<-data_merge_filter[which(data_merge_filter$chainType=="TRD"),]
+clone_type_TRD<-t(as.data.frame(unclass(table(data_chain_TRD$V_J_lenghCDR3_CloneId,factor(data_chain_TRD$sample))))) 
+data_chain_TRG<-data_merge_filter[which(data_merge_filter$chainType=="TRG"),]
+clone_type_TRG<-t(as.data.frame(unclass(table(data_chain_TRG$V_J_lenghCDR3_CloneId,factor(data_chain_TRG$sample))))) 
+
+##Build present vs no present
+clone_type_presence_IGK<-apply(clone_type_IGK,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_IGL<-apply(clone_type_IGL,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_IGH<-apply(clone_type_IGH,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRA<-apply(clone_type_TRA,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRB<-apply(clone_type_TRB,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRD<-apply(clone_type_TRD,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRG<-apply(clone_type_TRG,1,function(x) ifelse(x==0,0,1))
+
+###Filter by clones share at least in 5% of the samples (311*0.05= 15) or 2 samples
+clone_type_filter_IGK<-clone_type_presence_IGK[which(rowSums(clone_type_presence_IGK)>2),] #
+clone_type_filter_IGL<-clone_type_presence_IGL[which(rowSums(clone_type_presence_IGL)>2),] #
+clone_type_filter_IGH<-clone_type_presence_IGH[which(rowSums(clone_type_presence_IGH)>2),] #
+clone_type_filter_TRA<-clone_type_presence_TRA[which(rowSums(clone_type_presence_TRA)>2),] #
+clone_type_filter_TRB<-clone_type_presence_TRB[which(rowSums(clone_type_presence_TRB)>2),] #
+clone_type_filter_TRD<-clone_type_presence_TRD[which(rowSums(clone_type_presence_TRD)>2),] #
+clone_type_filter_TRG<-clone_type_presence_TRG[which(rowSums(clone_type_presence_TRG)>2),] #
+
+##Heatmp
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F","#BEAED4")
+
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
+ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],"PDAC (TCGA)" = cols[2]))
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
+
+cols2 = brewer.pal(12,name = "Paired")
+
+#IGH
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGH.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_IGH),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
+dev.off()
+
+#IGK
+tiff(paste0("Results/CommonClones/heatmap_common_clones_IGK.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_IGK),show_rownames = F, show_colnames = F,border_color=F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[4]),breaks = c(0,0.9,1))
+dev.off()
+
+#IGL
+tiff(paste0("Results/CommonClones/heatmap_common_clones_IGL.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_IGL),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[6]),breaks = c(0,0.9,1))
+dev.off()
+
+#TRA
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRA.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRA),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[8]),breaks = c(0,0.9,1))
+dev.off()
+
+#TRB
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRB.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRB),border_color=F,show_rownames = F,annotation_row = annotation_row,show_colnames = F,
+         annotation_colors = ann_colors,color = c("white",cols2[10]),breaks = c(0,0.9,1))
+
+dev.off()
+
+#TRD
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRD.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRD),border_color=F,show_rownames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[12]),breaks = c(0,0.9,1))
+
+dev.off()
+
+#TRG
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRG.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRG),border_color=F,show_rownames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
+
+dev.off()
+
+##########################
+#####Fisher test to find differences by clones in normal vs. tumor
+##########################
+#IGH
+p_value=NULL
+for(i in 1:dim(clone_type_filter_IGH)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_IGH),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_IGH[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_IGH_sign<-clone_type_filter_IGH[which(p.adj<0.05),] 
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)[id]
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F", "#BEAED4")
+ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],
+                               "PDAC (TCGA)" = cols[2]))
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGH_sign.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_IGH_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,
+         annotation_colors = ann_colors,color =c("white",cols2[2]),breaks = c(0,0.9,1))
+dev.off()
+
+#IGK
+p_value=NULL
+for(i in 1:dim(clone_type_filter_IGK)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_IGK),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_IGK[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_IGK_sign<-clone_type_filter_IGK[which(p.adj<0.05),]
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)[id]
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F", "#BEAED4")
+ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],
+                                         "PDAC (TCGA)" = cols[2]))
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGK_sign.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_IGK_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,show_colnames = F,
+         annotation_colors = ann_colors,color =c("white",cols2[4]),breaks = c(0,0.9,1))
+dev.off()
+
+#IGL
+p_value=NULL
+for(i in 1:dim(clone_type_filter_IGL)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_IGL),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_IGL[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_IGL_sign<-clone_type_filter_IGL[which(p.adj<0.05),] 
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)[id]
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F", "#BEAED4")
+ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],
+                               "PDAC (TCGA)" = cols[2]))
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGL_sign.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_IGL_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,show_colnames = F,
+         annotation_colors = ann_colors,color =c("white",cols2[6]),breaks = c(0,0.9,1))
+dev.off()
+
+#TRA
+p_value=NULL
+for(i in 1:dim(clone_type_filter_TRA)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_TRA),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_TRA[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_TRA_sign<-clone_type_filter_TRA[which(p.adj<0.05),] 
+rownames(clone_type_filter_TRA)[which(p.adj<0.05)]
+
+#TRB
+p_value=NULL
+for(i in 1:dim(clone_type_filter_TRB)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_TRB),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_TRB[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_TRB_sign<-clone_type_filter_TRB[which(p.adj<0.05),]
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+colnames(annotation_row)<-"outcome"
+rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)[id]
+brewer.pal(4,name = "Accent")
+cols=c( "#7FC97F", "#BEAED4")
+ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],
+                               "PDAC (TCGA)" = cols[2]))
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_TRB_sign.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRB_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,
+         annotation_colors = ann_colors,color =c("white",cols2[10]),breaks = c(0,0.9,1))
+dev.off()
+
+#TRD
+p_value=NULL
+for(i in 1:dim(clone_type_filter_TRD)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_TRD),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_TRD[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_TRD_sign<-clone_type_filter_TRD[which(p.adj<0.05),] 
+rownames(clone_type_filter_TRD)[which(p.adj<0.05)]#"TRDV2_TRDJ1_18_1" (present: 3 GTEx and 0 TCGA 130 ; No-present: 4 GTEx and 27 TCGA)
+annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+table(clone_type_filter_TRD_sign,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+
+#TRG
+p_value=NULL
+for(i in 1:dim(clone_type_filter_TRG)[1]){
+  print(i)
+  id<-match(colnames(clone_type_filter_TRG),rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+  tab<-table(clone_type_filter_TRG[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+  p_value[i]=fisher.test(tab)$p.value
+}
+p.adj<-p.adjust(p_value,"fdr")
+clone_type_filter_TRG_sign<-clone_type_filter_TRG[which(p.adj<0.05),] 
+rownames(clone_type_filter_TRG)[which(p.adj<0.05)]
+
+
+########################################
+## All Common Analysis ##############
+########################################
+PAAD.Val.repertoire.diversity.tumor.normmal<-PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity[which(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="PDAC (Val)"|
+                                                                                                        PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (TCGA)" |
+                                                                                                       PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (GTEx)"|
+                                                                                                       PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (TCGA)" |
+                                                                                                 PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (Val)"),]
+PAAD.Val.repertoire.diversity.tumor.normmal$outcome<-factor(PAAD.Val.repertoire.diversity.tumor.normmal$outcome)
+
+
+## Common clones across samples
+
+id<-match(data_merge$sample,rownames(PAAD.Val.repertoire.diversity.tumor.normmal))
+data_merge<-data_merge[which(is.na(id)==F),]
+
+#chain=c("IGHV","IGKV","IGLV")
+
 ## 1. Build the matrix with the clones by samples
 data_chain_IGK<-data_merge[which(data_merge$chainType=="IGK"),]
 clone_type_IGK<-t(as.data.frame(unclass(table(data_chain_IGK$V_J_lenghCDR3_CloneId,factor(data_chain_IGK$sample))))) 
@@ -48,112 +293,104 @@ data_chain_IGL<-data_merge[which(data_merge$chainType=="IGL"),]
 clone_type_IGL<-t(as.data.frame(unclass(table(data_chain_IGL$V_J_lenghCDR3_CloneId,factor(data_chain_IGL$sample))))) 
 data_chain_IGH<-data_merge[which(data_merge$chainType=="IGH"),]
 clone_type_IGH<-t(as.data.frame(unclass(table(data_chain_IGH$V_J_lenghCDR3_CloneId,factor(data_chain_IGH$sample))))) 
-data_chain_IG<-data_merge[which(data_merge$chainType=="IGH" |
-                                        data_merge$chainType=="IGK" |
-                                        data_merge$chainType=="IGL"),]
-clone_type_IG<-t(as.data.frame(unclass(table(data_chain_IG$V_J_lenghCDR3_CloneId,factor(data_chain_IG$sample))))) 
 
-data_chain_TCR<-data_merge[which(data_merge$chainType=="TRA" | 
-                                         data_merge$chainType=="TRB" |
-                                         data_merge$chainType=="TRD" | 
-                                         data_merge$chainType=="TRG"),]
-clone_type_TCR<-t(as.data.frame(unclass(table(data_chain_TCR$V_J_lenghCDR3_CloneId,factor(data_chain_TCR$sample))))) 
+data_chain_TRA<-data_merge[which(data_merge$chainType=="TRA"),]
+clone_type_TRA<-t(as.data.frame(unclass(table(data_chain_TRA$V_J_lenghCDR3_CloneId,factor(data_chain_TRA$sample))))) 
+data_chain_TRB<-data_merge[which(data_merge$chainType=="TRB"),]
+clone_type_TRB<-t(as.data.frame(unclass(table(data_chain_TRB$V_J_lenghCDR3_CloneId,factor(data_chain_TRB$sample))))) 
+data_chain_TRD<-data_merge[which(data_merge$chainType=="TRD"),]
+clone_type_TRD<-t(as.data.frame(unclass(table(data_chain_TRD$V_J_lenghCDR3_CloneId,factor(data_chain_TRD$sample))))) 
+data_chain_TRG<-data_merge[which(data_merge$chainType=="TRG"),]
+clone_type_TRG<-t(as.data.frame(unclass(table(data_chain_TRG$V_J_lenghCDR3_CloneId,factor(data_chain_TRG$sample))))) 
 
 ##Build present vs no present
 clone_type_presence_IGK<-apply(clone_type_IGK,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_IGL<-apply(clone_type_IGL,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_IGH<-apply(clone_type_IGH,1,function(x) ifelse(x==0,0,1))
-clone_type_presence_IG<-apply(clone_type_IG,1,function(x) ifelse(x==0,0,1))
-clone_type_presence_TCR<-apply(clone_type_TCR,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRA<-apply(clone_type_TRA,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRB<-apply(clone_type_TRB,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRD<-apply(clone_type_TRD,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRG<-apply(clone_type_TRG,1,function(x) ifelse(x==0,0,1))
+clone_type_presence_TRDG<-apply(clone_type_TRDG,1,function(x) ifelse(x==0,0,1))
 
-###Filter by clones share at least in 20% of the samples
+###Filter by clones share at least in 5% of the samples (311*0.05= 15) or 2 samples
 clone_type_filter_IGK<-clone_type_presence_IGK[which(rowSums(clone_type_presence_IGK)>2),] #
-clone_type_filter_IGK<-clone_type_filter_IGK[,which(colSums(clone_type_filter_IGK)>0)] #
 clone_type_filter_IGL<-clone_type_presence_IGL[which(rowSums(clone_type_presence_IGL)>2),] #
-clone_type_filter_IGL<-clone_type_filter_IGL[,which(colSums(clone_type_filter_IGL)>0)] #
 clone_type_filter_IGH<-clone_type_presence_IGH[which(rowSums(clone_type_presence_IGH)>2),] #
-clone_type_filter_IGH<-clone_type_filter_IGH[,which(colSums(clone_type_filter_IGH)>0)] #
-clone_type_filter_IG<-clone_type_presence_IG[which(rowSums(clone_type_presence_IG)>2),] #
-clone_type_filter_IG<-clone_type_filter_IG[,which(colSums(clone_type_filter_IG)>0)] #
-clone_type_filter_TCR<-clone_type_presence_TCR[which(rowSums(clone_type_presence_TCR)>2),] #
-clone_type_filter_TCR<-clone_type_filter_TCR[,which(colSums(clone_type_filter_TCR)>0)] #
+clone_type_filter_TRA<-clone_type_presence_TRA[which(rowSums(clone_type_presence_TRA)>2),] #
+clone_type_filter_TRB<-clone_type_presence_TRB[which(rowSums(clone_type_presence_TRB)>2),] #
+clone_type_filter_TRD<-clone_type_presence_TRD[which(rowSums(clone_type_presence_TRD)>2),] #
+clone_type_filter_TRG<-clone_type_presence_TRG[which(rowSums(clone_type_presence_TRG)>2),] #
 
 ##Heatmp
 brewer.pal(4,name = "Accent")
-cols=c( "#7FC97F","#BEAED4")
-
-annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
-ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1],"tumor-pancreas (TCGA)" = cols[2]))
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+id<-match(colnames(clone_type_filter_IGH),PAAD.Val.repertoire.diversity.tumor.normmal$sample)
+annotation_row = data.frame(PAAD.Val.repertoire.diversity.tumor.normmal$outcome[id])
+ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],
+                               "PDAC (TCGA)" = cols[2],
+                               "normal_pancreas (Val)"= cols[3],
+                               "PDAC (Val)" = cols[4]))
 colnames(annotation_row)<-"outcome"
-rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
+rownames(annotation_row)<-rownames(PAAD.Val.repertoire.diversity.tumor.normmal)[id]
 
-cols2 = brewer.pal(10,name = "Paired")
-
-#IG
-tiff(paste0("Results/heatmap_common_clones_IG.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_IG),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols2[6]),breaks = c(0,0.9,1))
-dev.off()
+cols2 = brewer.pal(12,name = "Paired")
 
 #IGH
-tiff(paste0("Results/heatmap_common_clones_IGH.tiff"),width = 5000, height = 3000, res = 300)
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGH_All.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IGH),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
          annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
 dev.off()
 
+#"IGHV3-21_IGHJ4_12_656"  "IGHV3-23_IGHJ4_11_242"  "IGHV3-23_IGHJ4_14_1055" "IGHV3-7_IGHJ4_13_265"   "IGHV3-9_IGHJ6_13_34"  
+id2<-match(rownames(clone_type_filter_IGH_sign),rownames(clone_type_filter_IGH))
+table(clone_type_filter_IGH[id2[2],],PAAD.Val.repertoire.diversity.tumor.normmal$outcome[id])
+
+
 #IGK
-tiff(paste0("Results/heatmap_common_clones_IGK.tiff"),width = 5000, height = 3000, res = 300)
+tiff(paste0("Results/CommonClones/heatmap_common_clones_IGK_All.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IGK),show_rownames = F, show_colnames = F,border_color=F,annotation_row = annotation_row,
          annotation_colors = ann_colors,color = c("white",cols2[4]),breaks = c(0,0.9,1))
 dev.off()
 
+id2<-match(rownames(clone_type_filter_IGK_sign),rownames(clone_type_filter_IGK))
+table(clone_type_filter_IGK[id2,],PAAD.Val.repertoire.diversity.tumor.normmal$outcome[id])
+
+
 #IGL
-tiff(paste0("Results/heatmap_common_clones_IGL.tiff"),width = 5000, height = 3000, res = 300)
+tiff(paste0("Results/CommonClones/heatmap_common_clones_IGL_All.tiff"),width = 5000, height = 3000, res = 300)
 pheatmap(t(clone_type_filter_IGL),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[6]),breaks = c(0,0.9,1))
+dev.off()
+
+#TRA
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRA_All.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRA),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
          annotation_colors = ann_colors,color = c("white",cols2[8]),breaks = c(0,0.9,1))
 dev.off()
 
-#TCR
-tiff(paste0("Results/heatmap_common_clones_TCR.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_TCR),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+#TRB
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRB_All.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRB),border_color=F,show_rownames = F,annotation_row = annotation_row,show_colnames = F,
          annotation_colors = ann_colors,color = c("white",cols2[10]),breaks = c(0,0.9,1))
+
 dev.off()
 
-#####################################
-### Principal Components Analysis ###
-#####################################
-library(factoextra)
-pca <- prcomp(t(clone_type_filter_IG), scale = TRUE)
+#TRD
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRD_All.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRD),border_color=F,show_rownames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[12]),breaks = c(0,0.9,1))
 
-SPP <- PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome
-levels.SPP <- factor(c("normal-pancreas (GTEx)", "tumor-pancreas (TCGA)"))
-
-pc <- c(1,2)
-tiff(paste0("Results/PCA_IG.tiff"),width = 2000, height = 2000, res = 300)
-plot(pca$x[,pc[1]], pca$x[,pc[2]], col=cols[SPP],pch=20,xlab="PCA1",ylab="PCA2")
-legend("bottomright", legend=levels(levels.SPP), col=cols,pch=20,cex=0.8)
 dev.off()
+id2<-match(names(clone_type_filter_TRD_sign),colnames(clone_type_filter_TRD))
+id<-match(colnames(clone_type_filter_TRD)[id2],PAAD.Val.repertoire.diversity.tumor.normmal$sample)
+table(clone_type_filter_TRD[id2],PAAD.Val.repertoire.diversity.tumor.normmal$outcome[id])
 
-#####Fisher test to find differences by clones in normal vs. tumor
-p_value=NULL
-for(i in 1:dim(clone_type_filter_IG)[1]){
-  print(i)
-  tab<-table(clone_type_filter_IG[i,],PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
-  p_value[i]=fisher.test(tab)$p.value
-}
-p.adj<-p.adjust(p_value,"fdr")
-clone_type_filter_IG_sign<-clone_type_filter_IG[which(p.adj<0.05),] #808 out of 1252 are significant
-annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
-colnames(annotation_row)<-"outcome"
-rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
-brewer.pal(4,name = "Accent")
-cols=c( "#7FC97F", "#BEAED4")
-ann_colors = list (outcome = c("normal-pancreas (GTEx)" = cols[1],
-                                         "tumor-pancreas (TCGA)" = cols[2]))
+#TRG
+tiff(paste0("Results/CommonClones/heatmap_common_clones_TRG_All.tiff"),width = 5000, height = 3000, res = 300)
+pheatmap(t(clone_type_filter_TRG),border_color=F,show_rownames = F,annotation_row = annotation_row,
+         annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
 
-tiff(paste0("Results/heatmap_common_clones_IG_sign.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_IG_sign),border_color=F,show_rownames = F, annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white","red"),breaks = c(0,0.9,1))
 dev.off()
 
 
