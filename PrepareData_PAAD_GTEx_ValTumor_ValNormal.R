@@ -11,7 +11,7 @@ print(x)
 ###         
 ###
 ### Author: Silvia Pineda
-### Date: August, 2019
+### Date: June, 2020
 ############################################################################################
 library(pgirmess)
 library(stringr)
@@ -26,9 +26,23 @@ data_gtex<-data_gtex[,c(2,1,3:ncol(data_gtex))]
 colnames(data_gtex)[2]<-"readSequence"
 
 load("Data/PAAD/PAAD_MIXCR_results.Rdata")
-data$dataset<-"TCGA_PAAD"
+data_paad<-data
+data_paad$dataset<-"TCGA_PAAD"
 
-data<-rbind(data_gtex,data)
+load("Data/Pancreas_Validation/Validation_Pancreas.Rdata")
+data_val_tumor<-data
+data_val_tumor$dataset<-"Val_PAAD"
+data_val_tumor<-data_val_tumor[,c(2,1,3:ncol(data_val_tumor))]
+colnames(data_val_tumor)[2]<-"readSequence"
+
+load("Data/Validation_Normal_pancreas/Validation_Normal_Pancreas.Rdata")
+data_val_normal<-data
+data_val_normal$dataset<-"Val_normal"
+data_val_normal<-data_val_normal[,c(2,1,3:ncol(data_val_normal))]
+colnames(data_val_normal)[2]<-"readSequence"
+
+data<-rbind(data_gtex,data_paad,data_val_tumor,data_val_normal)
+
 
 ###Chain
 data$chainType<-ifelse(data$bestVGene!="", substr(data$bestVGene,1,3),
@@ -42,9 +56,16 @@ reads <- data.frame(cbind(read_count,read_count_chain))
 ####### The data needs to be normalized by the unmapped reads 
 totalReads_PAAD<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
 totalReads_gtex<-read.table("Data/GTEx/Pancreas/MIXCR/report/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+totalReads_val_tumor<-read.table("Data/Pancreas_Validation/total_reads.txt",sep=";")
+totalReads_val_normal<-read.table("Data/Validation_Normal_pancreas/report/total_reads.txt",sep=";")
+
 totalReads_gtex$V1<-substr(totalReads_gtex$V1,4,13)
 totalReads_gtex$V1<-unlist(strsplit(totalReads_gtex$V1, "_"))
-totalReads<-rbind(totalReads_PAAD,totalReads_gtex)
+
+totalReads_val_tumor$V1<-substr(totalReads_val_tumor$V1,4,13)
+totalReads_val_tumor$V1<-unlist(strsplit(totalReads_val_tumor$V1, "_"))
+
+totalReads<-rbind(totalReads_PAAD,totalReads_gtex,totalReads_val_tumor,totalReads_val_normal)
 id<-match(rownames(reads),totalReads$V1)
 reads$totalReads<-totalReads[id,2]
 
@@ -67,9 +88,9 @@ reads$TRG_expression<-reads$TRG/reads$totalReads
 reads$Alpha_Beta_ratio_expression<-(reads$TRA_expression+reads$TRB_expression)/reads$T_expression
 reads$KappaLambda_ratio_expression <- (reads$IGK_expression / reads$IGL_expression)
 
-####Restriction to CDR3 to extract the clones
-data_full_cdr3<-data[which(data$nSeqCDR3!=""),] #1082293
-data_full_cdr3$CDR3_length<-nchar(as.character(data_full_cdr3$nSeqCDR3)) 
+####Restriction to CDR3 to extract the clones using the aa
+data_full_cdr3<-data[which(data$aaSeqCDR3!=""),] 
+data_full_cdr3$CDR3_length<-nchar(as.character(data_full_cdr3$aaSeqCDR3)) 
 data_full_cdr3<-data_full_cdr3[which(data_full_cdr3$CDR3_length>3),] 
 
 ##Obtain the ID for the clone call
@@ -91,17 +112,17 @@ data_full_cdr3_TCR<-data_full_cdr3[which(data_full_cdr3$chainType=="TRA" |
 ###save the data to call the clones by all samples using the nucleotides.py
 data_clonesInference_Ig<-data_full_cdr3_Ig[,c("SEQUENCE_ID","sample","nSeqCDR3","aaSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
 data_clonesInference_TCR<-data_full_cdr3_TCR[,c("SEQUENCE_ID","sample","nSeqCDR3","aaSeqCDR3","CDR3_length","bestVGene","bestJGene","V_J_lenghCDR3")]
-write.table(data_clonesInference_Ig,file="Data/data_for_cloneInfered_Ig_PAAD_GTEx.txt",row.names = F,sep="\t")
-write.table(data_clonesInference_TCR,file="Data/data_for_cloneInfered_TCR_PAAD_GTEx.txt",row.names = F,sep="\t")
+write.table(data_clonesInference_Ig,file="Data/PAAD_GTEx_ValTumor_ValNormal/data_for_cloneInfered_Ig_PAAD_GTEx_ValTumor_ValNormal.txt",row.names = F,sep="\t")
+write.table(data_clonesInference_TCR,file="Data/PAAD_GTEx_ValTumor_ValNormal/data_for_cloneInfered_TCR_PAAD_GTEx_ValTumor_ValNormal.txt",row.names = F,sep="\t")
 
 ### After passing the nucleotides.py
 ##Read the clones and merge with the data
-nucleotides_Ig<-read.csv("Data/PAAD_GTEx/ClonesInfered_Ig_PAAD_GTEx.csv")
-nucleotides_TCR<-read.csv("Data/PAAD_GTEx//ClonesInfered_TCR_PAAD_GTEx.csv")
+nucleotides_Ig<-read.csv("Data/PAAD_GTEx_ValTumor_ValNormal/ClonesInfered_Ig_PAAD_GTEx_ValTumor_ValNormal.csv")
+nucleotides_TCR<-read.csv("Data/PAAD_GTEx_ValTumor_ValNormal/ClonesInfered_TCR_PAAD_GTEx_ValTumor_ValNormal.csv")
 nucleotides<-rbind(nucleotides_Ig,nucleotides_TCR)
 data_merge<-merge(data_full_cdr3,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 
-####Reads per chain only for clonal information
+###Reads per chain only for clonal information
 ##Reads per chain
 read_count <- table(data_merge$sample)
 read_count_chain <- table(data_merge$sample, data_merge$chainType)
@@ -109,9 +130,16 @@ reads_filter <- data.frame(cbind(read_count,read_count_chain))
 ####### The data needs to be normalized by the unmapped reads 
 totalReads_PAAD<-read.table("Data/PAAD/MIXCR_PAAD/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
 totalReads_gtex<-read.table("Data/GTEx/Pancreas/MIXCR/report/total_reads.txt",sep=";") ##We need to extract this number from the MIXCR report with the python script
+totalReads_val_tumor<-read.table("Data/Pancreas_Validation/total_reads.txt",sep=";")
+totalReads_val_normal<-read.table("Data/Validation_Normal_pancreas/report/total_reads.txt",sep=";")
+
 totalReads_gtex$V1<-substr(totalReads_gtex$V1,4,13)
 totalReads_gtex$V1<-unlist(strsplit(totalReads_gtex$V1, "_"))
-totalReads<-rbind(totalReads_PAAD,totalReads_gtex)
+
+totalReads_val_tumor$V1<-substr(totalReads_val_tumor$V1,4,13)
+totalReads_val_tumor$V1<-unlist(strsplit(totalReads_val_tumor$V1, "_"))
+
+totalReads<-rbind(totalReads_PAAD,totalReads_gtex,totalReads_val_tumor,totalReads_val_normal)
 id<-match(rownames(reads),totalReads$V1)
 reads_filter$totalReads<-totalReads[id,2]
 
@@ -135,10 +163,10 @@ reads_filter$Alpha_Beta_ratio_expression<-(reads_filter$TRA_expression+reads_fil
 reads_filter$KappaLambda_ratio_expression <- (reads_filter$IGK_expression / reads_filter$IGL_expression)
 
 colnames(reads_filter)<-c("read_count_filter","IGH_filter","IGK_filter", "IGL_filter","TRA_filter","TRB_filter","TRD_filter","TRG_filter", 
-                   "totalReads","Ig_Reads_filter","T_Reads_filter","IG_expression_filter", "IGH_expression_filter","IGK_expression_filter",
-                   "IGL_expression_filter", "T_expression_filter" ,               
-                    "TRA_expression_filter", "TRB_expression_filter","TRD_expression_filter","TRG_expression_filter",
-                    "Alpha_Beta_ratio_expression_filter",  "KappaLambda_ratio_expression_filter")
+                          "totalReads","Ig_Reads_filter","T_Reads_filter","IG_expression_filter", "IGH_expression_filter","IGK_expression_filter",
+                          "IGL_expression_filter", "T_expression_filter" ,               
+                          "TRA_expression_filter", "TRB_expression_filter","TRD_expression_filter","TRG_expression_filter",
+                          "Alpha_Beta_ratio_expression_filter",  "KappaLambda_ratio_expression_filter")
 
 ##Clones per chain
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
@@ -207,43 +235,6 @@ for (i in 1:length(sample)){
 
 diversity<-cbind(clones,entropy_IGH,entropy_IGK,entropy_IGL,entropy_TRA,entropy_TRB,entropy_TRD,entropy_TRG)
 
-####After runing recon
-recon<-read.table("Data/PAAD_GTEx/RECON/test_D_number_table.txt",header=T)
-chain<-substr(recon$sample_name,66,68)
-sample<-substr(recon$sample_name,70,105)
-sample<-unlist(strsplit(sample, "\\."))
-sample<-sample[which(nchar(sample)>7)]
-##0.0D is species richness (Number of clones)
-##Entropy is ln(1.0.D)
-diversity<-as.data.frame(diversity)
-chain_list<-unique(chain)
-for(i in chain_list){
-  recon_chain<-recon[which(chain==i),]
-  sample_chain<-substr(recon_chain$sample_name,70,105)
-  sample_chain<-unlist(strsplit(sample_chain, "\\."))
-  sample_chain<-sample_chain[which(nchar(sample_chain)>7)]
-  id<-match(rownames(diversity),sample_chain)
-  clone_chain<-ifelse(is.na(id)==F,recon_chain[id,"est_0.0D"],0)
-  assign(paste0("clones_recon_",i),clone_chain)
-  entroy_chain<-ifelse(is.na(id)==F,ln(recon_chain[id,"est_1.0D"]),0)
-  assign(paste0("entropy_recon_",i),entroy_chain)
-}
-diversity$clones_recon_IGH<-clones_recon_IGH
-diversity$clones_recon_IGK<-clones_recon_IGK
-diversity$clones_recon_IGL<-clones_recon_IGL
-diversity$clones_recon_TRA<-clones_recon_TRA
-diversity$clones_recon_TRB<-clones_recon_TRB
-diversity$clones_recon_TRD<-clones_recon_TRD
-diversity$clones_recon_TRG<-clones_recon_TRG
-
-diversity$entropy_recon_IGH<-entropy_recon_IGH
-diversity$entropy_recon_IGK<-entropy_recon_IGK
-diversity$entropy_recon_IGL<-entropy_recon_IGL
-diversity$entropy_recon_TRA<-entropy_recon_TRA
-diversity$entropy_recon_TRB<-entropy_recon_TRB
-diversity$entropy_recon_TRD<-entropy_recon_TRD
-diversity$entropy_recon_TRG<-entropy_recon_TRG
-
 ##length of CDR3
 cdr3_length<-aggregate(data_merge$CDR3_length,by=list(data_merge$sample,data_merge$chainType), FUN=mean)
 
@@ -275,62 +266,43 @@ colnames(diversity)[15:21]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_I
                               "cdr3_length_TRD","cdr3_length_TRG")
 
 
-PAAD.GTEx.repertoire.diversity<-cbind(reads,reads_filter,diversity)
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity<-cbind(reads,reads_filter,diversity)
+
 
 ###Para que no se aplaste el data_merge llamando a los otros FULLDATA
-data_merge_PAAD_GTEX<-data_merge
+data_merge_PAAD_GTEX_ValTumor_ValNormal<-data_merge
 
-load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
 load("Data/PAAD/PAAD_FullData.Rdata")
+load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
+load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
+load("Data/Validation_Normal_pancreas/Pancreas_Normal_Validation_FullData.Rdata")
 
 #PAAD.repertoire.diversity<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_3categ=="Tumor_pancreas"),]
-id.paad<-match(rownames(PAAD.repertoire.diversity),rownames(PAAD.GTEx.repertoire.diversity))
-id.gtex<-match(rownames(Pancreas.repertoire.diversity),rownames(PAAD.GTEx.repertoire.diversity))
+id.paad<-match(rownames(PAAD.repertoire.diversity),rownames(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity))
+id.gtex<-match(rownames(Pancreas.repertoire.diversity),rownames(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity))
+id.valtumor<-match(rownames(Pancreas.Validation.repertoire.diversity),rownames(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity))
+id.valnormal<-match(rownames(Pancreas.Normal.Validation.repertoire.diversity),rownames(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity))
 
 ##Outcome
-PAAD.GTEx.repertoire.diversity$outcome<-NA
-PAAD.GTEx.repertoire.diversity$outcome[na.omit(id.paad)]<-as.character(PAAD.repertoire.diversity$Tumor_type_4categ)
-PAAD.GTEx.repertoire.diversity$outcome[na.omit(id.gtex)]<-c("Normal_pancreas (GTEx)")
-
-PAAD.GTEx.repertoire.diversity$outcome<-ifelse(PAAD.GTEx.repertoire.diversity$outcome=="normal_pancreas","adjacent_normal_pancreas (TCGA)",
-                                        ifelse(PAAD.GTEx.repertoire.diversity$outcome=="pseudonormal_pancreas","pseudonormal_pancreas (TCGA)",
-                                        ifelse(PAAD.GTEx.repertoire.diversity$outcome=="PDAC","PDAC (TCGA)",
-                                        ifelse(PAAD.GTEx.repertoire.diversity$outcome=="PAC-Other","PAC_Other (TCGA)",     
-                                        ifelse(PAAD.GTEx.repertoire.diversity$outcome=="Normal_pancreas (GTEx)","normal_pancreas (GTEx)",NA)))))
-
-##Annotation sample
-PAAD.GTEx.repertoire.diversity$sample2<-NA
-PAAD.GTEx.repertoire.diversity$sample2[na.omit(id.paad)]<-as.character(substr(PAAD.repertoire.diversity$TCGA_sample,1,12))
-PAAD.GTEx.repertoire.diversity$sample2[na.omit(id.gtex)]<-as.character(Pancreas.repertoire.diversity$SUBJID)
-
-##Sex
-id.paad<-match(clinical.patient$bcr_patient_barcode,PAAD.GTEx.repertoire.diversity$sample2)
-PAAD.GTEx.repertoire.diversity$sex<-NA
-PAAD.GTEx.repertoire.diversity$sex[na.omit(id.paad)]<-as.character(clinical.patient$gender[which(na.omit(id.paad)!=F)])
-id.gtex<-match(annotation_gtex_pancreas$SUBJID,PAAD.GTEx.repertoire.diversity$sample2)
-PAAD.GTEx.repertoire.diversity$sex[na.omit(id.gtex)]<-as.character(annotation_gtex_pancreas$SEX[which(na.omit(id.gtex)!=F)])
-
-PAAD.GTEx.repertoire.diversity$sex<-ifelse(PAAD.GTEx.repertoire.diversity$sex=="Female" | PAAD.GTEx.repertoire.diversity$sex=="FEMALE","Female",
-                                    ifelse(PAAD.GTEx.repertoire.diversity$sex=="Male"| PAAD.GTEx.repertoire.diversity$sex=="MALE","Male",NA))
-
-##Age
-PAAD.GTEx.repertoire.diversity$age<-NA
-PAAD.GTEx.repertoire.diversity$age[na.omit(id.paad)]<-clinical.patient$age_at_initial_pathologic_diagnosis[which(na.omit(id.paad)!=F)]
-PAAD.GTEx.repertoire.diversity$age[na.omit(id.gtex)]<-annotation_gtex_pancreas$AGE[which(na.omit(id.gtex)!=F)]
-
-##Race
-PAAD.GTEx.repertoire.diversity$race<-NA
-PAAD.GTEx.repertoire.diversity$race[na.omit(id.paad)]<-as.character(clinical.patient$race_list[which(na.omit(id.paad)!=F)])
-PAAD.GTEx.repertoire.diversity$race[na.omit(id.gtex)]<-as.character(annotation_gtex_pancreas$RACE[which(na.omit(id.gtex)!=F)])
-
-PAAD.GTEx.repertoire.diversity$race<-ifelse(PAAD.GTEx.repertoire.diversity$race=="Asian" | PAAD.GTEx.repertoire.diversity$race=="ASIAN","Asian",
-                                           ifelse(PAAD.GTEx.repertoire.diversity$race=="BLACK OR AFRICAN AMERICAN"| PAAD.GTEx.repertoire.diversity$race=="Black/AA","Black/AA",
-                                                  ifelse(PAAD.GTEx.repertoire.diversity$race=="White"| PAAD.GTEx.repertoire.diversity$race=="WHITE","White",NA)))
-
-PAAD.GTEx.repertoire.diversity<-PAAD.GTEx.repertoire.diversity[which(is.na(PAAD.GTEx.repertoire.diversity$outcome)==F),]
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome<-NA
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome[na.omit(id.paad)]<-as.character(PAAD.repertoire.diversity$Tumor_type_4categ)
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome[na.omit(id.gtex)]<-c("normal_pancreas (GTEx)")
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome[na.omit(id.valtumor)]<-as.character(Pancreas.Validation.repertoire.diversity$tissue)
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome[na.omit(id.valnormal)]<-c("normal_pancreas (Val)")
 
 
-PAAD.GTEx.repertoire.diversity$sample<-rownames(PAAD.GTEx.repertoire.diversity)
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome<-ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas","adjacent_normal_pancreas (TCGA)",
+                                               ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="pseudonormal_pancreas","pseudonormal_pancreas (TCGA)",
+                                                 ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="PDAC","PDAC (TCGA)",
+                                                  ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="PAC-Other","PAC_Other (TCGA)",     
+                                                   ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (GTEx)","normal_pancreas (GTEx)",
+                                                    ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal pancreas","adjacent_normal_pancreas (Val)",
+                                                           ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="pancreas tumor","PDAC (Val)",
+                                                                  ifelse(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (Val)","normal_pancreas (Val)",NA))))))))
 
-data_merge<-data_merge_PAAD_GTEX
-save(data_merge,PAAD.GTEx.repertoire.diversity,file="Data/PAAD_GTEx/PAAD_GTEx_FullData.Rdata")
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity<-PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity[which(is.na(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome)==F),]
+PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$sample<-rownames(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity)
+
+data_merge<-data_merge_PAAD_GTEX_ValTumor_ValNormal
+save(data_merge,PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity,file="Data/PAAD_GTEx_ValTumor_ValNormal/PAAD_GTEx_ValTumor_ValNormal_FullData.Rdata")
+
