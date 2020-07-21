@@ -12,7 +12,7 @@ print(x)
 ###         
 ###
 ### Author: Silvia Pineda
-### Date: July, 2019
+### Date: July, 2020
 ############################################################################################
 library(zCompositions)
 library(easyCODA)
@@ -35,7 +35,7 @@ data_merge_qc<-data_merge[which(is.na(match(data_merge$sample,rownames(PAAD.GTEx
 ############
 ## 1. Build the matrix with the clones by samples
 ###########
-## Pancreas ans pseudonormal
+
 data_qc_chain_IGK<-data_merge_qc[which(data_merge_qc$chainType=="IGK"),]
 clone_type_IGK<-t(as.data.frame(unclass(table(data_qc_chain_IGK$V_J_lenghCDR3_CloneId,factor(data_qc_chain_IGK$sample))))) 
 data_qc_chain_IGL<-data_merge_qc[which(data_merge_qc$chainType=="IGL"),]
