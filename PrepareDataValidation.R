@@ -228,7 +228,7 @@ id.TRG<-match(rownames(diversity),cdr3_length_TRG$Group.1)
 cdr3_length_TRG_2<-ifelse(is.na(id.TRG)==T,0,cdr3_length_TRG$x)
 
 diversity<-cbind(diversity,cdr3_length_IGH_2,cdr3_length_IGK_2,cdr3_length_IGL_2,cdr3_length_TRA_2,cdr3_length_TRB_2,cdr3_length_TRD_2,cdr3_length_TRG_2)
-colnames(diversity)[29:35]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
+colnames(diversity)[15:21]<-c("cdr3_length_IGH","cdr3_length_IGK","cdr3_length_IGL","cdr3_length_TRA","cdr3_length_TRB",
                               "cdr3_length_TRD","cdr3_length_TRG")
 
 Pancreas.Validation.repertoire.diversity<-cbind(reads,diversity)

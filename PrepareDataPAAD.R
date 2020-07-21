@@ -170,10 +170,10 @@ for (i in 1:length(sample)){
   #write.delim(data.frame(table(table(clones_sample_IGH))),file=paste("clones_sample_IGH_",sample[i],".txt",sep=""),sep="\t",col.names=F)
   #write.delim(data.frame(table(table(clones_sample_IGK))),file=paste("clones_sample_IGK_",sample[i],".txt",sep=""),sep="\t",col.names=F)
   #write.delim(data.frame(table(table(clones_sample_IGL))),file=paste("clones_sample_IGL_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
-  write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRA))),file=paste("clones_sample_TRA_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRB))),file=paste("clones_sample_TRB_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRD))),file=paste("clones_sample_TRD_",sample[i],".txt",sep=""),sep="\t",col.names=F)
+  # write.delim(data.frame(table(table(clones_sample_TRG))),file=paste("clones_sample_TRG_",sample[i],".txt",sep=""),sep="\t",col.names=F)
   
   fi_IGH<-as.numeric(table(clones_sample_IGH))/length(clones_sample_IGH)
   fi_IGK<-as.numeric(table(clones_sample_IGK))/length(clones_sample_IGK)
@@ -354,6 +354,11 @@ biospecimen.slide<-biospecimen.slide[,-c(2,4,10,13,15)]
 write.csv(biospecimen.slide,"Data/PAAD/Clinical/biospecimen_slide_PAAD.csv")
 biospecimen.slide<-read.csv("Data/PAAD/Clinical/biospecimen_slide_PAAD.csv")
 
+##Subtypes of PAAD
+paad.subtype <- TCGAquery_subtype(tumor = "paad")
+write.csv(paad.subtype,"Data/PAAD/Clinical/paad.subtype.csv")
+paad.subtype<-read.csv("Data/PAAD/Clinical/paad.subtype.csv")
+
 ###Read xCELL data
 xCell.data<-read.table("Data/xCELL/xCell_PAAD_rsem_xCell_0643041519.txt",header = T,sep="\t")
 xcell.pvalue<-read.table("Data/xCELL/xCell_PAAD_rsem_xCell_0643041519.pvals.txt",header=T,sep="\t")
@@ -393,14 +398,13 @@ id<-match(substr(PAAD.repertoire.diversity$TCGA_sample,1,12),clinical.patient$bc
 PAAD.repertoire.diversity$Tumor_type_4categ<-ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas" & 
                                                     clinical.patient$histological_type[id]=="Pancreas-Adenocarcinoma Ductal Type","PDAC",
                                                     ifelse(PAAD.repertoire.diversity$Tumor_type=="Tumor_pancreas" & 
-                                                             clinical.patient$histological_type[id]=="Pancreas-Adenocarcinoma-Other Subtype","PAC-Other",
+                                                             clinical.patient$histological_type[id]=="Pancreas-Adenocarcinoma-Other Subtype","PDAC",
                                                     ifelse(PAAD.repertoire.diversity$Tumor_type=="Solid_tissue_normal","normal_pancreas",
                                                            ifelse(PAAD.repertoire.diversity$Tumor_type=="Adjacent_normal_pancreas","normal_pancreas",
                                                                   ifelse(PAAD.repertoire.diversity$Tumor_type=="Pseudonormal (<1% neoplastic cellularity)","pseudonormal_pancreas",NA)))))
 PAAD.repertoire.diversity$Tumor_type_4categ<-as.factor(PAAD.repertoire.diversity$Tumor_type_4categ)
 
-
-save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
+save(data_merge,PAAD.repertoire.diversity,xCell.data.PAAD,xCell.pvalue.PAAD,paad.subtype,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
      file="Data/PAAD/PAAD_FullData.Rdata")
 
 
@@ -428,7 +432,7 @@ Obtain_diversity<-function(data,PAAD.repertoire.diversity,chainType,sample_order
   return(entropy)
 }
 
-chainType="TRG"
+chainType="IGH"
 for (i in 1:5){
   assign(paste0("entropy_",i,"_",chainType),Obtain_diversity(data_merge,PAAD.repertoire.diversity,chainType,0.2))
 }
