@@ -28,17 +28,17 @@ setwd("~/TCGA-Immune/")
 
 load("Data/PAAD_GTEx_ValTumor_ValNormal/PAAD_GTEx_ValTumor_ValNormal_FullData.Rdata")
 
-########################################
-## GTEx vs. TCGA Analysis ##############
-########################################
-PAAD.GTEx.repertoire.diversity.tumor.normmal<-PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity[which(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (GTEx)"|
-                                                                                                        PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (TCGA)"),]
-PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome<-factor(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
-
 ###################################################
-## Common clones across samples
+## Common clones across ALL samples
 #################################################
-id<-match(data_merge$sample,rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal))
+Repertoire.Diversity<-PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity[which(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (GTEx)"|
+                                                                      PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (TCGA)" |
+                                                                        PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (Val)" |  
+                                                                PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "normal_pancreas (Val)"),]
+Repertoire.Diversity$outcome<-factor(Repertoire.Diversity$outcome)
+# Rename all levels, by name
+levels(Repertoire.Diversity$outcome) <- list("GTEX-Normal"="normal_pancreas (GTEx)", "TCGA-PDAC"= "PDAC (TCGA)", "Validation-PDAC"="PDAC (Val)","Validation-Normal"="normal_pancreas (Val)")
+id<-match(data_merge$sample,rownames(Repertoire.Diversity))
 data_merge_filter<-data_merge[which(is.na(id)==F),]
 
 #chain=c("IGHV","IGKV","IGLV")
@@ -69,7 +69,7 @@ clone_type_presence_TRB<-apply(clone_type_TRB,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_TRD<-apply(clone_type_TRD,1,function(x) ifelse(x==0,0,1))
 clone_type_presence_TRG<-apply(clone_type_TRG,1,function(x) ifelse(x==0,0,1))
 
-###Filter by clones share at least in 5% of the samples (311*0.05= 15) or 2 samples
+###Filter by clones share at least by 2 samples
 clone_type_filter_IGK<-clone_type_presence_IGK[which(rowSums(clone_type_presence_IGK)>2),] #
 clone_type_filter_IGL<-clone_type_presence_IGL[which(rowSums(clone_type_presence_IGL)>2),] #
 clone_type_filter_IGH<-clone_type_presence_IGH[which(rowSums(clone_type_presence_IGH)>2),] #
@@ -79,60 +79,119 @@ clone_type_filter_TRD<-clone_type_presence_TRD[which(rowSums(clone_type_presence
 clone_type_filter_TRG<-clone_type_presence_TRG[which(rowSums(clone_type_presence_TRG)>2),] #
 
 ##Heatmp
-brewer.pal(4,name = "Accent")
-cols=c( "#7FC97F","#BEAED4")
 
-annotation_row = data.frame(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
-ann_colors = list (outcome = c("normal_pancreas (GTEx)" = cols[1],"PDAC (TCGA)" = cols[2]))
-colnames(annotation_row)<-"outcome"
-rownames(annotation_row)<-rownames(PAAD.GTEx.repertoire.diversity.tumor.normmal)
+#IGK
+brewer.pal(4,name = "Accent")
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+id<-match(colnames(clone_type_filter_IGK),Repertoire.Diversity$sample)
+annotation_col = data.frame(Repertoire.Diversity$outcome[id])
+table(Repertoire.Diversity$outcome)
+ann_colors = list (outcome = c("GTEX-Normal" = cols[1],
+                               "TCGA-PDAC" = cols[2],
+                               "Validation-Normal"= cols[3],
+                               "Validation-PDAC" = cols[4]))
+colnames(annotation_col)<-"outcome"
+rownames(annotation_col)<-colnames(clone_type_filter_IGK)
 
 cols2 = brewer.pal(12,name = "Paired")
 
-#IGH
-tiff(paste0("Results/CommonClones//heatmap_common_clones_IGH.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_IGH),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGK.tiff"),width = 2000, height = 1500, res = 300)
+pheatmap(clone_type_filter_IGK,border_color=F,show_rownames = F, show_colnames = F,annotation_col = annotation_col,
          annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
 dev.off()
 
-#IGK
-tiff(paste0("Results/CommonClones/heatmap_common_clones_IGK.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_IGK),show_rownames = F, show_colnames = F,border_color=F,annotation_row = annotation_row,
+
+#IGH
+brewer.pal(4,name = "Accent")
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+id<-match(colnames(clone_type_filter_IGH),Repertoire.Diversity$sample)
+annotation_col = data.frame(Repertoire.Diversity$outcome[id])
+table(Repertoire.Diversity$outcome)
+ann_colors = list (outcome = c("GTEX-Normal" = cols[1],
+                               "TCGA-PDAC" = cols[2],
+                               "Validation-Normal"= cols[3],
+                               "Validation-PDAC" = cols[4]))
+colnames(annotation_col)<-"outcome"
+rownames(annotation_col)<-colnames(clone_type_filter_IGH)
+
+cols2 = brewer.pal(12,name = "Paired")
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGH.tiff"),width = 2000, height = 1500, res = 300)
+pheatmap(clone_type_filter_IGH,border_color=F,show_rownames = F, show_colnames = F,annotation_col = annotation_col,
          annotation_colors = ann_colors,color = c("white",cols2[4]),breaks = c(0,0.9,1))
 dev.off()
 
 #IGL
-tiff(paste0("Results/CommonClones/heatmap_common_clones_IGL.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_IGL),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+brewer.pal(4,name = "Accent")
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+id<-match(colnames(clone_type_filter_IGL),Repertoire.Diversity$sample)
+annotation_col = data.frame(Repertoire.Diversity$outcome[id])
+table(Repertoire.Diversity$outcome)
+ann_colors = list (outcome = c("GTEX-Normal" = cols[1],
+                               "TCGA-PDAC" = cols[2],
+                               "Validation-Normal"= cols[3],
+                               "Validation-PDAC" = cols[4]))
+colnames(annotation_col)<-"outcome"
+rownames(annotation_col)<-colnames(clone_type_filter_IGL)
+
+cols2 = brewer.pal(12,name = "Paired")
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_IGL.tiff"),width = 2000, height = 1500, res = 300)
+pheatmap(clone_type_filter_IGL,border_color=F,show_rownames = F, show_colnames = F,annotation_col = annotation_col,
          annotation_colors = ann_colors,color = c("white",cols2[6]),breaks = c(0,0.9,1))
 dev.off()
 
 #TRA
-tiff(paste0("Results/CommonClones/heatmap_common_clones_TRA.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_TRA),border_color=F,show_rownames = F, show_colnames = F,annotation_row = annotation_row,
+brewer.pal(4,name = "Accent")
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+id<-match(colnames(clone_type_filter_TRA),Repertoire.Diversity$sample)
+annotation_col = data.frame(Repertoire.Diversity$outcome[id])
+table(Repertoire.Diversity$outcome)
+ann_colors = list (outcome = c("GTEX-Normal" = cols[1],
+                               "TCGA-PDAC" = cols[2],
+                               "Validation-Normal"= cols[3],
+                               "Validation-PDAC" = cols[4]))
+colnames(annotation_col)<-"outcome"
+rownames(annotation_col)<-colnames(clone_type_filter_TRA)
+
+cols2 = brewer.pal(12,name = "Paired")
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_TRA.tiff"),width = 2000, height = 1500, res = 300)
+pheatmap(clone_type_filter_TRA,border_color=F,show_rownames = F, show_colnames = F,annotation_col = annotation_col,
          annotation_colors = ann_colors,color = c("white",cols2[8]),breaks = c(0,0.9,1))
 dev.off()
 
+
 #TRB
-tiff(paste0("Results/CommonClones/heatmap_common_clones_TRB.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_TRB),border_color=F,show_rownames = F,annotation_row = annotation_row,show_colnames = F,
+brewer.pal(4,name = "Accent")
+cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
+id<-match(colnames(clone_type_filter_TRB),Repertoire.Diversity$sample)
+annotation_col = data.frame(Repertoire.Diversity$outcome[id])
+table(Repertoire.Diversity$outcome)
+ann_colors = list (outcome = c("GTEX-Normal" = cols[1],
+                               "TCGA-PDAC" = cols[2],
+                               "Validation-Normal"= cols[3],
+                               "Validation-PDAC" = cols[4]))
+colnames(annotation_col)<-"outcome"
+rownames(annotation_col)<-colnames(clone_type_filter_TRB)
+
+cols2 = brewer.pal(12,name = "Paired")
+
+tiff(paste0("Results/CommonClones//heatmap_common_clones_TRB.tiff"),width = 2000, height = 1500, res = 300)
+pheatmap(clone_type_filter_TRB,border_color=F,show_rownames = F, show_colnames = F,annotation_col = annotation_col,
          annotation_colors = ann_colors,color = c("white",cols2[10]),breaks = c(0,0.9,1))
-
 dev.off()
 
-#TRD
-tiff(paste0("Results/CommonClones/heatmap_common_clones_TRD.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_TRD),border_color=F,show_rownames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols2[12]),breaks = c(0,0.9,1))
 
-dev.off()
 
-#TRG
-tiff(paste0("Results/CommonClones/heatmap_common_clones_TRG.tiff"),width = 5000, height = 3000, res = 300)
-pheatmap(t(clone_type_filter_TRG),border_color=F,show_rownames = F,annotation_row = annotation_row,
-         annotation_colors = ann_colors,color = c("white",cols2[2]),breaks = c(0,0.9,1))
+########################################
+## GTEx vs. TCGA Analysis ##############
+########################################
+#AAD.GTEx.repertoire.diversity.tumor.normmal<-PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity[which(PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome=="normal_pancreas (GTEx)"|
+#                                                                                                        PAAD.GTEx.ValTumor.ValNormal.repertoire.diversity$outcome== "PDAC (TCGA)"),]
+#PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome<-factor(PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome)
 
-dev.off()
+
 
 ##########################
 #####Fisher test to find differences by clones in normal vs. tumor
