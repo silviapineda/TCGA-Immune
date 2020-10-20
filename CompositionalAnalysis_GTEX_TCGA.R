@@ -145,7 +145,10 @@ save(CV.selbal.IGL,file="Selbal_IGL_filter_1.Rdata")
 ################
 ### clr-lasso ##
 ################
-#IGH
+
+###
+#1. IGH
+####
 z_clone_type_IGH<-log(clone_type_filter_IGH_zerosubs)
 clrx_clone_type_IGH <- apply(z_clone_type_IGH, 2, function(x) x - rowMeans(z_clone_type_IGH))
 
@@ -176,7 +179,9 @@ pheatmap(t(clrx_clone_type_IGH_sign),scale="row",border_color=F,show_colnames = 
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
 
-#IGK
+####
+#2. IGK
+#####
 z_clone_type_IGK<-log(clone_type_filter_IGK_zerosubs)
 clrx_clone_type_IGK <- apply(z_clone_type_IGK, 2, function(x) x - rowMeans(z_clone_type_IGK))
 
@@ -207,7 +212,37 @@ pheatmap(t(clrx_clone_type_IGK_sign),scale="row",border_color=F,show_colnames = 
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
 
-#IGL
+#### Clustering ###
+res <- pheatmap(t(clrx_clone_type_IGK_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
+                annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
+
+mat.clust <- as.data.frame(cbind(clrx_clone_type_IGK_sign, cluster = cutree(res$tree_col, k = 6)))
+mat.clust$cluster<-replace(mat.clust$cluster,mat.clust$cluster==4 | mat.clust$cluster==5 | mat.clust$cluster==6, 3)
+mat.clust$cluster<-replace(mat.clust$cluster,mat.clust$cluster==2, 4)
+mat.clust$cluster<-replace(mat.clust$cluster,mat.clust$cluster==1, 2)
+mat.clust$cluster<-replace(mat.clust$cluster,mat.clust$cluster==4, 1)
+
+
+annotation_row = data.frame(cluster = factor(mat.clust$cluster),
+                            PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+cols_cluster=c("#F8766D" ,"#00BA38", "#619CFF") ##default colors in ggplot
+
+
+ann_colors = list (cluster = c("1" = cols_cluster[1],"2" = cols_cluster[2],"3"=cols_cluster[3]),
+  outcome = c("normal_pancreas (GTEx)" = cols[1],"PDAC (TCGA)" = cols[2]))
+
+colnames(annotation_row)<-c("cluster","outcome")
+rownames(annotation_row)<-rownames(clrx_clone_type_IGK)
+tiff("Results/CompositionalAnalysis/IGK_clrLasso_cluster.tiff",width = 2500, height = 1500, res = 300)
+pheatmap(t(clrx_clone_type_IGK_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
+         annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
+dev.off()
+PAAD.GTEx.repertoire.diversity.tumor.normmal$IGK_clonotypes_cluster<-mat.clust$cluster
+
+#####
+#3. IGL
+#####
+
 z_clone_type_IGL<-log(clone_type_filter_IGL_zerosubs)
 clrx_clone_type_IGL <- apply(z_clone_type_IGL, 2, function(x) x - rowMeans(z_clone_type_IGL))
 
@@ -233,7 +268,6 @@ tiff("Results/CompositionalAnalysis/IGL_clrLasso.tiff",width = 2500, height = 15
 pheatmap(t(clrx_clone_type_IGL_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
-
 
 ################
 ### CODA-lasso ##
@@ -454,21 +488,28 @@ library(survival)
 library(survminer)
 library(survMisc)
 
+id<-match(rownames(PAAD.repertoire.tumor.filter),PAAD.GTEx.repertoire.diversity.tumor.normmal$sample)
+PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster<-PAAD.GTEx.repertoire.diversity.tumor.normmal$IGK_clonotypes_cluster[id]
+
+save(data_merge,PAAD.repertoire.diversity,PAAD.repertoire.tumor.filter,xCell.data.PAAD,xCell.pvalue.PAAD,paad.subtype,clinical.drug,clinical.patient,clinical.radiation,clinical.new_tumor_event,clinical.folow_up,biospecimen.slide,annotation,
+     file="Data/PAAD/PAAD_FullData.Rdata")
+
+
 ##OS
-id<-match(rownames(PAAD.repertoire.tumor.filter),rownames(clrx_clone_type_IGL_sign))
+#id<-match(rownames(PAAD.repertoire.tumor.filter),rownames(clrx_clone_type_IGL_sign))
 surv_object <- Surv(time = PAAD.repertoire.tumor.filter$OS.time, event = PAAD.repertoire.tumor.filter$OS)
-res.cox <- coxph(Surv(time = OS.time, event = OS)~clrx_clone_type_IGL_sign[id,7],data=PAAD.repertoire.tumor.filter)
+res.cox <- coxph(Surv(time = OS.time, event = OS)~IGK_clonotypes_cluster,data=PAAD.repertoire.tumor.filter)
 summary(res.cox)
 
 ggforest(res.cox)
 
 ##Categorical
-KL_mean<-mean(clrx_clone_type_IGL_sign[id,3],na.rm=T)
-PAAD.repertoire.tumor.filter$KL_ratio_2cat<-ifelse(as.numeric(clrx_clone_type_IGL_sign[id,3])<=KL_mean,1,2)
-fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.filter$KL_ratio_2cat)
+#KL_mean<-mean(clrx_clone_type_IGL_sign[id,3],na.rm=T)
+#PAAD.repertoire.tumor.filter$KL_ratio_2cat<-ifelse(as.numeric(clrx_clone_type_IGL_sign[id,3])<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 fit1
-tiff("Results/CompositionalAnalysis/IGLV1-40_IGLJ3_14_334_KM.tiff",res=300,h=2000,w=2000)
-ggsurvplot(fit1, data = PAAD.repertoire.tumor.filter)
+tiff("Results/CompositionalAnalysis/KM_IGK_clonotypes_cluster.tiff",res=300,h=1800,w=2700)
+ggsurvplot(fit1, data = PAAD.repertoire.tumor.filter,pval = T,pval.method = T, risk.table = TRUE,legend="right")
 dev.off()
 comp(ten(fit1))$tests$lrTests
 
