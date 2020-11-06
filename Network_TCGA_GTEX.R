@@ -26,7 +26,7 @@ load("Data/PAAD/PAAD_FullData.Rdata")
 load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
 load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
 load("Data/Validation_Normal_pancreas/Pancreas_Normal_Validation_FullData.Rdata")
-load("Data/GTEx/Blood/GTEx_FullData_OnlyDiversity.Rdata")
+#load("Data/GTEx/Blood/GTEx_FullData_OnlyDiversity.Rdata")
 
 ########################
 ##4.Plot the network
@@ -34,7 +34,7 @@ load("Data/GTEx/Blood/GTEx_FullData_OnlyDiversity.Rdata")
 cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
 
 #### TCGA - Only PDAC samples
-PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC"),] #131
+PAAD.repertoire.tumor<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Tumor_type_4categ=="PDAC"),] #144
 PAAD.repertoire.tumor$TCGA_sample<-substr(PAAD.repertoire.tumor$TCGA_sample,1,15)
 #### GTEX - Pancreas
 GTEX.repertoire.normal<-Pancreas.repertoire.diversity
@@ -43,45 +43,51 @@ Validation.repertoire.tumor<-Pancreas.Validation.repertoire.diversity[which(Panc
 ##Normal Validation
 Validation.repertoire.normal<-Pancreas.Normal.Validation.repertoire.diversity
 
-Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.tumor[,c("cluster_gini_IGL","vertex_gini_IGL")],
-                                        GTEX.repertoire.normal[,c("cluster_gini_IGL","vertex_gini_IGL")],
-                                        Validation.repertoire.tumor[,c("cluster_gini_IGL","vertex_gini_IGL")],
-                                        Validation.repertoire.normal[,c("cluster_gini_IGL","vertex_gini_IGL")])
+Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.tumor[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                 "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")],
+                                        GTEX.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                  "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")],
+                                        Validation.repertoire.tumor[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                       "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")],
+                                        Validation.repertoire.normal[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                        "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")])
 Cluster_vertex_gini_distribution$outcome<-c(rep("TCGA-PDAC",nrow(PAAD.repertoire.tumor)),rep("GTEX-Normal",nrow(GTEX.repertoire.normal)),
                                            rep("Validation-PDAC",nrow(Validation.repertoire.tumor)),rep("Validation-Normal",nrow(Validation.repertoire.normal)))
 Cluster_vertex_gini_distribution$outcome<-factor(Cluster_vertex_gini_distribution$outcome)
 
-chainType="IGL"
-tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
+#Cluster_vertex_gini_distribution<-Cluster_vertex_gini_distribution[which(Cluster_vertex_gini_distribution$cluster_gini_TRB!=0),]
+chainType="TRB"
+tiff(paste0("Results/network_vertex_cluster_gini_",chainType,".tiff"),h=1700,w=1700,res=300)
 par(fig=c(0,0.8,0,0.8))
 plot(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)], 
      Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)],
      col = cols[factor(Cluster_vertex_gini_distribution$outcome)],
-     pch=20,ylab = c("Gini (Vextex)"),xlab = c("Gini (Cluster)"))
+     pch=20,ylab = c("Gini (Vextex)"),xlab = c("Gini (Cluster)"),ylim=c(0,0.9),xlim=c(0,0.8))
 legend("bottomright",legend=c("GTEX-Normal",
                               "TCGA-PDAC",
                               "Validation-Normal",
                               "Validation-PDAC"), 
        col=cols,pch=20,cex=0.8)
 
-par(fig=c(0,0.8,0.55,1), new=TRUE)
-summary(glm(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome))
+par(fig=c(0,0.8,0.5,1), new=TRUE)
+#summary(glm(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome))
 boxplot(Cluster_vertex_gini_distribution[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome,
-        col=cols, horizontal=TRUE, axes=FALSE)
+        col=cols, horizontal=TRUE, axes=FALSE,ann=FALSE,ylim=c(0,0.8))
 
 
 
-par(fig=c(0.65,1,0,0.8),new=TRUE)
-summary(glm(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome))
+par(fig=c(0.6,1,0,0.8),new=TRUE)
+#summary(glm(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome))
 boxplot(Cluster_vertex_gini_distribution[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution$outcome,
-        col=cols, axes=FALSE)
+        col=cols, axes=FALSE,ann=FALSE,ylim=c(0,0.9))
 
 dev.off()
 
+
 tiff(paste0("Results/network_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
-ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_IGL",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_TRB",color = "outcome",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=outcome, y= cluster_gini_IGL, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  geom_point(aes(x=outcome, y= cluster_gini_TRB, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
                                                   "TCGA-PDAC",
                                                   "Validation-Normal",
@@ -95,9 +101,9 @@ ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_I
 dev.off()
 
 tiff(paste0("Results/network_vertex_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
-ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IGL",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_TRB",color = "outcome",ggtheme = theme_bw(),xlab = F) +
   rotate_x_text() +
-  geom_point(aes(x=outcome, y= vertex_gini_IGL, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  geom_point(aes(x=outcome, y= vertex_gini_TRB, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
                                                   "TCGA-PDAC",
                                                   "Validation-Normal",
@@ -108,6 +114,22 @@ ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "vertex_gini_IG
                       c("TCGA-PDAC","Validation-PDAC"),c("Validation-Normal","Validation-PDAC"),
                       c("TCGA-PDAC","Validation-Normal")))
 dev.off()
+
+###TCR
+tiff(paste0("Results/network_vertex_gini_TRA.tiff"),h=1700,w=1700,res=300)
+ggboxplot(Cluster_vertex_gini_distribution, x = "outcome" , y =  "cluster_gini_TRA",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+  rotate_x_text() +
+  geom_point(aes(x=outcome, y= cluster_gini_TRA, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+  scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
+                                                            "TCGA-PDAC",
+                                                            "Validation-Normal",
+                                                            "Validation-PDAC")) +
+  
+  stat_compare_means(
+    comparisons =list(c("GTEX-Normal","TCGA-PDAC"),
+                      c("TCGA-PDAC","Validation-PDAC")))
+dev.off()
+
 
 ######################################
 ##4.Plot the network with GTEX blood

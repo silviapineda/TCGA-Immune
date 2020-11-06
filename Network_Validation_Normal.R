@@ -47,10 +47,10 @@ Obtain_vertex_edges<-function(data,chainType){
 network_IGH<-Obtain_vertex_edges(data_merge,"IGH")
 network_IGK<-Obtain_vertex_edges(data_merge,"IGK")
 network_IGL<-Obtain_vertex_edges(data_merge,"IGL")
-#network_TRAV<-Obtain_vertex_edges(data_merge,"TRAV")
-#network_TRBV<-Obtain_vertex_edges(data_merge,"TRBV")
-#network_TRDV<-Obtain_vertex_edges(data_merge,"TRDV")
-#network_TRGV<-Obtain_vertex_edges(data_merge,"TRGV")
+network_TRA<-Obtain_vertex_edges(data_merge,"TRA")
+network_TRB<-Obtain_vertex_edges(data_merge,"TRB")
+network_TRD<-Obtain_vertex_edges(data_merge,"TRD")
+network_TRG<-Obtain_vertex_edges(data_merge,"TRG")
 
 #data_merge$receptor<-ifelse(data_merge$chainType=="IGH" | data_merge$chainType=="IGK" | data_merge$chainType=="IGL","IG","TCR")
 #network_IG<-Obtain_vertex_edges(data_merge,"IG")
@@ -119,9 +119,14 @@ Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainTy
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 Pancreas.Normal.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 
+Pancreas.Normal.Validation.repertoire.diversity$cluster_gini_TRA<-NA
+Pancreas.Normal.Validation.repertoire.diversity$cluster_gini_TRB<-NA
+Pancreas.Normal.Validation.repertoire.diversity$vertex_gini_TRA<-NA
+Pancreas.Normal.Validation.repertoire.diversity$vertex_gini_TRB<-NA
+
+
 ##To save the varibles with vertex and cluster
 save(data_merge,Pancreas.Normal.Validation.repertoire.diversity,file="Data/Validation_Normal_pancreas//Pancreas_Normal_Validation_FullData.Rdata")
-
 
 ########################
 ##4.Plot the network
@@ -153,10 +158,14 @@ load("Data/PAAD/PAAD_FullData.Rdata")
 load("Data/GTEx/Pancreas/GTEx_FullData.Rdata")
 load("Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
 
-Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Pancreas.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Pancreas.Validation.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")],
-                                        Pancreas.Normal.Validation.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH")])
+Cluster_vertex_gini_distribution<-rbind(PAAD.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                     "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")],
+                                        Pancreas.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                           "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")],
+                                        Pancreas.Validation.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                                    "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")],
+                                        Pancreas.Normal.Validation.repertoire.diversity[,c("cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK","cluster_gini_IGL","vertex_gini_IGL",
+                                                                                           "cluster_gini_TRA","vertex_gini_TRA","cluster_gini_TRB","vertex_gini_TRB")])
 Cluster_vertex_gini_distribution$outcome<-c(as.character(PAAD.repertoire.diversity$Tumor_type_4categ),rep("GTEX_normal_pancreas",nrow(Pancreas.repertoire.diversity)),
                                             as.character(Pancreas.Validation.repertoire.diversity$tissue),rep("Validation_normal_pancreas",nrow(Pancreas.Normal.Validation.repertoire.diversity)))
 
@@ -166,8 +175,9 @@ Cluster_vertex_gini_distribution<-Cluster_vertex_gini_distribution[which(Cluster
                                                                            Cluster_vertex_gini_distribution$outcome!="normal_pancreas"),]
 Cluster_vertex_gini_distribution$outcome<-factor(Cluster_vertex_gini_distribution$outcome)
 Cluster_vertex_gini_distribution.filter<-Cluster_vertex_gini_distribution
-tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
 
+chainType="TRB"
+tiff(paste0("Results/network_vertex_cluster_gini_",chainType,"_ALL.tiff"),h=2000,w=2000,res=300)
 #cols=brewer.pal(6,name = "Pastel1")
 cols= c("#7FC97F","#FBB4AE", "#BEAED4" ,  "#FDC086")
 

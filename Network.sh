@@ -1,5 +1,5 @@
 #!/bin/bash
-FILES=/Users/Pinedasans/TCGA-Immune/Results/Validation/Tumor/Network/edges_IGK*
+FILES=/Users/Pinedasans/TCGA-Immune/Results/Validation/Normal/Network/edges_TR*
 export PATH=/Library/Internet\ Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/bin:$PATH
 for f in $FILES
 do  

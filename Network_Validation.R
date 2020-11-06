@@ -46,10 +46,10 @@ Obtain_vertex_edges<-function(data,chainType){
 network_IGH<-Obtain_vertex_edges(data_merge,"IGH")
 network_IGK<-Obtain_vertex_edges(data_merge,"IGK")
 network_IGL<-Obtain_vertex_edges(data_merge,"IGL")
-#network_TRAV<-Obtain_vertex_edges(data_merge,"TRAV")
-#network_TRBV<-Obtain_vertex_edges(data_merge,"TRBV")
-#network_TRDV<-Obtain_vertex_edges(data_merge,"TRDV")
-#network_TRGV<-Obtain_vertex_edges(data_merge,"TRGV")
+network_TRA<-Obtain_vertex_edges(data_merge,"TRA")
+network_TRB<-Obtain_vertex_edges(data_merge,"TRB")
+network_TRD<-Obtain_vertex_edges(data_merge,"TRD")
+network_TRG<-Obtain_vertex_edges(data_merge,"TRG")
 
 #data_merge$receptor<-ifelse(data_merge$chainType=="IGH" | data_merge$chainType=="IGK" | data_merge$chainType=="IGL","IG","TCR")
 #network_IG<-Obtain_vertex_edges(data_merge,"IG")
@@ -73,9 +73,12 @@ Obtain_gini_index<-function(data,chainType,Pancreas.Validation.repertoire.divers
   num_reads_max_cluster<-NULL
   clusters<-NULL
   j<-1
+  sample2<-NULL
   
   for (i in sample){
     print(i)
+    res<-try(assign(paste0("edges",i),read.delim(paste0("Results/Validation/Tumor/Network/edges_",chainType,"_",i,".txt"))))
+    if(class(res) != "try-error"){ 
     assign(paste0("edges",i),read.delim(paste0("Results/Validation/Tumor/Network/edges_",chainType,"_",i,".txt")))
     assign(paste0("vertex",i),read.delim(paste0("Results/Validation/Tumor/Network/vertex_",chainType,"_",i,".txt")))
     vertex_max[j]<-max(get(paste0("vertex",i))$Freq)
@@ -85,12 +88,14 @@ Obtain_gini_index<-function(data,chainType,Pancreas.Validation.repertoire.divers
     num_reads_max_cluster[j]<-tail(table(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId)),1)
     cluster_gini[j]<-Gini(table(get(paste0("edges",i))$V_J_lenghCDR3_CloneId))
     j=j+1
+    sample2<-c(sample2,i)
+    }
   }
   
   #clonal_expansion<-(num_reads_max_cluster/summary_data[,chainType])*100
   results<-cbind(cluster_gini,vertex_gini,vertex_max,cluster_max,num_reads_max_cluster,clusters)
   
-  rownames(results)<-sample
+  rownames(results)<-sample2
   
   return(results)
 }
@@ -117,6 +122,34 @@ Pancreas.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-
 Pancreas.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
 Pancreas.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
 Pancreas.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+chainType= "TRA"
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Validation.repertoire.diversity)))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Validation.repertoire.diversity))
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+chainType= "TRB"
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Validation.repertoire.diversity)))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Validation.repertoire.diversity))
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+chainType= "TRD"
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Validation.repertoire.diversity)))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Validation.repertoire.diversity))
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
+chainType= "TRG"
+assign(paste0("cluster_gini_",chainType),data.frame(Obtain_gini_index(data_merge,chainType,Pancreas.Validation.repertoire.diversity)))
+id<-match(rownames(get(paste0("cluster_gini_",chainType))),rownames(Pancreas.Validation.repertoire.diversity))
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_gini_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_gini"]
+Pancreas.Validation.repertoire.diversity[id,paste0("vertex_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"vertex_max"]
+Pancreas.Validation.repertoire.diversity[id,paste0("cluster_max_",chainType)]<-get(paste0("cluster_gini_",chainType))[,"cluster_max"]
 
 ##To save the varibles with vertex and cluster
 save(data_merge,Pancreas.Validation.repertoire.diversity,file="Data/Pancreas_Validation/Pancreas_Validation_FullData.Rdata")
@@ -126,15 +159,17 @@ save(data_merge,Pancreas.Validation.repertoire.diversity,file="Data/Pancreas_Val
 ##4.Plot the network
 ########################
 #Tumor
-sample_tumor<-Pancreas.Validation.repertoire.diversity$sample[which(Pancreas.Validation.repertoire.diversity$tissue=="pancreas tumor")]
-chainType="IGH"
+
+chainType="TRA"
+Pancreas.Validation.repertoire.diversity.TRA<-Pancreas.Validation.repertoire.diversity[which(is.na(Pancreas.Validation.repertoire.diversity$cluster_gini_TRA)==F),]
+sample_tumor<-rownames(Pancreas.Validation.repertoire.diversity.TRA)
 for(i in sample_tumor) {
   print(i)
   edges <- read.delim(paste("Results/Validation/Tumor/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
   vertex <- read.delim(paste("Results/Validation/Tumor/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq/100
+    V(net)$size <- V(net)$Freq
     V(net)$color <- c("#B3CDE3")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
