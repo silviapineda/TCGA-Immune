@@ -321,7 +321,7 @@ Obtain_diversity<-function(data,Pancreas.repertoire.diversity,chainType,sample_o
   return(entropy)
 }
 
-chainType="TRG"
+chainType="TRD"
 for (i in 1:5){
   assign(paste0("entropy_",i,"_",chainType),Obtain_diversity(data_merge_pancreas,Pancreas.repertoire.diversity,chainType,0.2))
 }

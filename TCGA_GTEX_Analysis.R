@@ -526,19 +526,32 @@ for(i in 1:length(normal_samples)){
 
 ####Ig/T expression only in PDAC samples
 PAAD.repertoire.tumor.subtype.Ig<-PAAD.repertoire.tumor.subtype[which(PAAD.repertoire.tumor.subtype$Ig_Reads>1000),]
-Ig_markers<-c("IGH_expression","IGK_expression", "IGL_expression")
-Ig_markers<-c("entropy_IGH","entropy_IGK", "entropy_IGL")
+Ig_markers<-c("IGH_expression","IGK_expression", "IGL_expression","entropy_IGH","entropy_IGK", "entropy_IGL")
 
 PAAD.repertoire.tumor.subtype.T<-PAAD.repertoire.tumor.subtype[which(PAAD.repertoire.tumor.subtype$T_Reads>100),]
-T_markers<-c("TRA_expression","TRB_expression", "TRD_expression", "TRG_expression")
-T_markers<-c("entropy_TRA","entropy_TRB")
+T_markers<-c("TRA_expression","TRB_expression", "entropy_TRA","entropy_TRB")
 
 ##Correlation matrix
-mat<-PAAD.repertoire.tumor.subtype[,c(Ig_markers,T_markers)]
+mat<-PAAD.repertoire.tumor.filter[,c(Ig_markers,T_markers)]
 library(corrplot)
 M <- cor(mat)
-tiff("Results/ImmuneRep/Comparisons/Correlation_entropy.tiff",res=300,w=2000,h=2000)
-corrplot(M)
+tiff("Results/ImmuneRep/Comparisons/Correlation.tiff",res=300,w=2200,h=2200)
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(M, method="color", col=col(200),  
+         type="upper", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45, #Text label color and rotation
+         # Combine with significance
+          sig.level = 0.01, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+)
+
+dev.off()
+
+library("PerformanceAnalytics")
+tiff("Results/ImmuneRep/Comparisons/Chat_Correlation.tiff",res=300,w=2300,h=2300)
+chart.Correlation(mat, pch=19)
 dev.off()
 
 ##### PCA plot
@@ -579,8 +592,6 @@ dev.off()
 ####Ig/T expression only in PDAC samples ##
 ##########################################
 PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>1000),]
-All_markers<-c("IGH_expression","IGK_expression", "IGL_expression","entropy_IGH","entropy_IGK", "entropy_IGL",
-              "TRA_expression","TRB_expression", "TRD_expression", "TRG_expression","entropy_TRA","entropy_TRB")
 Ig_markers<-c("IGH_expression","IGK_expression", "IGL_expression")
 Ig_markers<-c("entropy_IGH","entropy_IGK", "entropy_IGL")
 
@@ -588,7 +599,9 @@ PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoi
 T_markers<-c("TRA_expression","TRB_expression", "TRD_expression", "TRG_expression")
 T_markers<-c("entropy_TRA","entropy_TRB")
 
-mat<-PAAD.repertoire.tumor.filter[,All_markers]
+All_markers<-c("IGH_expression","IGK_expression", "IGL_expression","entropy_IGH","entropy_IGK", "entropy_IGL",
+               "TRA_expression","TRB_expression", "TRD_expression", "TRG_expression","entropy_TRA","entropy_TRB")
+
 ##Correlation matrix
 mat<-PAAD.repertoire.tumor.filter[,All_markers]
 library(corrplot)
@@ -634,8 +647,7 @@ pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPa
 ############################################################
 
 #### TCGA - Only PDAC samples
-PAAD.repertoire.tumor<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="PDAC"),] #144
-PAAD.repertoire.tumor$TCGA_sample<-substr(PAAD.repertoire.tumor$TCGA_sample,1,15)
+PAAD.repertoire.tumor.filter$TCGA_sample<-substr(PAAD.repertoire.tumor.filter$TCGA_sample,1,15)
 #### GTEX - Pancreas
 GTEX.repertoire.normal<-Pancreas.repertoire.diversity
 ##Tumor Validation
@@ -643,7 +655,7 @@ Validation.repertoire.tumor<-Pancreas.Validation.repertoire.diversity[which(Panc
 ##Normal Validation
 Validation.repertoire.normal<-Pancreas.Normal.Validation.repertoire.diversity
 
-Repertoire.Diversity<-rbind(PAAD.repertoire.tumor[,c("Ig_Reads","T_Reads","IGH_expression","IGK_expression","IGL_expression",
+Repertoire.Diversity<-rbind(PAAD.repertoire.tumor.filter[,c("Ig_Reads","T_Reads","IGH_expression","IGK_expression","IGL_expression",
                                                "TRA_expression", "TRB_expression", "TRD_expression", "TRG_expression",
                                                "Alpha_Beta_ratio_expression", "KappaLambda_ratio_expression",
                                                "clones_IGH","clones_IGK","clones_IGL",
@@ -672,7 +684,7 @@ Repertoire.Diversity<-rbind(PAAD.repertoire.tumor[,c("Ig_Reads","T_Reads","IGH_e
                                                      "entropy_IGH", "entropy_IGK", "entropy_IGL",
                                                      "entropy_TRA", "entropy_TRB", "entropy_TRD", "entropy_TRG")])
 
-Repertoire.Diversity$outcome<-c(rep("TCGA-PDAC",nrow(PAAD.repertoire.tumor)),rep("GTEX-Normal",nrow(GTEX.repertoire.normal)),
+Repertoire.Diversity$outcome<-c(rep("TCGA-PDAC",nrow(PAAD.repertoire.tumor.filter)),rep("GTEX-Normal",nrow(GTEX.repertoire.normal)),
                                 rep("Validation-PDAC",nrow(Validation.repertoire.tumor)),rep("Validation-Normal",nrow(Validation.repertoire.normal)))
 Repertoire.Diversity$outcome<-factor(Repertoire.Diversity$outcome)
 
@@ -733,15 +745,56 @@ pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,annotation_col = an
          annotation_colors = ann_colors,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12),fontsize = 12)
 dev.off()
 
-####Summary plots
-Ig_expr<-melt(Repertoire.Diversity[,c("IGH_expression","IGK_expression","IGL_expression","outcome")])
+######################
+##Correlation matrix
+######################
+All_markers<-c("IGH_expression","IGK_expression", "IGL_expression","entropy_IGH", "entropy_IGK", "entropy_IGL",
+               "TRA_expression","TRB_expression","entropy_TRA", "entropy_TRB")
+mat_TCGA<-Repertoire.Diversity[which(Repertoire.Diversity$outcome=="TCGA-PDAC"),All_markers]
+mat_GTEX<-Repertoire.Diversity[which(Repertoire.Diversity$outcome=="GTEX-Normal"),All_markers]
+mat_PDAC_Validation<-Repertoire.Diversity[which(Repertoire.Diversity$outcome=="Validation-PDAC"),All_markers]
+mat_normal_Validation<-Repertoire.Diversity[which(Repertoire.Diversity$outcome=="Validation-Normal"),All_markers]
+
+library(corrplot)
+tiff("Results/ImmuneRep/Comparisons/CorrelationTCGA.tiff",res=300,w=2200,h=2200)
+M <- cor(mat_TCGA)
+p <- cor.mtest(mat_TCGA, conf.level = 0.05)
+
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(M, method="color", col=col(200),  
+         type="upper", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         p.mat=p$p,vsig.level = 0.05, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+)
+
+dev.off()
+
+library("PerformanceAnalytics")
+tiff("Results/ImmuneRep/Comparisons/Chat_Correlation_GTEX.tiff",res=300,w=2300,h=2300)
+chart.Correlation(mat_GTEX, pch=19)
+dev.off()
+
+
+
+###################
+####Summary plots##
+####################
+Ig_expr<-melt(Repertoire.Diversity[,c("IGH_expression","IGK_expression","IGL_expression","TRA_expression",
+                                      "TRB_expression","outcome")])
+Ig_expr<-Ig_expr[which(Ig_expr$value!=0),]
 Ig_expr$value<-log10(Ig_expr$value)
-tiff("Results/ImmuneRep/Comparisons/boxplot_Ig_expression.tiff",res=300,h=1200,w=1700)
-ggboxplot(Ig_expr, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+levels(Ig_expr$variable)<-c("IGH","IGK","IGL","TRA","TRB")
+tiff("Results/ImmuneRep/Comparisons/boxplot_Ig_expression.tiff",res=300,h=1200,w=2500)
+ggboxplot(Ig_expr, x = "outcome", y = "value",facet.by = "variable",nrow=1,color = "outcome",ggtheme = theme_bw(),xlab = F,
+          outlier.size = 0) +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())  +
-  geom_point(aes(x=outcome, y=value, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+        axis.ticks.x=element_blank())  + ylab("Expression(log10)") +
+  geom_point(aes(x=outcome, y=value, color=outcome),size=0.5, position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
                                                   "TCGA-PDAC",
                                                   "Validation-Normal",
@@ -754,53 +807,16 @@ ggboxplot(Ig_expr, x = "outcome", y = "value",facet.by = "variable",color = "out
 
 dev.off()
 
-TR_expr<-melt(Repertoire.Diversity[,c("TRA_expression","TRB_expression","TRD_expression","TRG_expression","outcome")])
-TR_expr<-TR_expr[which(TR_expr$value!=0),]
-TR_expr$value<-log10(TR_expr$value)
-tiff("Results/ImmuneRep/Comparisons/boxplot_TR_expression.tiff",res=300,h=1500,w=2500)
-ggboxplot(TR_expr, x = "outcome", y = "value",color = "outcome",ggtheme = theme_bw(),xlab = F) + facet_wrap("variable",nrow =1) +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  geom_point(aes(x=outcome, y=value, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
-                                                  "TCGA-PDAC",
-                                                  "Validation-Normal",
-                                                  "Validation-PDAC")) +
-  stat_compare_means(
-    comparisons =list(c("GTEX-Normal","Validation-Normal"),c("GTEX-Normal","TCGA-PDAC"),
-                      c("TCGA-PDAC","Validation-PDAC"),c("Validation-Normal","Validation-PDAC"),
-                      c("TCGA-PDAC","Validation-Normal")))
-dev.off()
-
-Ig_entropy<-melt(Repertoire.Diversity[,c("entropy_IGH","entropy_IGK","entropy_IGL","outcome")])
+Ig_entropy<-melt(Repertoire.Diversity[,c("entropy_IGH","entropy_IGK","entropy_IGL","entropy_TRA","entropy_TRB","outcome")])
 Ig_entropy<-Ig_entropy[which(Ig_entropy$value!=0),]
-tiff("Results/ImmuneRep/Comparisons/boxplot_Ig_entropy.tiff",res=300,h=1500,w=2500)
-ggboxplot(Ig_entropy, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw(),xlab = F) +
+levels(Ig_entropy$variable)<-c("IGH","IGK","IGL","TRA","TRB")
+tiff("Results/ImmuneRep/Comparisons/boxplot_Ig_entropy.tiff",res=300,h=1200,w=2500)
+ggboxplot(Ig_entropy, x = "outcome", y = "value",facet.by = "variable",nrow=1,color = "outcome",ggtheme = theme_bw(),xlab = F,
+          outlier.size = 0)+
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  geom_point(aes(x=outcome, y=value, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
-  scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
-                                                  "TCGA-PDAC",
-                                                  "Validation-Normal",
-                                                  "Validation-PDAC")) +
-  stat_compare_means(
-    comparisons =list(c("GTEX-Normal","Validation-Normal"),c("GTEX-Normal","TCGA-PDAC"),
-                      c("TCGA-PDAC","Validation-PDAC"),c("Validation-Normal","Validation-PDAC"),
-                      c("TCGA-PDAC","Validation-Normal")))
-
-
-dev.off()
-
-TR_entropy<-melt(Repertoire.Diversity[,c("entropy_TRA","entropy_TRB","outcome")])
-TR_entropy<-TR_entropy[which(TR_entropy$value!=0),]
-tiff("Results/ImmuneRep/Comparisons/boxplot_TR_entropy.tiff",res=300,h=1200,w=1700)
-ggboxplot(TR_entropy, x = "outcome", y = "value",facet.by = "variable",color = "outcome",ggtheme = theme_bw(),xlab = F) +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  geom_point(aes(x=outcome, y=value, color=outcome), position = position_jitterdodge(dodge.width = 0.8)) +
+        axis.ticks.x=element_blank()) + ylab("Shannon Entropy") +
+  geom_point(aes(x=outcome, y=value, color=outcome),size=0.5, position = position_jitterdodge(dodge.width = 0.8)) +
   scale_color_manual(values = c(cols), labels = c("GTEX-Normal",
                                                   "TCGA-PDAC",
                                                   "Validation-Normal",
