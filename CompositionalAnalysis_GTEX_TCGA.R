@@ -238,6 +238,7 @@ pheatmap(t(clrx_clone_type_IGK_sign),scale="row",border_color=F,show_colnames = 
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
 PAAD.GTEx.repertoire.diversity.tumor.normmal$IGK_clonotypes_cluster<-mat.clust$cluster
+write.csv(PAAD.GTEx.repertoire.diversity.tumor.normmal[c("sample","IGK_clonotypes_cluster")],"Data/PAAD/IGK_clonotype_cluster.csv")
 
 #####
 #3. IGL
