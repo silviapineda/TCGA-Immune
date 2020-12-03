@@ -163,7 +163,15 @@ IGH.test_clrlasso <- glmnet(x = clrx_clone_type_IGH, y = PAAD.GTEx.repertoire.di
 clones_IGH_clr<-rownames(IGH.test_clrlasso$beta)[which(as.numeric(IGH.test_clrlasso$beta)!=0)]
 clrx_clone_type_IGH[,match(clones_IGH_clr,colnames(clrx_clone_type_IGH))]
 clrx_clone_type_IGH_sign<-clrx_clone_type_IGH[,match(clones_IGH_clr,colnames(clrx_clone_type_IGH))]
-#boxplot(clrx_clone_type_IGK[,match(clones_IGK,colnames(clrx_clone_type_IGK))[1]]~PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+
+id.clone<-match(colnames(clrx_clone_type_IGH_sign),colnames(clone_type_filter_IGH_zerosubs))
+violinplot(clone_type_filter_IGH_zerosubs[,id.clone[1]]~PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id])
+df<-data.frame(cbind(clrx_clone_type_IGH_sign,PAAD.GTEx.repertoire.diversity.tumor.normmal$outcome[id]))
+colnames(df)<-c("clone1","clone2","outcome")
+df$outcome<-factor(df$outcome)
+ggplot(df, aes(y=clone2, x=outcome)) + 
+  geom_violin()
+
 
 ##Plot results
 brewer.pal(4,name = "Accent")
@@ -175,7 +183,7 @@ colnames(annotation_row)<-"outcome"
 rownames(annotation_row)<-rownames(clrx_clone_type_IGH)
 
 tiff("Results/CompositionalAnalysis/IGH_clrLasso.tiff",width = 2500, height = 1500, res = 300)
-pheatmap(t(clrx_clone_type_IGH_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
+pheatmap(t(clrx_clone_type_IGH),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
 
@@ -388,6 +396,21 @@ id.igh<-match(colnames(clrx_clone_type_IGH_sign),rownames(clrx_clone_type_IGH))
 clrx_clone_type_IGH_val<-clrx_clone_type_IGH[id.igh,]
 
 
+#### 
+## PCA for validation
+library(factoextra)
+pca <- prcomp(t(clrx_clone_type_IGH_val), scale = TRUE)
+pc <- c(1,2)
+id<-match(colnames(clrx_clone_type_IGH_val),Repertoire.Diversity$sample)
+groups <- as.factor(Repertoire.Diversity$outcome[id])
+fviz_pca_ind(pca,
+             geom.ind = "point", # show points only (nbut not "text")
+             col.ind = groups, # color by groups
+             palette = c("#7FC97F","#BEAED4","#FDC086","#B3CDE3"),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "Groups",
+             repel = TRUE)
+
 #IGH
 brewer.pal(4,name = "Accent")
 cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
@@ -419,6 +442,23 @@ clrx_clone_type_IGK_val<-clrx_clone_type_IGK[id.IGK,]
 id.IGK<-match(colnames(coda_clone_type_IGK_sign),rownames(clrx_clone_type_IGK))
 clrx_clone_type_IGK_val<-clrx_clone_type_IGK[id.IGK,]
 
+
+#### 
+## PCA for validation
+library(factoextra)
+pca <- prcomp(t(clrx_clone_type_IGK_val), scale = TRUE)
+pc <- c(1,2)
+id<-match(colnames(clrx_clone_type_IGK_val),Repertoire.Diversity$sample)
+groups <- as.factor(Repertoire.Diversity$outcome[id])
+tiff("Results/CompositionalAnalysis/IGK_clrlasso_validation.tiff",res=300,h=1000,w=1500)
+fviz_pca_ind(pca, geom.ind = "point",pointshape = 21,pointsize = 0.5,
+  fill.ind = groups, col.ind = groups,
+  palette = c("#7FC97F","#BEAED4","#B3CDE3","#FDC086"),
+  legend.title = list(fill = "Groups", color = "Groups"),
+  addEllipses = TRUE,ellipse.type = "confidence",
+  repel = TRUE) +  ggpubr::fill_palette("Groups")
+dev.off()
+
 #IGK
 brewer.pal(4,name = "Accent")
 cols= c("#7FC97F","#BEAED4","#FDC086","#B3CDE3")
@@ -449,6 +489,20 @@ clrx_clone_type_IGL_val<-clrx_clone_type_IGL[id.IGL,]
 
 id.IGL<-match(colnames(coda_clone_type_IGL_sign),rownames(clrx_clone_type_IGL))
 clrx_clone_type_IGL_val<-clrx_clone_type_IGL[id.IGL,]
+
+library(factoextra)
+pca <- prcomp(t(clrx_clone_type_IGL_val), scale = TRUE)
+pc <- c(1,2)
+id<-match(colnames(clrx_clone_type_IGL_val),Repertoire.Diversity$sample)
+groups <- as.factor(Repertoire.Diversity$outcome[id])
+tiff("Results/CompositionalAnalysis/IGL_clrlasso_validation.tiff",res=300,h=1000,w=1500)
+fviz_pca_ind(pca, geom.ind = "point",pointshape = 21,pointsize = 0.5,
+             fill.ind = groups, col.ind = groups,
+             palette = c("#7FC97F","#BEAED4","#B3CDE3","#FDC086"),
+             legend.title = list(fill = "Groups", color = "Groups"),
+             addEllipses = TRUE,ellipse.type = "confidence",
+             repel = TRUE) +  ggpubr::fill_palette("Groups")
+dev.off()
 
 #IGL
 brewer.pal(4,name = "Accent")
@@ -499,7 +553,7 @@ save(data_merge,PAAD.repertoire.diversity,PAAD.repertoire.tumor.filter,xCell.dat
 ##OS
 #id<-match(rownames(PAAD.repertoire.tumor.filter),rownames(clrx_clone_type_IGL_sign))
 surv_object <- Surv(time = PAAD.repertoire.tumor.filter$OS.time, event = PAAD.repertoire.tumor.filter$OS)
-res.cox <- coxph(Surv(time = OS.time, event = OS)~IGK_clonotypes_cluster,data=PAAD.repertoire.tumor.filter)
+res.cox <- coxph(Surv(time = OS.time, event = OS)~factor(IGK_clonotypes_cluster),data=PAAD.repertoire.tumor.filter)
 summary(res.cox)
 
 ggforest(res.cox)
@@ -509,8 +563,34 @@ ggforest(res.cox)
 #PAAD.repertoire.tumor.filter$KL_ratio_2cat<-ifelse(as.numeric(clrx_clone_type_IGL_sign[id,3])<=KL_mean,1,2)
 fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 fit1
-tiff("Results/CompositionalAnalysis/KM_IGK_clonotypes_cluster.tiff",res=300,h=1800,w=2700)
-ggsurvplot(fit1, data = PAAD.repertoire.tumor.filter,pval = T,pval.method = T, risk.table = TRUE,legend="right")
+tiff("Results/CompositionalAnalysis/KM_IGK_clonotypes_cluster.tiff",res=300,h=1500,w=1500)
+ggsurvplot(fit1, data = PAAD.repertoire.tumor.filter,pval = T,pval.method = T,legend="top",legend.title="IGK clonotype",
+           legend.labs=c("cluster 1","cluster 2","cluster 3"),xlab="Time (days)")
 dev.off()
 comp(ten(fit1))$tests$lrTests
+
+
+
+##ZNF521 mutattion
+PAAD.repertoire.tumor.filter$ZNF521.mutated<-factor(PAAD.repertoire.tumor.filter$ZNF521)
+chisq.test(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+table(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+
+
+
+p.value<-NULL
+j<-1
+for(i in 157:690){
+  if(sum(PAAD.repertoire.tumor.filter[,i])!=0) {
+    PAAD.repertoire.tumor.filter$mutated<-factor(PAAD.repertoire.tumor.filter[,i])
+    p.value[j]<-chisq.test(PAAD.repertoire.tumor.filter$mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)$p.value
+    j=j+1
+    } else { 
+      p.value[j]<-NA
+      j=j+1
+    }
+}
+
+id<-which(p.value<0.06)
+PAAD.repertoire.tumor.filter[,c(156+id)]
 
