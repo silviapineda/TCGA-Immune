@@ -195,14 +195,14 @@ legend("bottomright",legend=c("GTEX_normal_pancreas (n=180)",
 par(fig=c(0,0.8,0.55,1), new=TRUE)
 summary(glm(Cluster_vertex_gini_distribution.filter[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome))
 boxplot(Cluster_vertex_gini_distribution.filter[,paste0("cluster_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome,
-        col=cols, horizontal=TRUE, axes=FALSE)
+        col=cols, horizontal=TRUE, axes=FALSE,ann=FALSE)
 
 
 
 par(fig=c(0.65,1,0,0.8),new=TRUE)
 summary(glm(Cluster_vertex_gini_distribution.filter[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome))
 boxplot(Cluster_vertex_gini_distribution.filter[,paste0("vertex_gini_",chainType)]~Cluster_vertex_gini_distribution.filter$outcome,
-        col=cols, axes=FALSE)
+        col=cols, axes=FALSE,ann=FALSE)
 
 dev.off()
 
