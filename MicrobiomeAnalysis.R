@@ -37,13 +37,13 @@ source(file = './CoDA-Penalized-Regression/R/functions_coda_penalized_regression
 
 
 setwd("~/TCGA-Immune/")
-Kraken_counts<-read.csv("Microbiome/kraken_counts_filter.csv")
+Kraken_counts<-read.csv("Microbiome/kraken_counts_sorted_allreadsBacteria_filter.csv")
 rownames(Kraken_counts)<-Kraken_counts$species
 Kraken_counts<-Kraken_counts[,-1]
 
 ###Annotate the microbiome data with the TCGA samples
 annotation_microbiome<-read.csv("Microbiome/gdc_sample_sheet.2020-05-22.csv")
-id<-match(rownames(Kraken_counts),substr(annotation_microbiome$File.Name,1,36))
+id<-match(substr(rownames(Kraken_counts),1,36),substr(annotation_microbiome$File.Name,1,36))
 rownames(Kraken_counts)<-annotation_microbiome$Sample.ID[id]
 rownames(Kraken_counts)<-substr(rownames(Kraken_counts),1,15)
 
@@ -103,7 +103,7 @@ mat.clust <- as.data.frame(cbind(clrx_Kraken_counts, cluster = cutree(res$tree_c
 annotation_row = data.frame(cluster = factor(mat.clust$cluster))
 colnames(annotation_row)<-c("cluster")
 rownames(annotation_row)<-rownames(clrx_Kraken_counts)
-tiff("Microbiome/Kraken_CLR_clustering.tiff",width = 3200, height = 2500, res = 300)
+tiff("Microbiome/Kraken_CLR_clustering.tiff",width = 3200, height = 3000, res = 300)
 pheatmap(t(clrx_Kraken_counts),scale="row",border_color=F, show_colnames = F,annotation_col = annotation_row,
          color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120),cutree_cols = 6,cutree_rows = 6)
 dev.off()
@@ -147,14 +147,14 @@ cols=brewer.pal(4,name = "Accent")
 res <- pheatmap(t(clrx_Kraken_counts),scale="row",border_color=F,show_colnames = F,
                 color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 
-mat.clust <- as.data.frame(cbind(clrx_Kraken_counts, cluster = cutree(res$tree_col, k = 6)))
+mat.clust <- as.data.frame(cbind(clrx_Kraken_counts, cluster = cutree(res$tree_col, k = 9)))
 
 annotation_row = data.frame(cluster = factor(mat.clust$cluster))
 colnames(annotation_row)<-c("cluster")
 rownames(annotation_row)<-rownames(clrx_Kraken_counts)
-tiff("Microbiome/Kraken_CLR_clustering_PDAC.tiff",width = 3200, height = 2500, res = 300)
+tiff("Microbiome/Kraken_CLR_clustering_PDAC.tiff",width = 3200, height = 3000, res = 300)
 pheatmap(t(clrx_Kraken_counts),scale="row",border_color=F, show_colnames = F,annotation_col = annotation_row,
-         color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120),cutree_cols = 6,cutree_rows = 6)
+         color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120),cutree_cols = 9,cutree_rows = 9)
 dev.off()
 
 PAAD.repertoire.microbiome.tumor$Bacteria_cluster<-mat.clust$cluster
