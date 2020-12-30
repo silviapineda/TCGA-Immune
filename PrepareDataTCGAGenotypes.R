@@ -42,7 +42,13 @@ id<-match(rownames(PAAD.repertoire.tumor.filter.snp),rownames(clone_type_filter_
 clone_type_filter_IGH_snp<-clone_type_filter_IGH[na.omit(id),]
 rownames(clone_type_filter_IGH_snp)<-PAAD.repertoire.tumor.filter.snp$TCGA_sample
 
+PAAD.repertoire.subset<-PAAD.repertoire.tumor.filter.snp[,c("Ig_Reads","T_Reads","IGH_expression","IGK_expression","IGL_expression",
+                                                  "TRA_expression","TRB_expression","TRD_expression","TRG_expression",
+                                                  "Alpha_Beta_ratio_expression","KappaLambda_ratio_expression","entropy_IGH",
+                                                  "entropy_IGK","entropy_IGL","entropy_TRA","entropy_TRB","entropy_TRD","entropy_TRG",
+                                                  "cluster_gini_IGH","vertex_gini_IGH","cluster_gini_IGK","vertex_gini_IGK",
+                                                  "cluster_gini_IGL","vertex_gini_IGL")]
 
-save(PAAD.repertoire.tumor.filter.snp,Genotypes.PAAD.filter,clone_type_filter_IGH_snp,clone_type_filter_IGK_snp,clone_type_filter_IGL_snp,
+save(PAAD.repertoire.tumor.filter.snp,PAAD.repertoire.subset,Genotypes.PAAD.filter,clone_type_filter_IGH_snp,clone_type_filter_IGK_snp,clone_type_filter_IGL_snp,
      file="Data/PAAD/PAAD_Repertoire_Genotypes.Rdata")
 
