@@ -1735,18 +1735,18 @@ ggboxplot(df, x = "IGK_clonotypes_cluster", y = "TGF.beta.Response",color = "IGK
 dev.off()
 
 
-PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
-df<-PAAD.repertoire.tumor.filter.Ig[,c("TRB_expression","Macrophage.Regulation")]
-df$TRB_expression<-log10(df$TRB_expression)
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
+df<-PAAD.repertoire.tumor.filter.Ig[,c("IGH_expression","Wound.Healing")]
+df$IGH_expression<-log10(df$IGH_expression)
 col<-brewer.pal(9, "Set1")
-tiff("Manuscript/Figures/TRB_expression_Macrophage.Regulation.tiff",res=300,h=1100,w=1400)
-ggplot(df,aes(x = as.numeric(as.character(Macrophage.Regulation)), y = TRB_expression)) + geom_point(color = col[4]) +
-  geom_smooth(method="lm",color = col[4]) + stat_cor(method = "pearson",size=5,color="black",label.y.npc= "top")+ xlab("Leukocyte_DNAmethylation") +
+tiff("Manuscript/Figures/IGH_expression_Wound.Healing.tiff",res=300,h=1100,w=1400)
+ggplot(df,aes(x = as.numeric(as.character(Wound.Healing)), y = IGH_expression)) + geom_point(color = col[3]) +
+  geom_smooth(method="lm",color = col[3]) + stat_cor(method = "pearson",size=5,color="black",label.y.npc= "top")+ xlab("Leukocyte_DNAmethylation") +
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=20),
-        axis.title.y = element_text(size=20))  + ylim(-7,-4) + xlim(-0.5,2) +
-  xlab("Macrophage Regulation") + 
+        axis.title.y = element_text(size=20))  + ylim(-6,-2) + 
+  xlab("Wound Healing") + 
   ylab(NULL) + theme(axis.text.y = element_blank())
 dev.off()
 
@@ -1883,3 +1883,165 @@ ggboxplot(df, x = "Gender", y = "cluster_gini_IGK",color = "Gender",ggtheme = th
   #theme(legend.position = "top",legend.direction = "horizontal")+
   ylab(NULL) + theme(axis.text.y = element_blank()) + theme(axis.text.x = element_blank()) + xlab(NULL)
 dev.off() 
+
+
+##########################
+### Analysis with xCELL###
+#########################
+load("Data/PAAD/PAAD_FullData.Rdata")
+xCell.data.tumor<-t(xCell.data.PAAD[,match(PAAD.repertoire.tumor.filter$TCGA_sample,colnames(xCell.data.PAAD))])
+xCell.pvalue.tumor<-t(xCell.pvalue.PAAD[,match(PAAD.repertoire.tumor.filter$TCGA_sample,colnames(xCell.pvalue.PAAD))])
+
+##Filter by p-value
+xCell.pvalue.tumor.filter<-t(apply(xCell.pvalue.tumor,1,function (x) replace(x,x>=0.2,1)))
+xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter==1) <= 131*0.8] ##(131*0.8)  45 cells
+
+####Filter by variabilty (mean +- 2*SD)
+filter.out<-NULL
+for(i in 1:ncol(xcell.data.tumor.filter)){
+  pos<-mean(xcell.data.tumor.filter[,i])+2*sd(xcell.data.tumor.filter[,i])
+  neg<-mean(xcell.data.tumor.filter[,i])-2*sd(xcell.data.tumor.filter[,i])
+  
+  if(length(which(xcell.data.tumor.filter[,i]> pos)) == 0 & 
+     length(which(xcell.data.tumor.filter[,i]< neg)) == 0){
+    
+    filter.out[i]<-i
+  } else {
+    filter.out[i]<-NA
+  }
+}
+
+###
+##Delete scores
+xcell.data.tumor.filter<-xcell.data.tumor.filter[,-c(41:43)]
+
+#############
+####ENET#####
+#############
+
+##Tcells
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter.T[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F),]
+id<-match(PAAD.repertoire.tumor.filter.T$TCGA_sample,rownames(xcell.data.tumor.filter))
+alphalist<-seq(0.01,0.99,by=0.01)
+set.seed(34)
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter[id,],log10(PAAD.repertoire.tumor.filter.T$TRB_expression),family="gaussian"
+                                                        ,standardize=TRUE,alpha=a,nfolds=5))})
+xx<-rep(NA,length(alphalist))
+yy<-rep(NA,length(alphalist))
+for (j in 1:length(alphalist)) {
+  print(j)
+  if(class(elasticnet[[j]]) != "try-error"){
+    xx[j]<-elasticnet[[j]]$lambda.min
+    id.cv.opt<-grep(elasticnet[[j]]$lambda.min,elasticnet[[j]]$lambda,fixed=TRUE)
+    yy[j]<-elasticnet[[j]]$cvm[id.cv.opt]
+  }
+}
+id.min<-which(yy==min(yy,na.rm=TRUE))
+lambda<-xx[id.min]
+alpha<-alphalist[id.min]
+enet<-glmnet(xcell.data.tumor.filter[id,],log10(PAAD.repertoire.tumor.filter.T$TRB_expression),family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda) #86
+cells<-rownames(enet$beta)[which(as.numeric(enet$beta)!=0)]
+betas<-enet$beta[which(as.numeric(enet$beta)!=0)]
+cells_sign<-xcell.data.tumor.filter[id,match(cells,colnames(xcell.data.tumor.filter))]
+
+colors<-betas[order(betas)]
+myColors <- ifelse(betas<0,brewer.pal(6,name="Reds"), 
+                   ifelse(betas>0, brewer.pal(6,name="Greens"),c("Grey")))
+cells_sign_plot<-cells_sign
+for (i in 1:ncol(cells_sign)){
+  if(betas[i]<0){
+    cells_sign_plot[,i]<-c(-cells_sign[,i])
+  } else {
+    cells_sign_plot[,i]<-c(cells_sign[,i])
+  }
+}
+tiff("Results/xCell/entropy_TRB_xcell_boxplot.tiff",res=300,h=2000,w=2500)
+par(mar = c(4, 9, 2, 2))
+boxplot(cells_sign,las=2,col=myColors,xlab="xcell score",horizontal=T,cex.lab=1.5)
+#legend("topright", legend = c("Positive association","Negative association") , 
+#       col = brewer.pal(6,name="Reds"),brewer.pal(6,name="Greens") , bty = "n", pch=20 , pt.cex = 3, cex = 1, horiz = FALSE, inset = c(0.03, 0.1))
+dev.off()
+plot(0,0,1,1)
+legend_image <- as.raster(brewer.pal(6,name="Reds"))
+rasterImage(legend_image, 0, 0, 1,1)
+plot(0,0,1,1)
+legend_image <- as.raster(brewer.pal(6,name="Greens"))
+rasterImage(legend_image, 0, 0, 1,1)
+
+
+##Bcells
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter.Ig[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH)==F),]
+id<-match(PAAD.repertoire.tumor.filter.Ig$TCGA_sample,rownames(xcell.data.tumor.filter))
+alphalist<-seq(0.01,0.99,by=0.01)
+set.seed(34)
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter[id,],PAAD.repertoire.tumor.filter.Ig$entropy_IGK,family="gaussian"
+                                                        ,standardize=TRUE,alpha=a,nfolds=5))})
+xx<-rep(NA,length(alphalist))
+yy<-rep(NA,length(alphalist))
+for (j in 1:length(alphalist)) {
+  print(j)
+  if(class(elasticnet[[j]]) != "try-error"){
+    xx[j]<-elasticnet[[j]]$lambda.min
+    id.cv.opt<-grep(elasticnet[[j]]$lambda.min,elasticnet[[j]]$lambda,fixed=TRUE)
+    yy[j]<-elasticnet[[j]]$cvm[id.cv.opt]
+  }
+}
+id.min<-which(yy==min(yy,na.rm=TRUE))
+lambda<-xx[id.min]
+alpha<-alphalist[id.min]
+enet<-glmnet(xcell.data.tumor.filter[id,],PAAD.repertoire.tumor.filter.Ig$entropy_IGK,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda) #86
+cells<-rownames(enet$beta)[which(as.numeric(enet$beta)!=0)]
+betas<-enet$beta[which(as.numeric(enet$beta)!=0)]
+cells_sign<-xcell.data.tumor.filter[id,match(cells,colnames(xcell.data.tumor.filter))]
+
+colors<-betas[order(betas)]
+myColors <- ifelse(betas<0,brewer.pal(6,name="Reds"), 
+                   ifelse(betas>0, brewer.pal(6,name="Greens"),c("Grey")))
+cells_sign_plot<-cells_sign
+for (i in 1:ncol(cells_sign)){
+  if(betas[i]<0){
+    cells_sign_plot[,i]<-c(-cells_sign[,i])
+  } else {
+    cells_sign_plot[,i]<-c(cells_sign[,i])
+  }
+}
+tiff("Results/xCell/entropy_IGH_xcell_boxplot.tiff",res=300,h=2000,w=2500)
+par(mar = c(4, 9, 2, 2))
+boxplot(cells_sign,las=2,col=myColors,xlab="xcell score",horizontal=T,cex.lab=1.5)
+#legend("topright", legend = c("Positive association","Negative association") , 
+#       col = brewer.pal(6,name="Reds"),brewer.pal(6,name="Greens") , bty = "n", pch=20 , pt.cex = 3, cex = 1, horiz = FALSE, inset = c(0.03, 0.1))
+dev.off()
+plot(0,0,1,1)
+legend_image <- as.raster(brewer.pal(6,name="Reds"))
+rasterImage(legend_image, 0, 0, 1,1)
+plot(0,0,1,1)
+legend_image <- as.raster(brewer.pal(6,name="Greens"))
+rasterImage(legend_image, 0, 0, 1,1)
+
+
+
+
+
+
+
+
+
+####Plot results
+require(ggplot2)
+require(reshape2)
+df<-data.frame(PAAD.repertoire.tumor.filter.T$entropy_TRB,cells_sign)
+colnames(df)[1]<-c("entropy_TRB")
+df_melt<-melt(df,id.vars = "entropy_TRB")
+tiff("Results/xCell/entropy_TRB_xcell.tiff",res=300,h=2000,w=2000)
+ggplot(df_melt) +
+  geom_jitter(aes(value,entropy_TRB, colour=variable)) + 
+  geom_smooth(aes(value,entropy_TRB, colour=variable), method=glm, se=FALSE) +
+  facet_wrap(~variable) +
+  #stat_cor(aes(value,TRA_expression_log10, colour=variable),method = "spearman")+
+  labs(x = "xcell score", y = "Shannon Entropy TRB") + 
+  theme(legend.position = "none")
+dev.off()
+
+
