@@ -46,7 +46,7 @@ for(i in 1:ncol(xcell.data.filter)){
 }
 
 #Heatmp
-annotation_col = data.frame(PAAD.repertoire.diversity$Tumor_type_4categ)
+annotation_col = data.frame(PAAD.repertoire.tumor.subtype)
 cols=c( "#7FC97F", "#FBB4AE","#BEAED4", "#FDC086")
 ann_colors = list (Tumor_type_4categ = c("normal_pancreas" = cols[1],
                                          "PAC-Other" = cols[2],
