@@ -2,7 +2,7 @@
 
 #!/bin/bash/
 echo "start"
-for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*fastq.gz | rev | cut -c 12- | rev | uniq)
+for i in $(ls FASTQ/*fastq.gz | rev | cut -c 12- | rev | uniq)
 do
 f=$(basename "$i")
 echo $f
@@ -16,7 +16,7 @@ echo "end"
 #!/bin/bash/
 
 echo "start"
-for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*alignments.vdjca | rev | cut -c 18- | rev | uniq)
+for i in $(ls FASTQ/*alignments.vdjca | rev | cut -c 18- | rev | uniq)
 do
 f=$(basename "$i")
 echo $f
@@ -33,7 +33,7 @@ echo "end"
 #!/bin/bash/
 
 echo "start"
-for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*alignments_rescued_2.vdjca | rev | cut -c 28- | rev | uniq)
+for i in $(ls FASTQ/*alignments_rescued_2.vdjca | rev | cut -c 28- | rev | uniq)
 do
 f=$(basename "$i")
 echo $f
@@ -48,7 +48,7 @@ echo "end"
 #!/bin/bash/
 
 echo "start"
-for i in $(ls /local/spineda/CNIO/TCGA-Immune/GTEX_Pancreas_fastq/*alignments_extended.vdjca | rev | cut -c 27- | rev | uniq)
+for i in $(ls FASTQ/*alignments_extended.vdjca | rev | cut -c 27- | rev | uniq)
 do
 f=$(basename "$i")
 echo $f
