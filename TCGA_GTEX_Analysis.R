@@ -126,13 +126,12 @@ save(data_merge,PAAD.repertoire.diversity,PAAD.repertoire.tumor.filter,xCell.dat
 ##############################################################
 
 ##Mutated.Genes
-summary(glm(PAAD.repertoire.tumor.filter$Mutated.Genes~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC))
+summary(glm(PAAD.repertoire.tumor.filter$Mutated.Genes~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster))
 PAAD.repertoire.tumor.filter$Mutated.Genes<-factor(PAAD.repertoire.tumor.filter$Mutated.Genes)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"Mutated.Genes")
 
 ##ABSOLUTE PURITY
-plot(PAAD.repertoire.tumor.filter$ABSOLUTE.Purity~PAAD.repertoire.tumor.filter$Risk_Score_compositional)
-summary(glm(PAAD.repertoire.tumor.filter$Mutated.Genes~factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)))
+summary(glm(PAAD.repertoire.tumor.filter$ABSOLUTE.Purity~factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)))
 
 PAAD.repertoire.tumor.filter$ABSOLUTE.Purity<-factor(PAAD.repertoire.tumor.filter$ABSOLUTE.Purity)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"ABSOLUTE.Purity")
@@ -151,7 +150,7 @@ PAAD.repertoire.tumor.filter$subtypes_Moffit<-factor(ifelse(PAAD.repertoire.tumo
                                                              ifelse(PAAD.repertoire.tumor.filter$Moffitt.clusters..All.150.Samples..1basal..2classical==2,"Classical",NA)))
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"subtypes_Moffit")
 
-chisq.test(PAAD.repertoire.tumor.filter$subtypes_Moffit,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+chisq.test(PAAD.repertoire.tumor.filter$subtypes_Moffit,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~factor(PAAD.repertoire.tumor.filter$subtypes_Moffit)))
 
 ##mRNA.Collisson.clusters..All.150.Samples..1classical.2exocrine.3QM
@@ -172,7 +171,7 @@ PAAD.repertoire.tumor.filter$subtypes_Bailey<-factor(ifelse(PAAD.repertoire.tumo
                                                                     ifelse(PAAD.repertoire.tumor.filter$mRNA.Bailey.Clusters..All.150.Samples..1squamous.2immunogenic.3progenitor.4ADEX==3,"Progenitor",
                                                                            ifelse(PAAD.repertoire.tumor.filter$mRNA.Bailey.Clusters..All.150.Samples..1squamous.2immunogenic.3progenitor.4ADEX==4,"ADEX",NA)))))
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"subtypes_Bailey")
-chisq.test(PAAD.repertoire.tumor.filter$subtypes_Bailey,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+chisq.test(PAAD.repertoire.tumor.filter$subtypes_Bailey,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~factor(PAAD.repertoire.tumor.filter$subtypes_Bailey)))
 boxplot(PAAD.repertoire.tumor.filter$Risk_Score_compositional~factor(PAAD.repertoire.tumor.filter$subtypes_Bailey))
 
@@ -181,7 +180,7 @@ PAAD.repertoire.tumor.filter$Copy.Number.Clusters..All.150.Samples.<-factor(PAAD
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"Copy.Number.Clusters..All.150.Samples.")
 
 ##KRAS.Mutated..1.or.0.
-chisq.test(PAAD.repertoire.tumor.filter$KRAS.Mutated..1.or.0.,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+chisq.test(PAAD.repertoire.tumor.filter$KRAS.Mutated..1.or.0.,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~factor(PAAD.repertoire.tumor.filter$KRAS.Mutated..1.or.0.)))
 PAAD.repertoire.tumor.filter$KRAS.Mutated..1.or.0.<-factor(PAAD.repertoire.tumor.filter$KRAS.Mutated..1.or.0.)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"KRAS.Mutated..1.or.0.")
@@ -207,12 +206,115 @@ PAAD.repertoire.tumor.filter$lncRNA.Clusters..All.150.Samples.<-factor(PAAD.repe
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"lncRNA.Clusters..All.150.Samples.")
 
 ##ZNF521 mutattion
-chisq.test(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+PAAD.repertoire.tumor.filter$ZNF521.mutated<-factor(PAAD.repertoire.tumor.filter$ZNF521)
+chisq.test(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 boxplot(PAAD.repertoire.tumor.filter$Risk_Score_compositional~factor(PAAD.repertoire.tumor.filter$ZNF521.mutated))
+
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~factor(PAAD.repertoire.tumor.filter$ZNF521.mutated)))
 table(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
-PAAD.repertoire.tumor.filter$ZNF521.mutated<-factor(PAAD.repertoire.tumor.filter$ZNF521)
+
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"ZNF521.mutated")
+
+
+#################
+##Correlations ##
+################
+PAAD.repertoire.tumor.filter$Leukocyte_DNAmethylation<-PAAD.repertoire.tumor.filter$DNA.methylation.leukocyte.percent.estimate
+PAAD.repertoire.tumor.filter$Purity_ABSOLUTE<-PAAD.repertoire.tumor.filter$ABSOLUTE.Purity
+Signatures<-PAAD.repertoire.tumor.filter[,c("Leukocyte_DNAmethylation","Purity_ABSOLUTE")]
+
+
+IGH_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$IGH_expression),use="complete.obs",method = "pearson"))
+IGH_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$IGH_expression),use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGK_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$IGK_expression),use="complete.obs",method = "pearson"))
+IGK_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$IGK_expression),use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGL_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$IGL_expression),use="complete.obs",method = "pearson"))
+IGL_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$IGL_expression),use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRA_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$TRA_expression),use="complete.obs",method = "pearson"))
+TRA_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$TRA_expression),use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRB_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$TRB_expression),use="complete.obs",method = "pearson"))
+TRB_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$TRB_expression),use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGH_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_IGH,use="complete.obs",method = "pearson"))
+IGH_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_IGH,use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGK_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_IGK,use="complete.obs",method = "pearson"))
+IGK_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_IGK,use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGL_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_IGL,use="complete.obs",method = "pearson"))
+IGL_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_IGL,use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRA_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_TRA,use="complete.obs",method = "pearson"))
+TRA_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_TRA,use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRB_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_TRB,use="complete.obs",method = "pearson"))
+TRB_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_TRB,use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGH_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGH)==F)]
+                                               ,PAAD.repertoire.tumor.filter$vertex_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGH)==F)],use="complete.obs",method = "pearson"))
+IGH_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGH)==F)]
+                                                               ,PAAD.repertoire.tumor.filter$vertex_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGH)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGK_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGK)==F)]
+                                               ,PAAD.repertoire.tumor.filter$vertex_gini_IGK,use="complete.obs",method = "pearson"))
+IGK_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$vertex_gini_IGK[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGK)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGL_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGL)==F)]
+                                               ,PAAD.repertoire.tumor.filter$vertex_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGL)==F)],use="complete.obs",method = "pearson"))
+IGL_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGL)==F)]
+                                                               ,PAAD.repertoire.tumor.filter$vertex_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_IGL)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRA_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],
+                                               PAAD.repertoire.tumor.filter$vertex_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],use="complete.obs",method = "pearson"))
+TRA_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],
+                                                               PAAD.repertoire.tumor.filter$vertex_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRB_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],
+                                               PAAD.repertoire.tumor.filter$vertex_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],use="complete.obs",method = "pearson"))
+TRB_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],
+                                                               PAAD.repertoire.tumor.filter$vertex_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGH_cluster<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGH)==F)]
+                                                ,PAAD.repertoire.tumor.filter$cluster_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGH)==F)],use="complete.obs",method = "pearson"))
+IGH_cluster_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGH)==F)]
+                                                       ,PAAD.repertoire.tumor.filter$cluster_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGH)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGK_cluster<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGK)==F)]
+                                                ,PAAD.repertoire.tumor.filter$cluster_gini_IGK,use="complete.obs",method = "pearson"))
+IGK_cluster_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$cluster_gini_IGK[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGK)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+IGL_cluster<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGL)==F)]
+                                                ,PAAD.repertoire.tumor.filter$cluster_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGL)==F)],use="complete.obs",method = "pearson"))
+IGL_cluster_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGL)==F)]
+                                                                ,PAAD.repertoire.tumor.filter$cluster_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_IGL)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRA_cluster<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRA)==F)],
+                                                PAAD.repertoire.tumor.filter$cluster_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRA)==F)],use="complete.obs",method = "pearson"))
+TRA_cluster_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRA)==F)],
+                                                                PAAD.repertoire.tumor.filter$cluster_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRA)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+TRB_cluster<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRB)==F)],
+                                                PAAD.repertoire.tumor.filter$cluster_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRB)==F)],use="complete.obs",method = "pearson"))
+TRB_cluster_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRB)==F)],
+                                                                PAAD.repertoire.tumor.filter$cluster_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter$cluster_gini_TRB)==F)],use="complete.obs",method = "pearson")$p.value),method="fdr")
+
+
+
+tiff("Manuscript/Figure3_heatmap.tiff",res=300,h=2100,w=1000)
+breaks <-seq(-1, 1, by=0.1)
+pheatmap(t(cbind(IGH_expression,IGK_expression,IGL_expression,IGH_entropy,IGK_entropy,IGL_entropy,
+                 TRA_expression, TRB_expression,TRA_entropy,TRB_entropy,IGH_vertex,IGK_vertex,IGL_vertex,TRA_vertex,TRB_vertex,
+                 IGH_cluster,IGK_cluster,IGL_cluster,TRA_cluster,TRB_cluster)),cluster_rows = F,cluster_cols = F,breaks = breaks,gaps_row=c(3,6,8,10,13,15,18),
+         display_numbers = ifelse(t(cbind(IGH_expression_p,IGK_expression_p,IGL_expression_p,IGH_entropy_p,IGK_entropy_p,IGL_entropy_p,
+                                          TRA_expression_p, TRB_expression_p,TRA_entropy_p,TRB_entropy_p,IGH_vertex_p,IGK_vertex_p,IGL_vertex_p,TRA_vertex_p,TRB_vertex_p,
+                                          IGH_cluster_p,IGK_cluster_p,IGL_cluster_p,TRA_cluster_p,TRB_cluster_p))<0.05, "*", ""),fontsize_number = 20,
+         color = colorRampPalette(rev(brewer.pal(n = 10, name = "RdYlBu")))(length(breaks)))
+dev.off()
+
 
 ##############################################################
 # 2. Association analysis with Immune Landscape ###
@@ -256,15 +358,17 @@ PAAD.repertoire.tumor.filter$Lymphocyte.Infiltration.Signature.Score<-factor(PAA
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"Lymphocyte.Infiltration.Signature.Score")
 
 boxplot(PAAD.repertoire.tumor.filter$IFN.gamma.Response~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+summary(glm(PAAD.repertoire.tumor.filter$IFN.gamma.Response~factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)))
 PAAD.repertoire.tumor.filter$IFN.gamma.Response<-factor(PAAD.repertoire.tumor.filter$IFN.gamma.Response)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"IFN.gamma.Response")
 
 boxplot(PAAD.repertoire.tumor.filter$TGF.beta.Response~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
-summary(glm(PAAD.repertoire.tumor.filter$TGF.beta.Response~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster))
+summary(glm(PAAD.repertoire.tumor.filter$TGF.beta.Response~factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)))
 PAAD.repertoire.tumor.filter$TGF.beta.Response<-factor(PAAD.repertoire.tumor.filter$TGF.beta.Response)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"TGF.beta.Response")
 
 boxplot(PAAD.repertoire.tumor.filter$SNV.Neoantigens~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+summary(glm(PAAD.repertoire.tumor.filter$SNV.Neoantigens~factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)))
 plot(PAAD.repertoire.tumor.filter$SNV.Neoantigens~PAAD.repertoire.tumor.filter$Risk_Score_compositional)
 summary(glm(PAAD.repertoire.tumor.filter$SNV.Neoantigens~PAAD.repertoire.tumor.filter$Risk_Score_compositional))
 
@@ -307,7 +411,7 @@ association.test.immuneRep(PAAD.repertoire.tumor.filter,"TCR.Richness")
 
 boxplot(PAAD.repertoire.tumor.filter$Th1.Cells~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 plot(PAAD.repertoire.tumor.filter$Th1.Cells~PAAD.repertoire.tumor.filter$Risk_Score_compositional)
-summary(glm(PAAD.repertoire.tumor.filter$Th17.Cells~PAAD.repertoire.tumor.filter$Risk_Score_compositional))
+summary(glm(PAAD.repertoire.tumor.filter$Th2.Cells~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster))
 
 PAAD.repertoire.tumor.filter$Th1.Cells<-factor(PAAD.repertoire.tumor.filter$Th1.Cells)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"Th1.Cells")
@@ -320,6 +424,160 @@ association.test.immuneRep(PAAD.repertoire.tumor.filter,"Th2.Cells")
 boxplot(PAAD.repertoire.tumor.filter$Th17.Cells~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 PAAD.repertoire.tumor.filter$Th17.Cells<-factor(PAAD.repertoire.tumor.filter$Th17.Cells)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"Th17.Cells")
+
+#################
+####Correlation
+#################
+PAAD.repertoire.tumor.filter$Lymphocyte.Infiltration<-PAAD.repertoire.tumor.filter$Lymphocyte.Infiltration.Signature.Score
+
+PAAD.repertoire.tumor.filter$T_clones<-PAAD.repertoire.tumor.filter$TRA+PAAD.repertoire.tumor.filter$TRB+PAAD.repertoire.tumor.filter$TRD+PAAD.repertoire.tumor.filter$TRG
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_clones>100),]
+Signatures.T<-PAAD.repertoire.tumor.filter.T[,c("Lymphocyte.Infiltration","Macrophage.Regulation","TGF.beta.Response","IFN.gamma.Response",
+                                            "Wound.Healing","Th1.Cells","Th2.Cells","Th17.Cells")]
+
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
+Signatures.Ig<-PAAD.repertoire.tumor.filter.Ig[,c("Lymphocyte.Infiltration","Macrophage.Regulation","TGF.beta.Response","IFN.gamma.Response",
+                                                "Wound.Healing","Th1.Cells","Th2.Cells","Th17.Cells")]
+
+IGH_expression<-apply(Signatures.Ig,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter.Ig$IGH_expression),method = "pearson"))
+IGH_expression_p<-apply(Signatures.Ig,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter.Ig$IGH_expression),method = "pearson")$p.value)
+
+IGK_expression<-apply(Signatures.Ig,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter.Ig$IGK_expression),method = "pearson"))
+IGK_expression_p<-apply(Signatures.Ig,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter.Ig$IGK_expression),method = "pearson")$p.value)
+
+IGL_expression<-apply(Signatures.Ig,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter.Ig$IGL_expression),method = "pearson"))
+IGL_expression_p<-apply(Signatures.Ig,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter.Ig$IGL_expression),method = "pearson")$p.value)
+
+TRA_expression<-apply(Signatures.T,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter.T$TRA_expression),method = "pearson"))
+TRA_expression_p<-apply(Signatures.T,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter.T$TRA_expression),method = "pearson")$p.value)
+
+TRB_expression<-apply(Signatures.T,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter.T$TRB_expression),method = "pearson"))
+TRB_expression_p<-apply(Signatures.T,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter.T$TRB_expression),method = "pearson")$p.value)
+
+IGH_entropy<-apply(Signatures.Ig,2,function(x) cor(x,PAAD.repertoire.tumor.filter.Ig$entropy_IGH,method = "pearson"))
+IGH_entropy_p<-apply(Signatures.Ig,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.Ig$entropy_IGH,method = "pearson")$p.value)
+
+IGK_entropy<-apply(Signatures.Ig,2,function(x) cor(x,PAAD.repertoire.tumor.filter.Ig$entropy_IGK,method = "pearson"))
+IGK_entropy_p<-apply(Signatures.Ig,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.Ig$entropy_IGK,method = "pearson")$p.value)
+
+IGL_entropy<-apply(Signatures.Ig,2,function(x) cor(x,PAAD.repertoire.tumor.filter.Ig$entropy_IGL,method = "pearson"))
+IGL_entropy_p<-apply(Signatures.Ig,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.Ig$entropy_IGL,method = "pearson")$p.value)
+
+TRA_entropy<-apply(Signatures.T,2,function(x) cor(x,PAAD.repertoire.tumor.filter.T$entropy_TRA,method = "pearson"))
+TRA_entropy_p<-apply(Signatures.T,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.T$entropy_TRA,method = "pearson")$p.value)
+
+TRB_entropy<-apply(Signatures.T,2,function(x) cor(x,PAAD.repertoire.tumor.filter.T$entropy_TRB,method = "pearson"))
+TRB_entropy_p<-apply(Signatures.T,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.T$entropy_TRB,method = "pearson")$p.value)
+
+IGH_vertex<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH)==F)]
+                                               ,PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH)==F)],method = "pearson"))
+IGH_vertex_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH)==F)]
+                                                      ,PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH)==F)],method = "pearson")$p.value)
+IGK_vertex<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGK)==F)]
+                                               ,PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGK,method = "pearson"))
+IGK_vertex_p<-apply(Signatures.Ig,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGK[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGK)==F)],method = "pearson")$p.value)
+
+IGL_vertex<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGL)==F)]
+                                               ,PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGL)==F)],method = "pearson"))
+IGL_vertex_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGL)==F)]
+                                                      ,PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGL)==F)],method = "pearson")$p.value)
+
+TRA_vertex<-apply(Signatures.T,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRA)==F)],
+                                               PAAD.repertoire.tumor.filter.T$vertex_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRA)==F)],method = "spearman"))
+TRA_vertex_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRA)==F)],
+                                                               PAAD.repertoire.tumor.filter.T$vertex_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRA)==F)],method = "spearman")$p.value)
+
+TRB_vertex<-apply(Signatures.T,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F)],
+                                               PAAD.repertoire.tumor.filter.T$vertex_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F)],method = "spearman"))
+TRB_vertex_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F)],
+                                                               PAAD.repertoire.tumor.filter.T$vertex_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F)],method = "spearman")$p.value)
+
+IGH_cluster<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGH)==F)]
+                                               ,PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGH)==F)],method = "pearson"))
+IGH_cluster_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGH)==F)]
+                                                      ,PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGH[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGH)==F)],method = "pearson")$p.value)
+
+IGK_cluster<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGK)==F)]
+                                               ,PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGK,method = "pearson"))
+IGK_cluster_p<-apply(Signatures.Ig,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGK[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGK)==F)],method = "pearson")$p.value)
+
+IGL_cluster<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGL)==F)]
+                                               ,PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGL)==F)],method = "pearson"))
+IGL_cluster_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGL)==F)]
+                                                      ,PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGL[which(is.na(PAAD.repertoire.tumor.filter.Ig$cluster_gini_IGL)==F)],method = "pearson")$p.value)
+
+TRA_cluster<-apply(Signatures.T,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRA)==F)],
+                                               PAAD.repertoire.tumor.filter.T$cluster_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRA)==F)],method = "spearman"))
+TRA_cluster_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRA)==F)],
+                                                      PAAD.repertoire.tumor.filter.T$cluster_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRA)==F)],method = "spearman")$p.value)
+
+TRB_cluster<-apply(Signatures.T,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRB)==F)],
+                                               PAAD.repertoire.tumor.filter.T$cluster_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRB)==F)],method = "spearman"))
+TRB_cluster_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRB)==F)],
+                                                      PAAD.repertoire.tumor.filter.T$cluster_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter.T$cluster_gini_TRB)==F)],method = "spearman")$p.value)
+
+tiff("Manuscript/Figure4_heatmap.tiff",res=300,h=2200,w=1500)
+breaks <-seq(-1, 1, by=0.1)
+pheatmap(t(cbind(IGH_expression,IGK_expression,IGL_expression,IGH_entropy,IGK_entropy,IGL_entropy,
+                 TRA_expression, TRB_expression,TRA_entropy,TRB_entropy)),cluster_rows = F,cluster_cols = F,breaks = breaks,gaps_row=c(3,6,8),
+         display_numbers = ifelse(t(cbind(IGH_expression_p,IGK_expression_p,IGL_expression_p,IGH_entropy_p,IGK_entropy_p,IGL_entropy_p,
+                                                 TRA_expression_p, TRB_expression_p,TRA_entropy_p,TRB_entropy_p))<0.05, "*", ""),fontsize_number = 20,
+         color = colorRampPalette(rev(brewer.pal(n = 10, name = "RdYlBu")))(length(breaks)))
+
+dev.off()
+
+##################
+##Correlation ####
+##################
+
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
+Signatures.T<-PAAD.repertoire.tumor.filter.T[,c("SNV.Neoantigens","Silent.Mutation.Rate","Nonsilent.Mutation.Rate","number_pack_years_smoked_all")]
+
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
+Signatures.Ig<-PAAD.repertoire.tumor.filter.Ig[,c("SNV.Neoantigens","Silent.Mutation.Rate","Nonsilent.Mutation.Rate","number_pack_years_smoked_all")]
+
+
+IGH_expression<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.Ig$IGH_expression[which(is.na(x)==F)]),method = "pearson"))
+IGH_expression_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.Ig$IGH_expression[which(is.na(x)==F)]),method = "pearson")$p.value)
+
+IGK_expression<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.Ig$IGK_expression[which(is.na(x)==F)]),method = "pearson"))
+IGK_expression_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.Ig$IGK_expression[which(is.na(x)==F)]),method = "pearson")$p.value)
+
+IGL_expression<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.Ig$IGL_expression[which(is.na(x)==F)]),method = "pearson"))
+IGL_expression_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.Ig$IGL_expression[which(is.na(x)==F)]),method = "pearson")$p.value)
+
+TRA_expression<-apply(Signatures.T,2,function(x) cor(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.T$TRA_expression[which(is.na(x)==F)]),method = "pearson"))
+TRA_expression_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.T$TRA_expression[which(is.na(x)==F)]),method = "pearson")$p.value)
+
+TRB_expression<-apply(Signatures.T,2,function(x) cor(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.T$TRB_expression[which(is.na(x)==F)]),method = "pearson"))
+TRB_expression_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(x)==F)],log10(PAAD.repertoire.tumor.filter.T$TRB_expression[which(is.na(x)==F)]),method = "pearson")$p.value)
+
+IGH_entropy<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.Ig$entropy_IGH[which(is.na(x)==F)],method = "pearson"))
+IGH_entropy_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.Ig$entropy_IGH[which(is.na(x)==F)],method = "pearson")$p.value)
+
+IGK_entropy<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.Ig$entropy_IGK[which(is.na(x)==F)],method = "pearson"))
+IGK_entropy_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.Ig$entropy_IGK[which(is.na(x)==F)],method = "pearson")$p.value)
+
+IGL_entropy<-apply(Signatures.Ig,2,function(x) cor(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.Ig$entropy_IGL[which(is.na(x)==F)],method = "pearson"))
+IGL_entropy_p<-apply(Signatures.Ig,2,function(x) cor.test(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.Ig$entropy_IGL[which(is.na(x)==F)],method = "pearson")$p.value)
+
+TRA_entropy<-apply(Signatures.T,2,function(x) cor(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.T$entropy_TRA[which(is.na(x)==F)],method = "pearson"))
+TRA_entropy_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.T$entropy_TRA[which(is.na(x)==F)],method = "pearson")$p.value)
+
+TRB_entropy<-apply(Signatures.T,2,function(x) cor(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.T$entropy_TRB[which(is.na(x)==F)],method = "pearson"))
+TRB_entropy_p<-apply(Signatures.T,2,function(x) cor.test(x[which(is.na(x)==F)],PAAD.repertoire.tumor.filter.T$entropy_TRB[which(is.na(x)==F)],method = "pearson")$p.value)
+
+
+tiff("Manuscript/Figure5_heatmap.tiff",res=300,h=2000,w=1500)
+breaks <-seq(-0.5, 0.5, by=0.1)
+pheatmap(t(cbind(IGH_expression,IGK_expression,IGL_expression,IGH_entropy,IGK_entropy,IGL_entropy,
+                 TRA_expression, TRB_expression,TRA_entropy,TRB_entropy)),cluster_rows = F,cluster_cols = F,breaks = breaks,gaps_row=c(3,6,8),
+         display_numbers = ifelse(t(cbind(IGH_expression_p,IGK_expression_p,IGL_expression_p,IGH_entropy_p,IGK_entropy_p,IGL_entropy_p,
+                                          TRA_expression_p, TRB_expression_p,TRA_entropy_p,TRB_entropy_p))<0.06, "*", ""),fontsize_number = 20,
+         color = colorRampPalette(rev(brewer.pal(n = 10, name = "RdYlBu")))(length(breaks)))
+
+dev.off()
+
 
 ##############################################################
 # 3. Association analysis with Clinical outcomes ###
@@ -335,7 +593,7 @@ association.test.immuneRep(PAAD.repertoire.tumor.filter,"anatomic_neoplasm_subdi
 
 ##gender
 PAAD.repertoire.tumor.filter$gender<-factor(PAAD.repertoire.tumor.filter$gender)
-chisq.test(PAAD.repertoire.tumor.filter$gender,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+chisq.test(PAAD.repertoire.tumor.filter$gender,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~PAAD.repertoire.tumor.filter$gender))
 
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"gender")
@@ -347,7 +605,7 @@ association.test.immuneRep(PAAD.repertoire.tumor.filter,"race_list")
 
 ##History of Prior Malignancy
 PAAD.repertoire.tumor.filter$other_dx<-factor(PAAD.repertoire.tumor.filter$other_dx)
-chisq.test(PAAD.repertoire.tumor.filter$other_dx,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+chisq.test(PAAD.repertoire.tumor.filter$other_dx,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~PAAD.repertoire.tumor.filter$other_dx))
 
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"other_dx")
@@ -372,7 +630,7 @@ PAAD.repertoire.tumor.filter$smoking<-factor(ifelse(PAAD.repertoire.tumor.filter
                                                                      ifelse(PAAD.repertoire.tumor.filter$tobacco_smoking_history_master=="Current reformed smoker for > 15 years (greater than 15 years)","Former",
                                                                             ifelse(PAAD.repertoire.tumor.filter$tobacco_smoking_history_master=="Current reformed smoker for ≤15 years (less than or equal to 15 years)","Former",
                                                                                    ifelse(PAAD.repertoire.tumor.filter$tobacco_smoking_history_master=="Current reformed smoker, duration not specified","Former",NA))))))
-chisq.test(PAAD.repertoire.tumor.filter$smoking,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+chisq.test(PAAD.repertoire.tumor.filter$smoking,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~PAAD.repertoire.tumor.filter$smoking))
 
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"smoking")
@@ -388,7 +646,7 @@ summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~PAAD.repertoir
 
 ##number_pack_years_smoked
 boxplot(PAAD.repertoire.tumor.filter$number_pack_years_smoked~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
-summary(glm(PAAD.repertoire.tumor.filter$Risk_Score_compositional~PAAD.repertoire.tumor.filter$number_pack_years_smoked))
+summary(glm(PAAD.repertoire.tumor.filter$number_pack_years_smoked~factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)))
 
 PAAD.repertoire.tumor.filter$number_pack_years_smoked_all<-ifelse(PAAD.repertoire.tumor.filter$smoking2=="Non-smoker",0,PAAD.repertoire.tumor.filter$number_pack_years_smoked)
 PAAD.repertoire.tumor.filter$number_pack_years_smoked_all<-factor(PAAD.repertoire.tumor.filter$number_pack_years_smoked_all)
@@ -473,6 +731,9 @@ PAAD.repertoire.tumor.filter$treatment_outcome_first_course<-replace(PAAD.repert
 PAAD.repertoire.tumor.filter$treatment_outcome_first_course<-factor(PAAD.repertoire.tumor.filter$treatment_outcome_first_course)
 association.test.immuneRep(PAAD.repertoire.tumor.filter,"treatment_outcome_first_course")
 
+
+
+
 #############################################
 ### 4. Survival Analysis  ####
 ##############################################
@@ -488,7 +749,7 @@ PAAD.repertoire.tumor.filter$IGL_expression_log<-log10(PAAD.repertoire.tumor.fil
 PAAD.repertoire.tumor.filter$TRA_expression_log<-log10(PAAD.repertoire.tumor.filter$TRA_expression)
 PAAD.repertoire.tumor.filter$TRB_expression_log<-log10(PAAD.repertoire.tumor.filter$TRB_expression)
 surv_object <- Surv(time = PAAD.repertoire.tumor.filter$OS.time, event = PAAD.repertoire.tumor.filter$OS)
-PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster<-factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster_PDAC)
+PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster<-factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 PAAD.repertoire.tumor.filter.smoking<-PAAD.repertoire.tumor.filter[which(is.na(PAAD.repertoire.tumor.filter$number_pack_years_smoked_all)==F),]
 res.cox <- coxph(Surv(time = OS.time, event = OS)~IGK_clonotypes_cluster+gender+ as.numeric(as.character(age_at_initial_pathologic_diagnosis))
                  +pathologic_stage,data=PAAD.repertoire.tumor.filter)
@@ -506,7 +767,8 @@ se<-NULL
 p<-NULL
 for(i in 1:length(All_markers)){
   res.cox <- coxph(Surv(time = OS.time, event = OS)~PAAD.repertoire.tumor.filter[,All_markers[i]]+gender
-                   +as.numeric(as.character(age_at_initial_pathologic_diagnosis))+pathologic_stage+smoking
+                   +as.numeric(as.character(age_at_initial_pathologic_diagnosis))+pathologic_stage
+                     
                    ,data=PAAD.repertoire.tumor.filter)
   coef[i]<-coef(summary(res.cox))[1,1]
   HR[i]<-coef(summary(res.cox))[1,2]
@@ -516,9 +778,9 @@ for(i in 1:length(All_markers)){
 
 Survival_summary<-cbind(coef,HR,se,p)
 rownames(Survival_summary)<-All_markers
-tiff("Manuscript/Figures/SurvivalPlot.tiff",res=300,h=1700,w=2400)
+tiff("Manuscript/Figures/SurvivalPlot.tiff",res=300,h=2000,w=3000)
 viz_forest(x = Survival_summary[, c("coef", "se")], study_labels = rownames(Survival_summary),variant = "rain",
-           type="study_only", x_trans_function = exp, xlab = "Hazard-Ratio",annotate_CI = TRUE)
+           type="study_only", x_trans_function = exp, xlab = "Hazard-Ratio",annotate_CI = TRUE,text_size=5,x_limit=c(-3,2))
 
 dev.off()
 
@@ -687,6 +949,144 @@ corrplot(M)
 corrplot(M, order = "hclust", addrect = 4)
 dev.off()
 
+
+
+
+#########################################
+normal_samples<-PAAD.repertoire.diversity[which(PAAD.repertoire.diversity$Tumor_type_4categ=="normal_pancreas"),"TCGA_sample"]
+summary_data<-NULL
+for(i in 1:length(normal_samples)){
+  id<-grep(substr(normal_samples[i],1,12),PAAD.repertoire.diversity$TCGA_sample)
+  summary_data<-rbind(summary_data,PAAD.repertoire.diversity[id,c("IGH_expression","IGK_expression","IGL_expression",
+                                                                  "entropy_IGH","entropy_IGK","entropy_IGL",
+                                                                  "clones_IGH", "clones_IGK", "clones_IGL",
+                                                                  "TRA_expression","TRB_expression","TRD_expression","TRG_expression",
+                                                                  "entropy_TRA","entropy_TRB","entropy_TRD","entropy_TRG",
+                                                                  "clones_TRA", "clones_TRB", "clones_TRD", "clones_TRG",
+                                                                  "Tumor_type_4categ","TCGA_sample")])
+}
+summary_data<-summary_data[-3,]
+marker<-c("IGH_expression","IGK_expression","IGL_expression",
+          "entropy_IGH","entropy_IGK","entropy_IGL",
+          "clones_IGH", "clones_IGK", "clones_IGL",
+          "TRA_expression","TRB_expression","TRD_expression","TRG_expression",
+          "entropy_TRA","entropy_TRB","entropy_TRD","entropy_TRG",
+          "clones_TRA", "clones_TRB", "clones_TRD", "clones_TRG")
+for(i in 1:length(marker)){
+  summary_data$sample<-substr(summary_data$TCGA_sample,1,12)
+  summary_data$Marker<-summary_data[,marker[i]]
+  tiff(paste0("Results/ImmuneRep/Comparisons/tumor_adjacent_normal_",marker[i]))
+  print(ggplot(summary_data, aes(x = Tumor_type_4categ, y = Marker)) + scale_y_continuous(name=marker[i]) + 
+          scale_x_discrete("") +
+          geom_boxplot() +
+          geom_line(aes(group = sample)) +
+          geom_point())
+  dev.off()
+}
+
+for(i in 1:length(normal_samples)){
+  #id_pair<-grep(substr(normal_samples[i],1,12),PAAD.repertoire.diversity$TCGA_sample)
+  #PAAD.repertoire.diversity[id_pair,]
+  print(ggline(summary_data, x = "Tumor_type_4categ", y = "IGH_expression", color = "Tumor_type_4categ",
+               add = c("mean_se", "jitter"),  palette = c("#66C2A5", "#FC8D62")) + scale_y_continuous(name="IGH_expression") +
+          stat_compare_means(aes(group = sample),method="anova",label = "p.format"))
+  
+  
+}
+
+
+####Ig/T expression only in PDAC samples
+PAAD.repertoire.tumor.subtype.Ig<-PAAD.repertoire.tumor.subtype[which(PAAD.repertoire.tumor.subtype$Ig_Reads>1000),]
+Ig_markers<-c("IGH_expression","IGK_expression", "IGL_expression","entropy_IGH","entropy_IGK", "entropy_IGL")
+
+PAAD.repertoire.tumor.subtype.T<-PAAD.repertoire.tumor.subtype[which(PAAD.repertoire.tumor.subtype$T_Reads>100),]
+T_markers<-c("TRA_expression","TRB_expression", "entropy_TRA","entropy_TRB")
+
+##Correlation matrix
+mat<-PAAD.repertoire.tumor.filter[,c(Ig_markers,T_markers)]
+library(corrplot)
+M <- cor(mat)
+tiff("Results/ImmuneRep/Comparisons/Correlation.tiff",res=300,w=2200,h=2200)
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(M, method="color", col=col(200),  
+         type="upper", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         sig.level = 0.0001, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+)
+
+dev.off()
+
+library("PerformanceAnalytics")
+tiff("Results/ImmuneRep/Comparisons/Chat_Correlation.tiff",res=300,w=2300,h=2300)
+chart.Correlation(mat, pch=19)
+dev.off()
+
+##### PCA plot
+pca <- prcomp((mat), scale = TRUE)
+pc <- c(1,2)
+tiff(paste0("Results/PCA_clones_relative_abundance_IG.tiff"),width = 2000, height = 2000, res = 300)
+plot(pca$x[,pc[1]], pca$x[,pc[2]], pch=20,xlab="PCA1",ylab="PCA2")
+text(pca$x[,1], pca$x[,2], rownames(mat), pos= 2 )
+dev.off()
+
+
+
+
+
+#### Clustering ###
+#res <- pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(brewer.pal(6,name="PuOr"))(12))
+#mat.clust <- cbind(mat, cluster = cutree(res$tree_col, k = 4))
+#mat.clust$cluster<-replace(mat.clust$cluster,mat.clust$cluster==4,3)
+
+mat<-PAAD.repertoire.tumor.subtype.T[,T_markers]
+annotation_col = data.frame(ABSOLUTE_Purity = 100*as.numeric(as.character(PAAD.repertoire.tumor.subtype.T$ABSOLUTE.Purity)),
+                            Leukocyte_DNAmethylation = 100*as.numeric(as.character(PAAD.repertoire.tumor.subtype.T$Leukocyte_DNAmethylation)))
+rownames(annotation_col)<-rownames(mat)
+
+##Plot heatmap with cluster
+ann_colors = list (ABSOLUTE_Purity = colorRampPalette(brewer.pal(9,name="Purples"))(120),
+                   Leukocyte_DNAmethylation = colorRampPalette(brewer.pal(9,name="Greens"))(120))
+tiff("Results/ImmuneRep/Comparisons/Cluster_TExpression_heatmap.tiff",res=300,w=2500,h=1000)
+pheatmap(t(mat),scale="row",show_colnames = F,border_color=F,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120),
+         annotation_col = annotation_col,annotation_colors = ann_colors)
+
+dev.off()
+
+
+
+
+############################################ 
+####Ig/T expression only in PDAC samples ##
+##########################################
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>1000),]
+Ig_markers<-c("IGH_expression","IGK_expression", "IGL_expression")
+Ig_markers<-c("entropy_IGH","entropy_IGK", "entropy_IGL")
+
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
+T_markers<-c("TRA_expression","TRB_expression", "TRD_expression", "TRG_expression")
+T_markers<-c("entropy_TRA","entropy_TRB")
+
+All_markers<-c("IGH_expression","IGK_expression", "IGL_expression","entropy_IGH","entropy_IGK", "entropy_IGL",
+               "TRA_expression","TRB_expression", "TRD_expression", "TRG_expression","entropy_TRA","entropy_TRB")
+
+##Correlation matrix
+mat<-Pancreas.Validation.repertoire.diversity[which(Pancreas.Validation.repertoire.diversity$tissue=="normal pancreas"),All_markers]
+library(corrplot)
+M <- cor(mat)
+tiff("Results/ImmuneRep/Comparisons/Correlation_Allmarkers.tiff",res=300,w=2000,h=2000)
+corrplot(M)
+corrplot(M, order = "hclust", addrect = 4)
+dev.off()
+
+
+
+
+
+
 ##### PCA plot
 pca <- prcomp((mat), scale = TRUE)
 pc <- c(1,2)
@@ -832,17 +1232,16 @@ mat_PDAC_Validation<-Repertoire.Diversity[which(Repertoire.Diversity$outcome=="V
 mat_normal_Validation<-Repertoire.Diversity[which(Repertoire.Diversity$outcome=="Validation-Normal"),All_markers]
 
 library(corrplot)
-tiff("Results/ImmuneRep/Comparisons/CorrelationTCGA.tiff",res=300,w=2200,h=2200)
-M <- cor(mat_TCGA)
-p <- cor.mtest(mat_TCGA, conf.level = 0.05)
-
+tiff("Results/ImmuneRep/Comparisons/CorrelationGTEX.tiff",res=300,w=2200,h=2200)
+M <- cor(mat_normal_Validation)
+p <- cor.mtest(mat_normal_Validation, conf.level = 0.05)
 col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
 corrplot(M, method="color", col=col(200),  
          type="upper", 
          addCoef.col = "black", # Add coefficient of correlation
          tl.col="black", tl.srt=45, #Text label color and rotation
          # Combine with significance
-         p.mat=p$p,vsig.level = 0.05, insig = "blank", 
+         #p.mat=p$p,sig.level = 0.05, insig = "blank", 
          # hide correlation coefficient on the principal diagonal
          diag=FALSE 
 )
@@ -1485,7 +1884,7 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank()) +
             geom_point(aes(x=Ig_expr[,clinical.var], y=value,color=Ig_expr[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
-            stat_compare_means(label = "p.format"))
+            stat_compare_means(label = "p.format")+ylab("log10(expression)"))
   } else {
     print(ggplot(Ig_expr,aes(x = as.numeric(as.character(Ig_expr[,clinical.var])), y = value)) + geom_point() +
             facet_grid(.~Ig_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
@@ -1503,7 +1902,7 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank()) +
             geom_point(aes(x=Ig_entropy[,clinical.var], y=value,color=Ig_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
-            stat_compare_means(label = "p.format"))
+            stat_compare_means(label = "p.format")+ylab("Shannon Entropy"))
   } else {
     print(ggplot(Ig_entropy,aes(x = as.numeric(as.character(Ig_entropy[,clinical.var])), y = value)) + geom_point() +
             facet_grid(.~Ig_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
@@ -1545,40 +1944,40 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
 
   
   PAAD.repertoire.tumor.clinical.patient.T<-PAAD.repertoire.tumor.clinical.patient[which(PAAD.repertoire.tumor.clinical.patient$T_Reads>100),]
-  T_expr<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","TRA_expression","TRB_expression","TRD_expression","TRG_expression",clinical.var)])
+  T_expr<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","TRA_expression","TRB_expression",clinical.var)])
   T_expr$value<-log10(T_expr$value)
   T_expr<-na.omit(T_expr)
-  tiff(paste0("Results/ImmuneRep/Clinical//boxplot_T_expr_TCGA_",clinical.var,".tiff"),res=300,h=1000,w=2500)
+  tiff(paste0("Results/ImmuneRep/Clinical//boxplot_T_expr_TCGA_",clinical.var,".tiff"),res=300,h=1000,w=1500)
   if(length(table(T_expr[,clinical.var]))<10){
     print(ggboxplot(T_expr, x = clinical.var, y = "value",color = clinical.var,ggtheme = theme_bw()) + facet_wrap("variable",nrow=1)+
             theme(axis.title.x=element_blank(),
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank()) +
             geom_point(aes(x=T_expr[,clinical.var], y=value,color=T_expr[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
-            stat_compare_means(label = "p.format"))
+            stat_compare_means(label = "p.format")+ylab("log10(expression)"))
   } else {
     print(ggplot(T_expr,aes(x = as.numeric(as.character(T_expr[,clinical.var])), y = value)) + geom_point() +
             facet_grid(.~T_expr$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
   }
   dev.off()
   # 
-  # T_entropy<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","entropy_TRA","entropy_TRB",clinical.var)])
-  # T_entropy<-T_entropy[which(T_entropy$value!=0),]
-  # T_entropy<-na.omit(T_entropy)
-  # tiff(paste0("Results/ImmuneRep/Clinical//boxplot_T_entropy_TCGA_",clinical.var,".tiff"),res=300,h=1000,w=2000)
-  # if(length(table(T_entropy[,clinical.var]))<10){  
-  #   print(ggboxplot(T_entropy, x = clinical.var, y = "value",color = clinical.var,ggtheme = theme_bw()) +facet_wrap("variable",nrow=1)+
-  #           theme(axis.title.x=element_blank(),
-  #                 axis.text.x=element_blank(),
-  #                 axis.ticks.x=element_blank()) +
-  #           geom_point(aes(x=T_entropy[,clinical.var], y=value,color=T_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
-  #           stat_compare_means(label = "p.format"))
-  # } else {  
-  #   print(ggplot(T_entropy,aes(x = as.numeric(as.character(T_entropy[,clinical.var])), y = value)) + geom_point() + 
-  #           facet_grid(.~T_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
-  # }
-  # dev.off()
-  # 
+  T_entropy<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","entropy_TRA","entropy_TRB",clinical.var)])
+  T_entropy<-T_entropy[which(T_entropy$value!=0),]
+  T_entropy<-na.omit(T_entropy)
+  tiff(paste0("Results/ImmuneRep/Clinical//boxplot_T_entropy_TCGA_",clinical.var,".tiff"),res=300,h=1000,w=1500)
+  if(length(table(T_entropy[,clinical.var]))<10){
+    print(ggboxplot(T_entropy, x = clinical.var, y = "value",color = clinical.var,ggtheme = theme_bw()) +facet_wrap("variable",nrow=1)+
+            theme(axis.title.x=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank()) +
+            geom_point(aes(x=T_entropy[,clinical.var], y=value,color=T_entropy[,clinical.var]), position = position_jitterdodge(dodge.width = 0.8)) +
+            stat_compare_means(label = "p.format")+ylab("Shannon Entropy"))
+  } else {
+    print(ggplot(T_entropy,aes(x = as.numeric(as.character(T_entropy[,clinical.var])), y = value)) + geom_point() +
+            facet_grid(.~T_entropy$variable) + geom_smooth(method="lm") + stat_cor(method = "pearson")+ xlab(clinical.var))
+  }
+  dev.off()
+
   
   # Alpha_Beta_ratio_expression<-melt(PAAD.repertoire.tumor.clinical.patient.T[,c("TCGA_sample","Alpha_Beta_ratio_expression",clinical.var)])
   # Alpha_Beta_ratio_expression<-na.omit(Alpha_Beta_ratio_expression)
@@ -1618,7 +2017,7 @@ association.test.immuneRep<- function (PAAD.repertoire.tumor.clinical.patient,cl
 ############################
 ### Plots for the paper ###
 ###########################
-PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>1000),]
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
 df<-PAAD.repertoire.tumor.filter.Ig[,c("entropy_IGH","number_pack_years_smoked")]
 tiff("Manuscript/Figures/entropy_IGH_pack_years.tiff",res=300,h=1000,w=1300)
 ggplot(df,aes(x = as.numeric(as.character(number_pack_years_smoked)), y = entropy_IGH)) + geom_point() +
@@ -1631,11 +2030,11 @@ ggplot(df,aes(x = as.numeric(as.character(number_pack_years_smoked)), y = entrop
   ylab("entropy IGH") + ylim (3,11) 
 dev.off()  
 
-PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>1000),]
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
 df<-PAAD.repertoire.tumor.filter.Ig[,c("IGK_expression","gender")]
 df$IGK_expression<-log10(df$IGK_expression)
-tiff("Manuscript/Figures/IGK_expression_sex.tiff",res=300,h=1000,w=1000)
-ggboxplot(df, x = "gender", y = "IGK_expression",color = "gender",ggtheme = theme_bw()) +
+tiff("Manuscript/Figures/IGK_expression_sex.tiff",res=300,h=2000,w=1000)
+ggboxplot(df, x = "gender", y = "IGK_expression",color = "gender", palette = c("#C77CFF","#7CAE00"),ggtheme = theme_bw()) +
   geom_point(aes(x=df$gender, y=df$IGK_expression,color=df$gender), position = position_jitterdodge(dodge.width = 0.8)) +
   stat_compare_means(label = "p.format",size=8,label.y = -2.3) + 
   theme(axis.text.x = element_text(size=20),
@@ -1643,8 +2042,8 @@ ggboxplot(df, x = "gender", y = "IGK_expression",color = "gender",ggtheme = them
         axis.title.x = element_text(size=20),
         axis.title.y = element_text(size=20)) +
   xlab("Sex") +
-  ylab("IGK expression") + ylim (-6,-2) +
-  theme(legend.position = "none") 
+  ylab("log10(IGK expression)") + ylim (-6,-2) +
+  theme(legend.position = "none")  
 
 dev.off()  
 
@@ -1668,19 +2067,19 @@ dev.off()
 PAAD.repertoire.tumor.filter$history_of_diabetes<-ifelse(PAAD.repertoire.tumor.filter$history_of_diabetes=="",NA,
                                                          as.character(PAAD.repertoire.tumor.filter$history_of_diabetes))
 PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
-df<-PAAD.repertoire.tumor.filter.T[,c("TRB_expression","history_of_diabetes")]
-df$TRB_expression<-log10(df$TRB_expression)
+df<-PAAD.repertoire.tumor.filter.T[,c("entropy_TRB","history_of_diabetes")]
+df$entropy_TRB
 df<-na.omit(df)
-tiff("Manuscript/Figures/TRB_expression_diabetes.tiff",res=300,h=1100,w=1100)
-ggboxplot(df, x = "history_of_diabetes", y = "TRB_expression",color = "history_of_diabetes",ggtheme = theme_bw()) +
-  geom_point(aes(x=df$history_of_diabetes, y=df$TRB_expression,color=df$history_of_diabetes), position = position_jitterdodge(dodge.width = 0.8)) +
-  stat_compare_means(label = "p.format",size=8,label.y=-4.5) + 
+tiff("Manuscript/Figures/entropy_TRB_diabetes.tiff",res=300,h=2000,w=1000)
+ggboxplot(df, x = "history_of_diabetes", y = "entropy_TRB",color = "history_of_diabetes",ggtheme = theme_bw()) +
+  geom_point(aes(x=df$history_of_diabetes, y=df$entropy_TRB,color=df$history_of_diabetes), position = position_jitterdodge(dodge.width = 0.8)) +
+  stat_compare_means(label = "p.format",size=8,label.y=8.0) + 
   theme(axis.text.x = element_text(size=20),
         axis.text.y = element_text(size=20),
         axis.title.x = element_text(size=20),
         axis.title.y = element_text(size=20)) +
   xlab("history of diabetes") +
-  ylab("TRB expression") + ylim (-6,-4) +
+  ylab("Shannon Entropy TRB") +# ylim (-7,-4) +
   theme(legend.position = "none") 
 dev.off()  
 
@@ -1765,9 +2164,9 @@ ggboxplot(df, x = "subtypes_Bailey", y = "entropy_TRA",color = "subtypes_Bailey"
         axis.title.y = element_text(size=20),
         legend.text = element_text(size=15),
         legend.title = element_text(face="bold",size=15)) + 
-  xlab("subtypes_Bailey") + 
-  #theme(legend.position = "top",legend.direction = "horizontal")+
-  ylab(NULL) + theme(axis.text.y = element_blank()) + theme(axis.text.x = element_blank()) + xlab(NULL)
+  xlab("Subtypes Bailey") +
+  ylab("Shannon Entropy TRA") +# ylim (-7,-4) +
+  theme(legend.position = "none") 
 dev.off()  
 
 
@@ -1896,6 +2295,31 @@ xCell.pvalue.tumor<-t(xCell.pvalue.PAAD[,match(PAAD.repertoire.tumor.filter$TCGA
 xCell.pvalue.tumor.filter<-t(apply(xCell.pvalue.tumor,1,function (x) replace(x,x>=0.2,1)))
 xcell.data.tumor.filter <-  xCell.data.tumor[,colSums(xCell.pvalue.tumor.filter==1) <= 131*0.8] ##(131*0.8)  45 cells
 
+##Filter by percetage of zeros
+xcell.data.tumor.filter.zeros<-t(apply(xcell.data.tumor.filter,1,function (x) replace(x,x<0.02,0)))
+percentage_zeros<-apply(xcell.data.tumor.filter.zeros,2,function(x) sum (x %in% 0) / nrow(xcell.data.tumor.filter.zeros))
+xcell.data.tumor.filter<-xcell.data.tumor.filter[,which(percentage_zeros<0.8)] #31
+xcell.data.tumor.filter<-xcell.data.tumor.filter[,-c((ncol(xcell.data.tumor.filter)-2):ncol(xcell.data.tumor.filter))]
+
+mean_value<-apply(xcell.data.tumor.filter,2,mean)
+tiff("Results/xCell/TotalxCell_PDAC.tiff",res=300,h=2500,w=2500)
+par(mar = c(4, 13, 2, 2))
+boxplot(xcell.data.tumor.filter[,order(mean_value)],las=2,xlab="xcell score",horizontal=T,cex.lab=1.5,ylim=c(0,1.4))
+dev.off()
+
+CIBERSORT<-PAAD.repertoire.tumor.filter[,822:849]
+mean_value<-apply(CIBERSORT,2,mean)
+tiff("Results/xCell/TotalCibersort.tiff",res=300,h=2500,w=2500)
+par(mar = c(4, 13, 2, 2))
+boxplot(CIBERSORT[,order(mean_value)],las=2,xlab="CIBERSORT score",horizontal=T,cex.lab=1.5)
+dev.off()
+
+
+PAAD.repertoire.tumor.filter$StromaScore<-xcell.data.tumor.filter[,42]
+PAAD.repertoire.tumor.filter$ImmuneScore<-xcell.data.tumor.filter[,41]
+PAAD.repertoire.tumor.filter$MicroenvironmentScore<-xcell.data.tumor.filter[,43]
+PAAD.repertoire.tumor.filter$Epithelial_cells<-xcell.data.tumor.filter[,12]
+
 ####Filter by variabilty (mean +- 2*SD)
 filter.out<-NULL
 for(i in 1:ncol(xcell.data.tumor.filter)){
@@ -1910,10 +2334,87 @@ for(i in 1:ncol(xcell.data.tumor.filter)){
     filter.out[i]<-NA
   }
 }
-
+#xcell.data.tumor.filter<-xcell.data.tumor.filter[,-na.omit(filter.out)]
 ###
 ##Delete scores
-xcell.data.tumor.filter<-xcell.data.tumor.filter[,-c(41:43)]
+xcell.data.tumor.filter<-xcell.data.tumor.filter[,-c(29:31)]
+
+#####
+###Correlation
+Signatures<-xcell.data.tumor.filter
+
+IGH_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$IGH_expression),method = "spearman"))
+IGH_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$IGH_expression),method = "spearman")$p.value),method = "fdr")
+
+IGK_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$IGK_expression),method = "spearman"))
+IGK_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$IGK_expression),method = "spearman")$p.value),method = "fdr")
+
+IGL_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$IGL_expression),method = "spearman"))
+IGL_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$IGL_expression),method = "spearman")$p.value),method = "fdr")
+
+TRA_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$TRA_expression),method = "spearman"))
+TRA_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$TRA_expression),method = "spearman")$p.value),method = "fdr")
+
+TRB_expression<-apply(Signatures,2,function(x) cor(x,log10(PAAD.repertoire.tumor.filter$TRB_expression),method = "spearman"))
+TRB_expression_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,log10(PAAD.repertoire.tumor.filter$TRB_expression),method = "spearman")$p.value),method = "fdr")
+
+IGH_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_IGH,method = "spearman"))
+IGH_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_IGH,method = "spearman")$p.value),method = "fdr")
+
+IGK_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_IGK,method = "spearman"))
+IGK_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_IGK,method = "spearman")$p.value),method = "fdr")
+
+IGL_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_IGL,method = "spearman"))
+IGL_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_IGL,method = "spearman")$p.value),method = "fdr")
+
+TRA_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_TRA,method = "spearman"))
+TRA_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_TRA,method = "spearman")$p.value),method = "fdr")
+
+TRB_entropy<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$entropy_TRB,method = "spearman"))
+TRB_entropy_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$entropy_TRB,method = "spearman")$p.value),method = "fdr")
+
+IGH_vertex<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$vertex_gini_IGH,method = "spearman"))
+IGH_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$vertex_gini_IGH,method = "spearman")$p.value),method = "fdr")
+
+IGK_vertex<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$vertex_gini_IGK,method = "spearman"))
+IGK_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$vertex_gini_IGK,method = "spearman")$p.value),method = "fdr")
+
+IGL_vertex<-apply(Signatures,2,function(x) cor(x,PAAD.repertoire.tumor.filter$vertex_gini_IGL,method = "spearman"))
+IGL_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x,PAAD.repertoire.tumor.filter$vertex_gini_IGL,method = "spearman")$p.value),method = "fdr")
+
+TRA_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],PAAD.repertoire.tumor.filter$vertex_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],method = "spearman"))
+TRA_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],PAAD.repertoire.tumor.filter$vertex_gini_TRA[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRA)==F)],method = "spearman")$p.value),method = "fdr")
+
+TRB_vertex<-apply(Signatures,2,function(x) cor(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],PAAD.repertoire.tumor.filter$vertex_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],method = "spearman"))
+TRB_vertex_p<-p.adjust(apply(Signatures,2,function(x) cor.test(x[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],PAAD.repertoire.tumor.filter$vertex_gini_TRB[which(is.na(PAAD.repertoire.tumor.filter$vertex_gini_TRB)==F)],method = "spearman")$p.value),method = "fdr")
+
+tiff("Results/xCell/xcell_heatmap.tiff",res=300,h=2000,w=2000)
+breaks <-seq(-1, 1, by=0.1)
+pheatmap(cbind(IGH_expression,IGK_expression,IGL_expression,IGH_entropy,IGK_entropy,IGL_entropy,
+                 TRA_expression, TRB_expression,TRA_entropy,TRB_entropy),cluster_rows = T,cluster_cols = F,breaks = breaks,gaps_col =c(3,6,8,10),
+         display_numbers = ifelse(cbind(IGH_expression_p,IGK_expression_p,IGL_expression_p,IGH_entropy_p,IGK_entropy_p,IGL_entropy_p,
+                                          TRA_expression_p, TRB_expression_p,TRA_entropy_p,IGH_expression_p)<0.05, "*", ""),fontsize_number = 20,
+         color = colorRampPalette(rev(brewer.pal(n = 10, name = "RdYlBu")))(length(breaks)))
+
+dev.off()
+
+###############################
+### IGK clonotypes cluster  ###
+###############################
+p.value=NULL
+for(i in 1:ncol(xcell.data.tumor.filter)){
+  p.value[i]<-kruskal.test(xcell.data.tumor.filter[,i]~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)$p.value
+}
+xcell.data.tumor.filter.sign<-xcell.data.tumor.filter[,p.adjust(p.value,method = "fdr")<0.05]
+df<-data.frame(cbind(xcell.data.tumor.filter.sign,factor(PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)))
+colnames(df)[20]<-"IGK_clonotypes_cluster"
+colnames(df)[5]<- "Switched.MemoryBcells"
+df.m <- melt(df,id.var="IGK_clonotypes_cluster")
+df.m$IGK_clonotypes_cluster<-factor(df.m$IGK_clonotypes_cluster)
+tiff("Results/xCell/cluster_IGK.tiff",res=200,h=2000,w=2500)
+ggplot(data = df.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=IGK_clonotypes_cluster))+ ylab("xcell score") +
+  theme(text = element_text(size=20),axis.text.x = element_text(angle=90, hjust=1)) 
+dev.off()
 
 #############
 ####ENET#####
@@ -1923,9 +2424,20 @@ xcell.data.tumor.filter<-xcell.data.tumor.filter[,-c(41:43)]
 PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
 PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter.T[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F),]
 id<-match(PAAD.repertoire.tumor.filter.T$TCGA_sample,rownames(xcell.data.tumor.filter))
+
+##Univariate analysis
+p.value<-NULL
+for (i in 1:ncol(xcell.data.tumor.filter)){
+  p.value[i]<-coefficients(summary(glm(PAAD.repertoire.tumor.filter.T$entropy_TRB~xcell.data.tumor.filter[,i])))[2,4]
+}
+cells_sign<-xcell.data.tumor.filter[,which(p.adjust(p.value,"fdr")<0.05)]
+
+
+
+##ENET
 alphalist<-seq(0.01,0.99,by=0.01)
 set.seed(34)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter[id,],log10(PAAD.repertoire.tumor.filter.T$TRB_expression),family="gaussian"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter[id,],PAAD.repertoire.tumor.filter.T$entropy_TRB,family="gaussian"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
@@ -1940,43 +2452,44 @@ for (j in 1:length(alphalist)) {
 id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
-enet<-glmnet(xcell.data.tumor.filter[id,],log10(PAAD.repertoire.tumor.filter.T$TRB_expression),family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda) #86
+enet<-glmnet(xcell.data.tumor.filter[id,],PAAD.repertoire.tumor.filter.T$entropy_TRB,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda) #86
 cells<-rownames(enet$beta)[which(as.numeric(enet$beta)!=0)]
 betas<-enet$beta[which(as.numeric(enet$beta)!=0)]
 cells_sign<-xcell.data.tumor.filter[id,match(cells,colnames(xcell.data.tumor.filter))]
 
-colors<-betas[order(betas)]
-myColors <- ifelse(betas<0,brewer.pal(6,name="Reds"), 
-                   ifelse(betas>0, brewer.pal(6,name="Greens"),c("Grey")))
-cells_sign_plot<-cells_sign
-for (i in 1:ncol(cells_sign)){
-  if(betas[i]<0){
-    cells_sign_plot[,i]<-c(-cells_sign[,i])
-  } else {
-    cells_sign_plot[,i]<-c(cells_sign[,i])
-  }
-}
+betas_neg<-betas[betas<0]
+betas_pos<-betas[betas>0]
+colors<-c(betas_neg[order(betas_neg,decreasing = T)],betas_pos[order(betas_pos)])
+myColors <- ifelse(colors<0,colorRampPalette(brewer.pal(6,name="Reds"))(18), 
+                   ifelse(colors>0, colorRampPalette(brewer.pal(6,name="Greens"))(18),c("Grey")))
+
 tiff("Results/xCell/entropy_TRB_xcell_boxplot.tiff",res=300,h=2000,w=2500)
 par(mar = c(4, 9, 2, 2))
-boxplot(cells_sign,las=2,col=myColors,xlab="xcell score",horizontal=T,cex.lab=1.5)
+cells_sign_neg<-cells_sign[,which(betas<0)]
+cells_sign_pos<-cells_sign[,which(betas>0)]
+cells_sign_order<-cbind(cells_sign_neg[,order(betas_neg,decreasing = T)], cells_sign_pos[,order(betas_pos)])
+boxplot(cells_sign_order,las=2,col=myColors,xlab="xcell score",horizontal=T,cex.lab=1.5,ylim=c(0,1.4))
 #legend("topright", legend = c("Positive association","Negative association") , 
 #       col = brewer.pal(6,name="Reds"),brewer.pal(6,name="Greens") , bty = "n", pch=20 , pt.cex = 3, cex = 1, horiz = FALSE, inset = c(0.03, 0.1))
 dev.off()
+
 plot(0,0,1,1)
-legend_image <- as.raster(brewer.pal(6,name="Reds"))
+rasterImage <- as.raster(brewer.pal(6,name="Reds"))
 rasterImage(legend_image, 0, 0, 1,1)
 plot(0,0,1,1)
 legend_image <- as.raster(brewer.pal(6,name="Greens"))
 rasterImage(legend_image, 0, 0, 1,1)
-
 
 ##Bcells
 PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
 PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter.Ig[which(is.na(PAAD.repertoire.tumor.filter.Ig$vertex_gini_IGH)==F),]
 id<-match(PAAD.repertoire.tumor.filter.Ig$TCGA_sample,rownames(xcell.data.tumor.filter))
+
+
+
 alphalist<-seq(0.01,0.99,by=0.01)
 set.seed(34)
-elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter[id,],PAAD.repertoire.tumor.filter.Ig$entropy_IGK,family="gaussian"
+elasticnet<-lapply(alphalist, function(a){try(cv.glmnet(xcell.data.tumor.filter[id,],log10(PAAD.repertoire.tumor.filter.Ig$IGK_expression),family="gaussian"
                                                         ,standardize=TRUE,alpha=a,nfolds=5))})
 xx<-rep(NA,length(alphalist))
 yy<-rep(NA,length(alphalist))
@@ -1991,28 +2504,28 @@ for (j in 1:length(alphalist)) {
 id.min<-which(yy==min(yy,na.rm=TRUE))
 lambda<-xx[id.min]
 alpha<-alphalist[id.min]
-enet<-glmnet(xcell.data.tumor.filter[id,],PAAD.repertoire.tumor.filter.Ig$entropy_IGK,family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda) #86
+enet<-glmnet(xcell.data.tumor.filter[id,],log10(PAAD.repertoire.tumor.filter.Ig$IGK_expression),family="gaussian",standardize=TRUE,alpha=alpha,lambda=lambda) #86
 cells<-rownames(enet$beta)[which(as.numeric(enet$beta)!=0)]
 betas<-enet$beta[which(as.numeric(enet$beta)!=0)]
 cells_sign<-xcell.data.tumor.filter[id,match(cells,colnames(xcell.data.tumor.filter))]
 
-colors<-betas[order(betas)]
-myColors <- ifelse(betas<0,brewer.pal(6,name="Reds"), 
-                   ifelse(betas>0, brewer.pal(6,name="Greens"),c("Grey")))
-cells_sign_plot<-cells_sign
-for (i in 1:ncol(cells_sign)){
-  if(betas[i]<0){
-    cells_sign_plot[,i]<-c(-cells_sign[,i])
-  } else {
-    cells_sign_plot[,i]<-c(cells_sign[,i])
-  }
-}
-tiff("Results/xCell/entropy_IGH_xcell_boxplot.tiff",res=300,h=2000,w=2500)
+betas_neg<-betas[betas<0]
+betas_pos<-betas[betas>0]
+colors<-c(betas_neg[order(betas_neg,decreasing = T)],betas_pos[order(betas_pos)])
+myColors <- ifelse(colors<0,colorRampPalette(brewer.pal(6,name="Reds"))(25), 
+                   ifelse(colors>0, colorRampPalette(brewer.pal(6,name="Greens"))(25),c("Grey")))
+
+tiff("Results/xCell/expression_IGK_xcell_boxplot.tiff",res=300,h=2000,w=2500)
 par(mar = c(4, 9, 2, 2))
-boxplot(cells_sign,las=2,col=myColors,xlab="xcell score",horizontal=T,cex.lab=1.5)
+cells_sign_neg<-cells_sign[,which(betas<0)]
+cells_sign_pos<-cells_sign[,which(betas>0)]
+cells_sign_order<-cbind(cells_sign_neg[,order(betas_neg,decreasing = T)], cells_sign_pos[,order(betas_pos)])
+boxplot(cells_sign_order,las=2,col=myColors,xlab="xcell score",horizontal=T,cex.lab=1.5,ylim=c(0,1.4))
 #legend("topright", legend = c("Positive association","Negative association") , 
 #       col = brewer.pal(6,name="Reds"),brewer.pal(6,name="Greens") , bty = "n", pch=20 , pt.cex = 3, cex = 1, horiz = FALSE, inset = c(0.03, 0.1))
 dev.off()
+
+
 plot(0,0,1,1)
 legend_image <- as.raster(brewer.pal(6,name="Reds"))
 rasterImage(legend_image, 0, 0, 1,1)
@@ -2021,27 +2534,78 @@ legend_image <- as.raster(brewer.pal(6,name="Greens"))
 rasterImage(legend_image, 0, 0, 1,1)
 
 
+##################################
+### Validation with ICGC data ####
+##################################
+xCell.data.tumor.val<-read.table("Data/Fayaz/Faiyas/xCell_Faiyas_LCM_PDAC_xCell_0655021021.txt",sep="\t",header=T)
+xCell.pvalue.tumor.val<-read.table("Data/Fayaz/Faiyas/xCell_Faiyas_LCM_PDAC_xCell_0655021021.pvals.txt",sep="\t",header=T)
+rownames(xCell.data.tumor.val)<-xCell.data.tumor.val$X
+rownames(xCell.pvalue.tumor.val)<-xCell.pvalue.tumor.val$X
+xCell.data.tumor.val<-t(xCell.data.tumor.val[,-1])
+xCell.pvalue.tumor.val<-t(xCell.pvalue.tumor.val[,-1])
 
+##Filter by p-value
+xCell.pvalue.tumor.val.filter<-t(apply(xCell.pvalue.tumor.val,1,function (x) replace(x,x>=0.2,1)))
+xCell.data.tumor.val.filter <-  xCell.data.tumor.val[,colSums(xCell.pvalue.tumor.val==1) <= 247*0.8] ##(247*0.8)  49 cells
 
+##Filter by percetage of zeros
+#xcell.data.tumor.filter.zeros<-t(apply(xCell.data.tumor.val.filter,1,function (x) replace(x,x<0.02,0)))
+percentage_zeros<-apply(xCell.data.tumor.val.filter,2,function(x) sum (x %in% 0) / nrow(xCell.data.tumor.val.filter))
+xCell.data.tumor.val.filter<-xCell.data.tumor.val.filter[,which(percentage_zeros<0.8)] 
+xCell.data.tumor.val.filter<-xCell.data.tumor.val.filter[,-ncol(xCell.data.tumor.val.filter)] #48
 
-
-
-
-
-####Plot results
-require(ggplot2)
-require(reshape2)
-df<-data.frame(PAAD.repertoire.tumor.filter.T$entropy_TRB,cells_sign)
-colnames(df)[1]<-c("entropy_TRB")
-df_melt<-melt(df,id.vars = "entropy_TRB")
-tiff("Results/xCell/entropy_TRB_xcell.tiff",res=300,h=2000,w=2000)
-ggplot(df_melt) +
-  geom_jitter(aes(value,entropy_TRB, colour=variable)) + 
-  geom_smooth(aes(value,entropy_TRB, colour=variable), method=glm, se=FALSE) +
-  facet_wrap(~variable) +
-  #stat_cor(aes(value,TRA_expression_log10, colour=variable),method = "spearman")+
-  labs(x = "xcell score", y = "Shannon Entropy TRB") + 
-  theme(legend.position = "none")
+mean_value<-apply(xCell.data.tumor.val.filter,2,mean)
+tiff("Results/xCell/TotalxCell_ICGC.tiff",res=300,h=3000,w=2500)
+par(mar = c(4, 13, 2, 2))
+boxplot(xCell.data.tumor.val.filter[,order(mean_value)],las=2,xlab="xcell score",horizontal=T,cex.lab=1.5,ylim=c(0,1.4))
 dev.off()
 
+
+###########################
+### Analysis with TIDE ####
+#https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6487502/#
+###########################
+
+TIDE<-read.csv("Data/PAAD/TCGA.PAAD.TIDE.csv")
+id<-match(PAAD.repertoire.tumor.filter$bcr_patient_barcode,TIDE$X)
+
+##Tcells
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$T_Reads>100),]
+PAAD.repertoire.tumor.filter.T<-PAAD.repertoire.tumor.filter.T[which(is.na(PAAD.repertoire.tumor.filter.T$vertex_gini_TRB)==F),]
+id<-match(PAAD.repertoire.tumor.filter.T$bcr_patient_barcode,TIDE$X)
+id2<-match(TIDE$X,PAAD.repertoire.tumor.filter.T$bcr_patient_barcode)
+
+summary(glm(PAAD.repertoire.tumor.filter.T$entropy_TRA[na.omit(id2)]~TIDE$Exclusion[na.omit(id)] + PAAD.repertoire.tumor.filter.T$SNV.Neoantigens[na.omit(id2)]))
+
+
+
+
+
+
+
+
+###########
+###Prognostic score
+#######
+load("/Volumes/Human_Cancer_Genetics/Genetic_and_Molecular_Epidemiology/Backup/ImmuneRepertoire_PAAD_TCGA/CompAna/IPS_IGK_nosmok.RData")
+id<-match(rownames(PAAD.repertoire.tumor.filter),u_IGK_nosmok$ind)
+PAAD.repertoire.tumor.filter$IPS_IGK_nosmok <-u_IGK_nosmok$IPS_IGK_nosmok[id]
+boxplot(PAAD.repertoire.tumor.filter$IPS_IGK_nosmok~PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+
+PAAD.repertoire.tumor.filter.Ig<-PAAD.repertoire.tumor.filter[which(PAAD.repertoire.tumor.filter$Ig_Reads>100),]
+df<-PAAD.repertoire.tumor.filter.Ig[,c("IGK_clonotypes_cluster","IPS_IGK_nosmok")]
+df<-df[which(is.na(df$IPS_IGK_nosmok)==F),]
+df$IGK_clonotypes_cluster<-factor(df$IGK_clonotypes_cluster)
+tiff("Manuscript/Figures/IGK_clonotypes_cluster_IPS_IGK_nosmok.tiff",res=300,h=1800,w=1300)
+ggboxplot(df, x = "IGK_clonotypes_cluster", y = "IPS_IGK_nosmok",color = "IGK_clonotypes_cluster",ggtheme = theme_bw()) +
+  geom_point(aes(x=df$IGK_clonotypes_cluster, y=df$IPS_IGK_nosmok,color=df$IGK_clonotypes_cluster), position = position_jitterdodge(dodge.width = 0.8)) +
+  stat_compare_means(label = "p.format",size=8) + 
+  theme(axis.text.x = element_text(size=20),
+        axis.text.y = element_text(size=20),
+        axis.title.x = element_text(size=20),
+        axis.title.y = element_text(size=20)) +
+  xlab("IGK_clonotypes_cluster") +
+  ylab("Prognostic Score") +
+  theme(legend.position = "none") 
+dev.off()
 
