@@ -114,10 +114,6 @@ PAAD.repertoire.microbiome$Bacteria_cluster<-mat.clust$cluster
 ## Integration with Immune Repertooire ##
 #########################################
 
-#######Clustering IGK
-IGK_clonotypes_cluster<-read.csv("Data/PAAD/IGK_clonotype_cluster.csv")
-id<-match(rownames(PAAD.repertoire.tumor.filter),IGK_clonotypes_cluster$sample)
-PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster<-IGK_clonotypes_cluster$IGK_clonotypes_cluster[id]
 
 #####Filter by only PDAC
 id<-match(rownames(Kraken_counts),substr(PAAD.repertoire.tumor.filter$TCGA_sample,1,15))
@@ -139,23 +135,31 @@ Kraken_counts_filter_zerosubs<-Kraken_counts_filter_2+1
 z_Kraken_counts<-log(Kraken_counts_filter_zerosubs)
 clrx_Kraken_counts <- apply(z_Kraken_counts, 2, function(x) x - rowMeans(z_Kraken_counts))
 
-#### Clustering ###
-##Heatmap 
-brewer.pal(4,name = "Accent")
-cols=brewer.pal(4,name = "Accent")
 
-res <- pheatmap(t(clrx_Kraken_counts),scale="row",border_color=F,show_colnames = F,
-                color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
-
-mat.clust <- as.data.frame(cbind(clrx_Kraken_counts, cluster = cutree(res$tree_col, k = 9)))
-
-annotation_row = data.frame(cluster = factor(mat.clust$cluster))
-colnames(annotation_row)<-c("cluster")
-rownames(annotation_row)<-rownames(clrx_Kraken_counts)
-tiff("Microbiome/Kraken_CLR_clustering_PDAC.tiff",width = 3200, height = 3000, res = 300)
-pheatmap(t(clrx_Kraken_counts),scale="row",border_color=F, show_colnames = F,annotation_col = annotation_row,
-         color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120),cutree_cols = 9,cutree_rows = 9)
+p.value=NULL
+for(i in 1:ncol(clrx_Kraken_counts)){
+  p.value[i]<-kruskal.test(clrx_Kraken_counts[,i]~PAAD.repertoire.microbiome.tumor$IGK_clonotypes_cluster)$p.value
+}
+clrx_Kraken_counts_sign<-clrx_Kraken_counts[,p.value<0.05]
+df<-data.frame(cbind(clrx_Kraken_counts_sign,factor(PAAD.repertoire.microbiome.tumor$IGK_clonotypes_cluster)))
+colnames(df)[7]<-"IGK_clonotypes_cluster"
+df.m <- melt(df,id.var="IGK_clonotypes_cluster")
+df.m$IGK_clonotypes_cluster<-factor(df.m$IGK_clonotypes_cluster)
+tiff("Results/Microbiome/clr_IGKcluster.tiff",res=200,h=1000,w=2000)
+ggplot(data = df.m, aes(x=variable, y=value)) + geom_boxplot(aes(fill=IGK_clonotypes_cluster))+ coord_flip() + ylab("clr")
 dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 
 PAAD.repertoire.microbiome.tumor$Bacteria_cluster<-mat.clust$cluster
 
