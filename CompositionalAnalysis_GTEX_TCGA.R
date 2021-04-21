@@ -183,7 +183,7 @@ colnames(annotation_row)<-"outcome"
 rownames(annotation_row)<-rownames(clrx_clone_type_IGH)
 
 tiff("Results/CompositionalAnalysis/IGH_clrLasso.tiff",width = 2500, height = 1500, res = 300)
-pheatmap(t(clrx_clone_type_IGH),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
+pheatmap(t(clrx_clone_type_IGH_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
 
@@ -216,7 +216,7 @@ colnames(annotation_row)<-"outcome"
 rownames(annotation_row)<-rownames(clrx_clone_type_IGK)
 
 tiff("Results/CompositionalAnalysis/IGK_clrLasso.tiff",width = 2500, height = 1500, res = 300)
-pheatmap(t(clrx_clone_type_IGK_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
+pheatmap(t(46),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
 
@@ -245,13 +245,13 @@ tiff("Results/CompositionalAnalysis/IGK_clrLasso_cluster.tiff",width = 2500, hei
 pheatmap(t(clrx_clone_type_IGK_sign),scale="row",border_color=F,show_colnames = F, annotation_col = annotation_row,
          annotation_colors = ann_colors,color = colorRampPalette(rev(brewer.pal(6,name="RdGy")))(120))
 dev.off()
+
 PAAD.GTEx.repertoire.diversity.tumor.normmal$IGK_clonotypes_cluster<-mat.clust$cluster
 write.csv(PAAD.GTEx.repertoire.diversity.tumor.normmal[c("sample","IGK_clonotypes_cluster")],"Data/PAAD/IGK_clonotype_cluster.csv")
 
 #####
 #3. IGL
 #####
-
 z_clone_type_IGL<-log(clone_type_filter_IGL_zerosubs)
 clrx_clone_type_IGL <- apply(z_clone_type_IGL, 2, function(x) x - rowMeans(z_clone_type_IGL))
 
@@ -551,9 +551,9 @@ save(data_merge,PAAD.repertoire.diversity,PAAD.repertoire.tumor.filter,xCell.dat
 
 
 ##OS
-#id<-match(rownames(PAAD.repertoire.tumor.filter),rownames(clrx_clone_type_IGL_sign))
+id<-match(rownames(PAAD.repertoire.tumor.filter),rownames(clrx_clone_type_IGK))
 surv_object <- Surv(time = PAAD.repertoire.tumor.filter$OS.time, event = PAAD.repertoire.tumor.filter$OS)
-res.cox <- coxph(Surv(time = OS.time, event = OS)~factor(IGK_clonotypes_cluster),data=PAAD.repertoire.tumor.filter)
+res.cox <- coxph(Surv(time = OS.time, event = OS)~clrx_clone_type_IGK[id,270],data=PAAD.repertoire.tumor.filter)
 summary(res.cox)
 
 ggforest(res.cox)
@@ -571,7 +571,7 @@ comp(ten(fit1))$tests$lrTests
 
 
 
-##ZNF521 mutattion
+##ZNF521 mutation
 PAAD.repertoire.tumor.filter$ZNF521.mutated<-factor(PAAD.repertoire.tumor.filter$ZNF521)
 chisq.test(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
 table(PAAD.repertoire.tumor.filter$ZNF521.mutated,PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
@@ -591,6 +591,20 @@ for(i in 157:690){
     }
 }
 
-id<-which(p.value<0.06)
+id<-which(p.value<0.07)
 PAAD.repertoire.tumor.filter[,c(156+id)]
+
+table(PAAD.repertoire.tumor.filter[,c(156+id[7])],PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+
+
+##Categorical
+KL_mean<-mean(clrx_clone_type_IGK[,270],na.rm=T)
+PAAD.repertoire.tumor.filter$KL_ratio_2cat[id]<-ifelse(as.numeric(clrx_clone_type_IGK[,270])<=KL_mean,1,2)
+fit1 <- survfit(surv_object ~ PAAD.repertoire.tumor.filter$IGK_clonotypes_cluster)
+fit1
+tiff("Results/CompositionalAnalysis/KM_IGK_clonotypes_cluster.tiff",res=300,h=1500,w=1500)
+ggsurvplot(fit1, data = PAAD.repertoire.tumor.filter,pval = T,pval.method = T,legend="top",legend.title="IGK clonotype",
+           legend.labs=c("cluster 1","cluster 2","cluster 3"),xlab="Time (days)")
+dev.off()
+comp(ten(fit1))$tests$lrTests
 
