@@ -226,23 +226,25 @@ dev.off()
 ########################
 
 #Tumor
-chainType="TRA"
-PAAD.repertoire.diversity.TRA<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$cluster_gini_TRA)==F),]
-sample_tumor<-rownames(PAAD.repertoire.diversity.TRA)[which(PAAD.repertoire.diversity.TRA$Tumor_type_4categ=="PDAC")]
+chainType="IGK"
+PAAD.repertoire.diversity.IGK<-PAAD.repertoire.diversity[which(is.na(PAAD.repertoire.diversity$cluster_gini_IGK)==F),]
+sample_tumor<-rownames(PAAD.repertoire.diversity.IGK)[which(PAAD.repertoire.diversity.IGK$Tumor_type_4categ=="PDAC")]
+
+
 for(i in sample_tumor) {
   print(i)
   edges <- read.delim(paste("Data/PAAD/Network/edges_",chainType,"_",i,".txt.outcome.txt",sep = ""))
   vertex <- read.delim(paste("Data/PAAD/Network/vertex_",chainType,"_",i,".txt",sep = ""))
   if(length(edges$edge1)!=0){
     net<-graph_from_data_frame(d=edges,vertices = vertex,directed=F)
-    V(net)$size <- V(net)$Freq
+    V(net)$size <- V(net)$Freq/100
     V(net)$color <- c("#BEAED4")
     net <- simplify(net, remove.multiple = F, remove.loops = T) 
     E(net)$arrow.mode <- 0
     E(net)$width <- 0.4
     E(net)$color <- c("black")
     tiff(paste("Results/PAAD/Network/network_",chainType,"_",i,".tiff",sep=""),res=300,h=3000,w=3000)
-    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01))
+    plot(net,vertex.label=NA,layout=layout_with_graphopt(net,niter=800,charge=0.01,mass=30))
     dev.off()
   }
 }
